@@ -1,7 +1,3 @@
-
-> drem@0.1.0 build
-> DISABLE_ESLINT_PLUGIN='true' react-scripts --max_old_space_size=4096 build
-
 Creating an optimized production build...
 Compiled with warnings.
 

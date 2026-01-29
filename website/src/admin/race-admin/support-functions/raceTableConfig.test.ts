@@ -1,12 +1,13 @@
-import i18next from '../../i18n';
-import { ColumnsConfig, VisibleContentOptions } from './deviceTableConfig';
+// @ts-nocheck - Type checking disabled for test file during incremental migration
+import i18next from '../../../i18n';
+import { ColumnDefinitions, VisibleContentOptions } from './raceTableConfig';
 
 i18next.t = jest.fn().mockReturnValue('');
 
-describe('Devices Table', () => {
-  describe('Devices table config', () => {
+describe('Race Manager', () => {
+  describe('Race table config', () => {
     test('ensure same columns configured in both configs', () => {
-      const columnDefinitions = ColumnsConfig();
+      const columnDefinitions = ColumnDefinitions();
       const cdIds = columnDefinitions.map((o) => o.id);
 
       const visibleContentOptions = VisibleContentOptions();

@@ -1,9 +1,11 @@
+// @ts-nocheck - Type checking disabled for test file during incremental migration
 import { calculateMetrics } from './metricCalculations';
+import { Race } from '../../../types';
 
 describe('Race Manager', () => {
   describe('Metric Calculation', () => {
     test('race with no laps', () => {
-      const noRaces = [];
+      const noRaces: Race[] = [];
 
       const raceMetrics = calculateMetrics(noRaces);
 
