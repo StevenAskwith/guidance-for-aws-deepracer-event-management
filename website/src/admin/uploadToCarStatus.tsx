@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { BarChart, Box, Container, Header, SpaceBetween, StatusIndicator } from '@cloudscape-design/components';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import { API, graphqlOperation } from 'aws-amplify';

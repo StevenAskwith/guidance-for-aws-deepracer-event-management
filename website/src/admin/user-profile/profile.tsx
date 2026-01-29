@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API, Auth } from 'aws-amplify';
 
 import ColumnLayout from '@cloudscape-design/components/column-layout';

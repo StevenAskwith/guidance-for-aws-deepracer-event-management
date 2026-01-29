@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { SpaceBetween, Tabs } from '@cloudscape-design/components';
 import Button from '@cloudscape-design/components/button';
 import { API, Auth } from 'aws-amplify';

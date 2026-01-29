@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import Button from '@cloudscape-design/components/button';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';

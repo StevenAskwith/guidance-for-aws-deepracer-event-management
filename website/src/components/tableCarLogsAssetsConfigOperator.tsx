@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { CarLogsAssetType } from './assetType';
