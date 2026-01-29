@@ -2,14 +2,14 @@
 import { Container, FormField, Grid, Header, Toggle } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import useMutation from '../../../hooks/useMutation.js';
-import { RacesStatusEnum } from '../../../hooks/usePublishOverlay.js';
+import useMutation from '../../../hooks/useMutation';
+import { RacesStatusEnum } from '../../../hooks/usePublishOverlay';
 import {
   useSelectedEventContext,
   useSelectedTrackContext,
-} from '../../../store/contexts/storeProvider.js';
-import { RacerSelector } from '../components/racerSelector.jsx';
-import { RacesDoneByUser } from '../components/racesDoneByUser.jsx';
+} from '../../../store/contexts/storeProvider';
+import { RacerSelector } from '../components/racerSelector';
+import { RacesDoneByUser } from '../components/racesDoneByUser';
 
 export const RaceSetupPage = (props) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-setup']);

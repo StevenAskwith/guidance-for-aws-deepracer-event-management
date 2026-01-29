@@ -20,7 +20,7 @@ import {
   useSelectedEventContext,
   useSelectedTrackContext,
 } from '../../../store/contexts/storeProvider';
-import { RacerSelector } from '../components/racerSelector.jsx';
+import { RacerSelector } from '../components/racerSelector';
 import { RacesDoneByUser } from '../components/racesDoneByUser';
 import { Breadcrumbs } from '../support-functions/supportFunctions';
 
