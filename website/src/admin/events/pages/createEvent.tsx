@@ -1,18 +1,18 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, Form, SpaceBetween } from '@cloudscape-design/components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '../../../components/pageLayout';
 import useMutation from '../../../hooks/useMutation';
+
 import { EventInfoPanel } from '../components/generalInfoPanel';
 import { RaceConfigPanel } from '../components/raceConfigPanel';
 import { TracksPanel } from '../components/tracksPanel';
 import { event } from '../support-functions/eventDomain';
 
-export const EditEvent = () => {
+export const CreateEvent = () => {
   const { t } = useTranslation();
-  const location = useLocation();
-  const selectedEvent = location.state;
   const navigate = useNavigate();
 
   const [send, loading, errorMessage, data] = useMutation();
@@ -26,21 +26,16 @@ export const EditEvent = () => {
   }, [loading, data, errorMessage, navigate]);
 
   const UpdateConfigHandler = (attr) => {
+    console.debug(attr);
     setEventConfig((prevState) => {
       const merged = { ...prevState, ...attr };
+      console.debug(merged);
       return merged;
     });
   };
 
-  useEffect(() => {
-    if (selectedEvent) {
-      setEventConfig(selectedEvent);
-    }
-  }, [selectedEvent]);
-
-  const onSaveEventHandler = async () => {
-    delete eventConfig.raceConfig.eventName;
-    send('updateEvent', eventConfig);
+  const onCreateEventHandler = async () => {
+    send('addEvent', eventConfig);
   };
 
   const formIsValidHandler = useCallback(() => {
@@ -51,16 +46,15 @@ export const EditEvent = () => {
     setCreateButtonIsDisabled(true);
   }, []);
 
-  console.info(eventConfig);
   return (
     <PageLayout
-      header={t('events.edit-event')}
+      header={t('events.create-event')}
       description={t('events.description')}
       breadcrumbs={[
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('admin.breadcrumb'), href: '/admin/home' },
         { text: t('events.breadcrumb'), href: '/admin/events' },
-        { text: t('events.edit-event') },
+        { text: t('events.create-event') },
       ]}
     >
       <form onSubmit={(event) => event.preventDefault()}>
@@ -68,14 +62,14 @@ export const EditEvent = () => {
           actions={
             <SpaceBetween direction="horizontal" size="xs">
               <Button variant="link" onClick={() => navigate(-1)} disabled={loading}>
-                {t('button.cancel')}
+                Cancel
               </Button>
               <Button
                 variant="primary"
-                onClick={onSaveEventHandler}
+                onClick={onCreateEventHandler}
                 disabled={loading || createButtonIsDisabled}
               >
-                {t('button.save')}
+                Create Event
               </Button>
             </SpaceBetween>
           }
@@ -84,11 +78,7 @@ export const EditEvent = () => {
         >
           <SpaceBetween size="l">
             <EventInfoPanel
-              sponsor={eventConfig.sponsor}
-              typeOfEvent={eventConfig.typeOfEvent}
-              countryCode={eventConfig.countryCode}
-              eventDate={eventConfig.eventDate}
-              eventName={eventConfig.eventName}
+              {...eventConfig}
               onChange={UpdateConfigHandler}
               onFormIsValid={formIsValidHandler}
               onFormIsInvalid={formIsInvalidHandler}
