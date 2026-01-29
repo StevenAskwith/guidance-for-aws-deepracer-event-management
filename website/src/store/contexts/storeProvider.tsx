@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import React, { createContext, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { event } from '../../admin/events/support-functions/eventDomain';

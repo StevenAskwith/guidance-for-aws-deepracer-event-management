@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { SimpleHelpPanelLayout } from '../components/help-panels/simple-help-panel';
 import { initStore } from './store';
 

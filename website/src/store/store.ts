@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-let globalState = {};
-let listeners = [];
-let actions = {};
+// Store types - using any for flexibility during incremental migration
+// TODO: Replace with strongly-typed discriminated union of action types
+type ActionIdentifier = string;
+type ActionHandler = (state: any, payload: any) => any;
+type Actions = Record<ActionIdentifier, ActionHandler>;
+type Listener = (state: any) => void;
+type DispatchFunction = (actionIdentifier: ActionIdentifier, payload?: any) => void;
+
+let globalState: any = {};
+let listeners: Listener[] = [];
+let actions: Actions = {};
 
 /**
  * low level custom hook for managing the global store.
@@ -12,10 +20,10 @@ let actions = {};
  * @example
  * const [state, dispatch] = useStore();
  */
-export const useStore = () => {
+export const useStore = (): [any, DispatchFunction] => {
   const [, setState] = useState(globalState);
 
-  const dispatch = useCallback((actionIdentifier, payload) => {
+  const dispatch: DispatchFunction = useCallback((actionIdentifier, payload) => {
     const newState = actions[actionIdentifier](globalState, payload);
     globalState = { ...globalState, ...newState };
 
@@ -35,7 +43,7 @@ export const useStore = () => {
   return [globalState, dispatch];
 };
 
-export const initStore = (userActions, initialState) => {
+export const initStore = (userActions: Actions, initialState?: any): void => {
   if (initialState) {
     globalState = { ...globalState, ...initialState };
   }

@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
 
 const splitPanelDefaultSettings = {
