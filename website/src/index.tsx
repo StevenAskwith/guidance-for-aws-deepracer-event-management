@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import '@cloudscape-design/global-styles/dark-mode-utils.css';
 import '@cloudscape-design/global-styles/index.css';
 import React, { Suspense } from 'react';

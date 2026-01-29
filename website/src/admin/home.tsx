@@ -1,11 +1,10 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { Cards, Grid, Header, Link } from '@cloudscape-design/components';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { HomeCards } from './components/homeCards';
+import { AdminHomeCards } from '../components/homeCards';
+import i18next from '../i18n';
 
-const Home = () => {
-  const { t } = useTranslation();
-
+const AdminHome = () => {
   return (
     <>
       <img
@@ -36,8 +35,8 @@ const Home = () => {
             ],
           }}
           cardsPerRow={[{ cards: 1 }, { minWidth: 500, cards: 2 }]}
-          items={HomeCards()}
-          header={<Header>{t('home.header', 'DeepRacer Event Manager')}</Header>}
+          items={AdminHomeCards()}
+          header={<Header>{i18next.t('admin.home-header')}</Header>}
         />
         <div></div>
       </Grid>
@@ -45,4 +44,4 @@ const Home = () => {
   );
 };
 
-export { Home };
+export { AdminHome };
