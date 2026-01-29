@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Grid } from '@cloudscape-design/components';
 import Container from '@cloudscape-design/components/container';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
