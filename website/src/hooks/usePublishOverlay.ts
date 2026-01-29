@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { useEffect, useRef } from 'react';
 import useMutation from './useMutation';
 

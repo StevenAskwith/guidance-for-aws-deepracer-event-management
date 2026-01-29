@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, Auth, graphqlOperation } from 'aws-amplify';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

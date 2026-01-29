@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { useState } from 'react';
 
 export default function useCounter(initValue = 0) {
