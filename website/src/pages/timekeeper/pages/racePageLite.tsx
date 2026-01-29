@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Box,
   Button,
@@ -17,8 +18,6 @@ import {
   GetRaceTypeNameFromId,
   RaceTypeEnum,
 } from '../../../admin/events/support-functions/raceConfig';
-import { SimpleHelpPanelLayout } from '../../../components/help-panels/simple-help-panel';
-import { PageLayout } from '../../../components/pageLayout';
 import useCounter from '../../../hooks/useCounter';
 import { usePublishOverlay } from '../../../hooks/usePublishOverlay';
 import useWebsocket from '../../../hooks/useWebsocket';
@@ -30,18 +29,18 @@ import RaceTimer from '../components/raceTimer';
 import { getAverageWindows } from '../support-functions/averageClaculations';
 import { defaultCar, defaultLap } from '../support-functions/raceDomain';
 import { stateMachine } from '../support-functions/stateMachine';
-import { Breadcrumbs } from '../support-functions/supportFunctions';
 
 import styles from './racePage.module.css';
 
 export const RacePage = ({
   raceInfo,
   setRaceInfo,
-  setStartTime,
   fastestLap,
   fastestAverageLap,
   raceConfig,
   onNext,
+  selectedCar,
+  setStartTime,
 }) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-page']);
   const [state] = useStore();
@@ -62,7 +61,7 @@ export const RacePage = ({
   const [btnUndoFalseFinish, setBtnUndoFalseFinish] = useState(true);
   const [btnEndRace, setBtnEndRace] = useState(false);
   const [btnStartRace, setBtnStartRace] = useState(false);
-  const [currentCar, setCurrentCar] = useState(defaultCar);
+  const [currentCar, setCurrentCar] = useState(selectedCar || defaultCar);
 
   const [
     carResetCounter,
@@ -76,10 +75,10 @@ export const RacePage = ({
   const startTimeRef = useRef();
   const [PublishOverlay] = usePublishOverlay();
 
-  // populate the laps on page refresh, without this laps array in the overlay is empty
+  //populate the laps on page refresh, without this laps array in the overlay is empty
   useEffect(() => {
     lapsForOverlay.current = raceInfo.laps;
-  }, []);
+  }, [raceInfo.laps]);
 
   const [, send] = useMachine(stateMachine, {
     actions: {
@@ -101,6 +100,7 @@ export const RacePage = ({
           console.debug('Setting initial race start time', startTimeRef.current);
         }
         setStartButtonText(t('timekeeper.pause-race'));
+        setStartTime(new Date());
         startTimers();
         // Buttons
         toggleBtnState(false);
@@ -292,26 +292,13 @@ export const RacePage = ({
   );
 
   // JSX
-  const breadcrumbs = Breadcrumbs();
   let fastestAverageLapInformation = <></>;
   if (raceConfig.rankingMethod === RaceTypeEnum.BEST_AVERAGE_LAP_TIME_X_LAP) {
     fastestAverageLapInformation = <FastestAverageLapTable fastestAverageLap={fastestAverageLap} />;
   }
 
   return (
-    <PageLayout
-      helpPanelHidden={false}
-      helpPanelContent={
-        <SimpleHelpPanelLayout
-          headerContent={t('header', { ns: 'help-admin-timekeeper-race-page' })}
-          bodyContent={t('content', { ns: 'help-admin-timekeeper-race-page' })}
-          footerContent={t('footer', { ns: 'help-admin-timekeeper-race-page' })}
-        />
-      }
-      breadcrumbs={breadcrumbs}
-      header={t('timekeeper.race-page.page-header')}
-      description={t('timekeeper.race-page.page-description')}
-    >
+    <>
       <SpaceBetween size="l" direction="vertical">
         <ColumnLayout columns={2}>
           <Container>
@@ -467,6 +454,6 @@ export const RacePage = ({
         </ColumnLayout>
       </SpaceBetween>
       {warningModal}
-    </PageLayout>
+    </>
   );
 };

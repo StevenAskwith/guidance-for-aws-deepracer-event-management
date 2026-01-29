@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Header } from '@cloudscape-design/components';
 import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import useInterval from '../../../hooks/useInterval';
