@@ -1,13 +1,13 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useState } from 'react';
 
 import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
 
-/* eslint import/no-anonymous-default-export: [2, {"allowArrowFunction": true}] */
 export default ({ disabled, variant }) => {
   const [visible, setVisible] = useState(false);
   // const [msgs, setMsgs] = useState([]);
 
-  function modealOpen() {
+  function modalOpen() {
     setVisible(true);
   }
 
@@ -21,10 +21,10 @@ export default ({ disabled, variant }) => {
         disabled={disabled}
         variant={variant}
         onClick={() => {
-          modealOpen();
+          modalOpen();
         }}
       >
-        Create group
+        Toggle user
       </Button>
 
       <Modal
@@ -40,7 +40,7 @@ export default ({ disabled, variant }) => {
             </SpaceBetween>
           </Box>
         }
-        header="Create group"
+        header="Toggle user"
       ></Modal>
     </>
   );

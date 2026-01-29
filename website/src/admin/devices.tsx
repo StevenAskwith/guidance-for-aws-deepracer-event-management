@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { default as React, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API, graphqlOperation } from 'aws-amplify';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 import * as mutations from '../../../graphql/mutations';

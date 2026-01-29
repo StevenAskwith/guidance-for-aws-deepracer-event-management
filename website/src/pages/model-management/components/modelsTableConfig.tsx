@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 // @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 // @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { ModelUploadStatus } from '../../../components/modelUploadStatus';
