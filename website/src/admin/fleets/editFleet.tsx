@@ -1,18 +1,25 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, Form, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+
+import { useStore } from '../../store/store';
+
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout } from '../../components/pageLayout';
 import useMutation from '../../hooks/useMutation';
 import { merge } from '../../support-functions/merge';
 import { DevicesPanel } from './devicesPanel';
 import { fleet } from './fleetDomain';
 import { GeneralInfoPanel } from './generalInfoPanel';
+import { Breadcrumbs } from './support-functions/supportFunctions';
 
-export const CreateFleet = () => {
+export const EditFleet = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const selectedFleet = location.state;
   const navigate = useNavigate();
-
+  const [state, dispatch] = useStore();
   const [send, loading, errorMessage, data] = useMutation();
   const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState(false);
   const [fleetConfig, setFleetConfig] = useState(fleet);
@@ -23,10 +30,20 @@ export const CreateFleet = () => {
     }
   }, [loading, data, errorMessage, navigate]);
 
-  const UpdateConfigHandler = (attr) => {
-    if (Array.isArray(attr.carIds) && attr.carIds.length === 0) {
+  // Ensure that also offline cars are loaded
+  useEffect(() => {
+    if (!state.cars.offlineCars) {
+      (async () => {
+        await dispatch('REFRESH_CARS', true);
+      })();
+    }
+  }, [dispatch, state.cars.offlineCars]);
+
+  const updateConfigHandler = (attr) => {
+    console.debug('EditFleet - Changed Cars - Updating fleetConfig', JSON.stringify(attr));
+    if (Array.isArray(attr.carIds)) {
       setFleetConfig((prevState) => {
-        return { ...prevState, carIds: [] };
+        return { ...prevState, carIds: attr.carIds };
       });
     } else if (attr) {
       setFleetConfig((prevState) => {
@@ -35,13 +52,15 @@ export const CreateFleet = () => {
     }
   };
 
-  const onCreateHandler = async () => {
-    send('addFleet', fleetConfig);
-    send('carsUpdateFleet', {
-      resourceIds: fleetConfig.carIds,
-      fleetId: fleetConfig.fleetId,
-      fleetName: fleetConfig.fleetName,
-    });
+  useEffect(() => {
+    if (selectedFleet) {
+      setFleetConfig(selectedFleet);
+    }
+  }, [selectedFleet, dispatch, state.cars.offlineCars]);
+
+  const onSaveHandler = async () => {
+    console.debug('Sending fleet updates', fleetConfig);
+    await send('updateFleet', fleetConfig);
   };
 
   const formIsValidHandler = () => {
@@ -52,44 +71,41 @@ export const CreateFleet = () => {
     setCreateButtonIsDisabled(true);
   };
 
+  const breadcrumbs = Breadcrumbs();
+  breadcrumbs.push({ text: t('fleets.edit-fleet') });
+
   return (
     <PageLayout
-      header={t('fleets.create-fleet')}
-      description={t('fleets.description')}
-      breadcrumbs={[
-        { text: t('home.breadcrumb'), href: '/' },
-        { text: t('admin.breadcrumb'), href: '/admin/home' },
-        { text: t('fleets.breadcrumb'), href: '/admin/fleets' },
-        { text: t('fleets.create-fleet') },
-      ]}
+      helpPanelHidden="true"
+      header={t('fleets.edit-fleet')}
+      description={t('fleets.edit-description')}
+      breadcrumbs={breadcrumbs}
     >
       <form onSubmit={(event) => event.preventDefault()}>
         <Form
           actions={
             <SpaceBetween direction="horizontal" size="xs">
               <Button variant="link" onClick={() => navigate(-1)} disabled={loading}>
-                Cancel
+                {t('button.cancel')}
               </Button>
               <Button
                 variant="primary"
-                onClick={onCreateHandler}
+                onClick={onSaveHandler}
                 disabled={loading || createButtonIsDisabled}
               >
-                Create Fleet
+                {t('button.save-changes')}
               </Button>
             </SpaceBetween>
           }
-          errorText={errorMessage}
-          errorIconAriaLabel="Error"
         >
           <SpaceBetween size="l">
             <GeneralInfoPanel
               {...fleetConfig}
-              onChange={UpdateConfigHandler}
+              onChange={updateConfigHandler}
               onFormIsValid={formIsValidHandler}
               onFormIsInvalid={formIsInvalidHandler}
             />
-            <DevicesPanel onChange={UpdateConfigHandler} {...fleetConfig} />
+            <DevicesPanel onChange={updateConfigHandler} {...fleetConfig} />
           </SpaceBetween>
         </Form>
       </form>
