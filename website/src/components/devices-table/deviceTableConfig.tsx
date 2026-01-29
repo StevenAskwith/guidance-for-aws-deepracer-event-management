@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { Checkbox, FormField, Link } from '@cloudscape-design/components';
 import ButtonDropdown from '@cloudscape-design/components/button-dropdown';
 import DatePicker from '@cloudscape-design/components/date-picker';

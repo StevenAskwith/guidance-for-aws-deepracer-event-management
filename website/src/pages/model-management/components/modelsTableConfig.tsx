@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { ModelUploadStatus } from '../../../components/modelUploadStatus';
 import i18next from '../../../i18n';
 import { formatAwsDateTime } from '../../../support-functions/time';

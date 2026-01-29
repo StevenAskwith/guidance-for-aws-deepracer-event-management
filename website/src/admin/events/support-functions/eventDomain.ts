@@ -44,7 +44,7 @@ export const EventTypeConfig = () => {
   ];
 };
 
-export const GetTypeOfEventNameFromId = (id) => {
+export const GetTypeOfEventNameFromId = (id: string | undefined): string | undefined => {
   if (!id) return;
   const options = EventTypeConfig();
   const item = options.find((item) => item.value.toString() === id.toString());
@@ -54,7 +54,7 @@ export const GetTypeOfEventNameFromId = (id) => {
   return undefined;
 };
 
-export const GetTypeOfEventOptionFromId = (id) => {
+export const GetTypeOfEventOptionFromId = (id: string | undefined): { label: string; value: string } | undefined => {
   if (!id) return;
   const options = EventTypeConfig();
   const item = options.find((item) => item.value.toString() === id.toString());

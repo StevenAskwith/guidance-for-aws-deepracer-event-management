@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { Input, Select } from '@cloudscape-design/components';
 import i18next from '../../../i18n';
 import { convertMsToString } from '../../../support-functions/time';

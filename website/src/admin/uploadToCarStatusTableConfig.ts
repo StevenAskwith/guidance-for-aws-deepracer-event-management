@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 //import i18next from '../i18n';
 import { useTranslation } from 'react-i18next';
 import { formatAwsDateTime } from '../support-functions/time';

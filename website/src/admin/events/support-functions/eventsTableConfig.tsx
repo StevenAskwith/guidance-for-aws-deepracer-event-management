@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { EventLinksButtons } from '../../../components/eventLinksButtons';
 import { Flag } from '../../../components/flag';
 import awsconfig from '../../../config.json';

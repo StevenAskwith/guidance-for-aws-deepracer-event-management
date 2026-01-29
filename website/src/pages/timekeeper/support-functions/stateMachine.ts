@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { assign, createMachine, raise } from 'xstate';
 
 export const stateMachine = createMachine({

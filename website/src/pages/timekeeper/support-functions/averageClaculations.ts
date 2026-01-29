@@ -1,3 +1,5 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 export const getAverageWindows = (laps, windowSize) => {
   if (!windowSize) {
     windowSize = 3;
