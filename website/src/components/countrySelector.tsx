@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { SelectField } from '@aws-amplify/ui-react';
 import { FormField, Select } from '@cloudscape-design/components';
 import { getNames, registerLocale } from 'i18n-iso-countries';

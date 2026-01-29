@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, Button, SpaceBetween } from '@cloudscape-design/components';
 import i18next from '../i18n';
 

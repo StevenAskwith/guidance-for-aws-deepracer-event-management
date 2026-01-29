@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { useTranslation } from 'react-i18next';
 
 export const CarLogsAssetType = ({ type }) => {

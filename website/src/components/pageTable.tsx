@@ -1,3 +1,4 @@
+// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useEffect } from 'react';
 
 import { useCollection } from '@cloudscape-design/collection-hooks';
