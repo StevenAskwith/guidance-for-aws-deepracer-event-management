@@ -1,5 +1,5 @@
 import { Button, ProgressBar } from '@cloudscape-design/components';
-import { Storage } from 'aws-amplify';
+import { uploadData } from 'aws-amplify/storage';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCurrentAuthUser } from '../../../hooks/useAuth';
@@ -8,10 +8,11 @@ import { useStore } from '../../../store/store';
 
 import awsconfig from '../../../config.json';
 
-// TODO: Update config.json type definition to include Storage.uploadBucket
-interface AwsConfigWithStorage {
+/** Legacy config shape for accessing the upload bucket name */
+interface LegacyConfig {
   Storage?: {
     uploadBucket?: string;
+    region?: string;
   };
 }
 
@@ -52,29 +53,38 @@ export function ModelUpload(): JSX.Element {
       //const s3path = `${sub}/${file.name}`;
 
       if (file.name.match(/^[a-zA-Z0-9-_]+\.tar\.gz$/)) {
-        Storage.put(s3path, file, {
-          bucket: (awsconfig as any as AwsConfigWithStorage).Storage?.uploadBucket,
-          contentType: file.type,
-          level: 'private',
-          tagging: `lifecycle=true`,
-          progressCallback(progress: { loaded: number; total: number }) {
-            dispatch('ADD_NOTIFICATION', {
-              type: 'info',
-              content: (
-                <ProgressBar
-                  description={t('models.notifications.uploading-model') + ' ' + file.name + '...'}
-                  value={Math.round((progress.loaded / progress.total) * 100)}
-                  variant="flash"
-                />
-              ),
-              id: file.name,
-              dismissible: true,
-              onDismiss: () => {
-                dispatch('DISMISS_NOTIFICATION', file.name);
-              },
-            });
+        const legacyConfig = awsconfig as unknown as LegacyConfig;
+        const uploadBucket = legacyConfig.Storage?.uploadBucket;
+        const uploadRegion = legacyConfig.Storage?.region;
+
+        const uploadOp = uploadData({
+          path: ({identityId}) => `private/${identityId}/${s3path}`,
+          data: file,
+          options: {
+            contentType: file.type,
+            onProgress(progress: { transferredBytes: number; totalBytes?: number }) {
+              const total = progress.totalBytes || 1;
+              dispatch('ADD_NOTIFICATION', {
+                type: 'info',
+                content: (
+                  <ProgressBar
+                    description={t('models.notifications.uploading-model') + ' ' + file.name + '...'}
+                    value={Math.round((progress.transferredBytes / total) * 100)}
+                    variant="flash"
+                  />
+                ),
+                id: file.name,
+                dismissible: true,
+                onDismiss: () => {
+                  dispatch('DISMISS_NOTIFICATION', file.name);
+                },
+              });
+            },
+            ...(uploadBucket ? { bucket: { bucketName: uploadBucket, region: uploadRegion || '' } } : {}),
           },
-        })
+        });
+
+        uploadOp.result
           .then((result: any) => {
             console.debug('MODEL UPLOAD RESULT', result);
             dispatch('ADD_NOTIFICATION', {

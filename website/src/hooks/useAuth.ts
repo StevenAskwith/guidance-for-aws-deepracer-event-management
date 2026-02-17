@@ -1,9 +1,9 @@
-import { Auth } from 'aws-amplify';
+import { fetchAuthSession, getCurrentUser, signOut, updatePassword } from 'aws-amplify/auth';
 
 /**
  * Authenticated user information returned by the Auth helpers.
- * Centralises all Auth.currentAuthenticatedUser() access patterns
- * to make future Amplify version upgrades a single-file change.
+ * Centralises all Auth access patterns to make future Amplify
+ * version upgrades a single-file change.
  */
 export interface AuthUser {
     /** Cognito username */
@@ -20,20 +20,22 @@ export interface AuthUser {
 
 /**
  * Get the current authenticated user's information.
- * Combines Auth.currentAuthenticatedUser() and Auth.currentCredentials()
+ * Combines getCurrentUser() and fetchAuthSession() (Amplify v6)
  * into a single typed response.
  */
 export const getCurrentAuthUser = async (): Promise<AuthUser> => {
-    const user = await Auth.currentAuthenticatedUser();
-    const credentials = await Auth.currentCredentials();
+    const user = await getCurrentUser();
+    const session = await fetchAuthSession();
 
-    const groups: string[] = user.signInUserSession?.accessToken?.payload?.['cognito:groups'] ?? [];
+    const accessToken = session.tokens?.accessToken;
+    const groups: string[] =
+        (accessToken?.payload?.['cognito:groups'] as string[] | undefined) ?? [];
 
     return {
         username: user.username,
-        sub: user.attributes?.sub ?? '',
-        identityId: credentials.identityId ?? '',
-        jwtToken: user.signInUserSession?.accessToken?.jwtToken ?? '',
+        sub: user.userId, // v6: userId is the sub
+        identityId: session.identityId ?? '',
+        jwtToken: accessToken?.toString() ?? '',
         groups,
     };
 };
@@ -42,7 +44,7 @@ export const getCurrentAuthUser = async (): Promise<AuthUser> => {
  * Sign the current user out.
  */
 export const authSignOut = async (): Promise<void> => {
-    await Auth.signOut();
+    await signOut();
 };
 
 /**
@@ -53,7 +55,6 @@ export const authSignOut = async (): Promise<void> => {
 export const authChangePassword = async (
     oldPassword: string,
     newPassword: string
-): Promise<string> => {
-    const user = await Auth.currentAuthenticatedUser();
-    return Auth.changePassword(user, oldPassword, newPassword);
+): Promise<void> => {
+    await updatePassword({ oldPassword, newPassword });
 };

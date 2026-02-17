@@ -10,7 +10,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-amplify/ui-react": "^5.3.3",
+    "@aws-amplify/ui-react": "^6.15.0",
     "@cloudscape-design/collection-hooks": "^1.0.82",
     "@cloudscape-design/component-toolkit": "^1.0.0-beta.138",
     "@cloudscape-design/components": "^3.0.1204",
@@ -20,7 +20,7 @@
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",
     "@xstate/react": "^3.2.2",
-    "aws-amplify": "^5.3.30",
+    "aws-amplify": "^6.16.2",
     "aws-rum-web": "^1.25.0",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.19",

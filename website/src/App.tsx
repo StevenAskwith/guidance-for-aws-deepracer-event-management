@@ -7,7 +7,7 @@ import {
   View,
 } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
-import { Amplify } from 'aws-amplify';
+import { Amplify, type ResourcesConfig } from 'aws-amplify';
 import { AwsRum } from 'aws-rum-web';
 import { Suspense } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
@@ -21,7 +21,7 @@ import { StoreProvider } from './store/contexts/storeProvider';
 import initDataStores from './store/initStore';
 
 import { translations } from '@aws-amplify/ui-react';
-import { I18n } from 'aws-amplify';
+import { I18n } from 'aws-amplify/utils';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -42,9 +42,11 @@ interface ValidationErrors {
 }
 
 /**
- * Extended AWS config type with optional runtime properties
+ * Legacy config shape produced by generate_amplify_config_cfn.py
+ * We map this to Amplify v6 ResourcesConfig at runtime (Option A)
+ * so the CDK scripts don't need to change.
  */
-interface AWSConfig {
+interface LegacyConfig {
   Auth: {
     region: string;
     userPoolId: string;
@@ -76,11 +78,37 @@ interface AWSConfig {
   };
 }
 
-const config = awsconfig as AWSConfig;
+const config = awsconfig as LegacyConfig;
+
+/** Map legacy config.json → Amplify v6 ResourcesConfig */
+function buildAmplifyConfig(legacy: LegacyConfig): ResourcesConfig {
+  return {
+    Auth: {
+      Cognito: {
+        userPoolId: legacy.Auth.userPoolId,
+        userPoolClientId: legacy.Auth.userPoolWebClientId,
+        identityPoolId: legacy.Auth.identityPoolId,
+      },
+    },
+    API: {
+      GraphQL: {
+        endpoint: legacy.API.aws_appsync_graphqlEndpoint,
+        region: legacy.API.aws_appsync_region,
+        defaultAuthMode: 'userPool',
+      },
+    },
+    Storage: {
+      S3: {
+        bucket: legacy.Storage.bucket,
+        region: legacy.Storage.region,
+      },
+    },
+  };
+}
 
 I18n.putVocabularies(translations);
 
-Amplify.configure(awsconfig);
+Amplify.configure(buildAmplifyConfig(config));
 
 initDataStores();
 
