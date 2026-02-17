@@ -27,7 +27,7 @@ import {
   Wizard,
 } from '@cloudscape-design/components';
 import { API } from 'aws-amplify';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WithEventSelected from '../../components/WithEventSelected';
 import * as mutations from '../../graphql/mutations';
@@ -343,11 +343,11 @@ const LocalTimekeeperWizard = () => {
     }, messageDisplayTime);
   };
 
-  const breadcrumbs = [
+  const breadcrumbs = useMemo(() => [
     { text: t('home.breadcrumb'), href: '/' },
     { text: t('operator.breadcrumb'), href: '/admin/home' },
     { text: t('topnav.time-keeper-wizard'), href: '/admin/timekeeper-wizard' },
-  ];
+  ], [t]);
 
   // JSX
   return (

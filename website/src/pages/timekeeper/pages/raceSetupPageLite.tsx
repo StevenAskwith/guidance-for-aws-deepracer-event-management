@@ -29,7 +29,7 @@ interface RacerValidation {
   isDisabled: boolean;
 }
 
-export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
+export const RaceSetupPage: React.FC<RaceSetupPageProps> = ({ race, setRace }) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-setup']);
   const [SendMutation] = useMutation();
   const selectedEvent = useSelectedEventContext();
@@ -60,7 +60,7 @@ export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
     // update race setup when track or event is changed while on page
     if (!selectedEvent || !selectedTrack) return;
     
-    props.setRace((preValue) => {
+    setRace((preValue) => {
       return {
         ...preValue,
         eventId: selectedEvent.eventId,
@@ -68,7 +68,7 @@ export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
         trackName: selectedTrack.leaderBoardTitle,
       };
     });
-  }, [selectedEvent, selectedTrack, props]);
+  }, [selectedEvent, selectedTrack, setRace]);
 
   useEffect(() => {
     if (!selectedEvent?.eventId || !selectedTrack) return;
@@ -83,12 +83,12 @@ export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
 
   // input validation
   useEffect(() => {
-    if (props.race.eventId) {
+    if (race.eventId) {
       setRacerValidation((prevState) => {
         return { ...prevState, isDisabled: false };
       });
     }
-    if (props.race.userId) {
+    if (race.userId) {
       setRacerValidation((prevState) => {
         return { ...prevState, isInvalid: false };
       });
@@ -97,10 +97,10 @@ export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
     return () => {
       setRacerValidation({ isInvalid: true, isDisabled: true });
     };
-  }, [props.race.eventId, props.race.userId]);
+  }, [race.eventId, race.userId]);
 
   const configUpdateHandler = (attr: Partial<Race>): void => {
-    props.setRace((prevState) => {
+    setRace((prevState) => {
       return { ...prevState, ...attr };
     });
   };
@@ -144,18 +144,18 @@ export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
       <Grid gridDefinition={[{ colspan: 6 }, { colspan: 3 }, { colspan: 3 }, { colspan: 12 }]}>
         <RacerSelector
           description={t('timekeeper.race-setup-page.racer-description')}
-          race={props.race}
+          race={race}
           onConfigUpdate={configUpdateHandler}
           racerValidation={racerValidation}
           selectedEvent={selectedEvent}
         />
-        <RacesDoneByUser selecedEvent={(selectedEvent as any) || null} selecedUserId={props.race.userId || null} />
+        <RacesDoneByUser selecedEvent={(selectedEvent as any) || null} selecedUserId={race.userId || null} />
         <FormField
           label={t('race-admin.raced-by-proxy')}
           description={t('race-admin.raced-by-proxy-description')}
         >
           <Toggle
-            checked={props.race.racedByProxy}
+            checked={race.racedByProxy}
             onChange={(value) => configUpdateHandler({ racedByProxy: value.detail.checked })}
           />
         </FormField>
