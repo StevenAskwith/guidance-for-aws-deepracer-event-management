@@ -142,7 +142,7 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
   }
 
   const breadcrumbs = Breadcrumbs();
-  breadcrumbs.push({ text: t('timer-activation.breadcrumb'), href: '#' });
+  breadcrumbs.push({ text: t('AdminActivation.timer-activation.breadcrumb'), href: '#' });
 
   return (
     <PageLayout
@@ -154,8 +154,8 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
           footerContent={t('footer', { ns: 'help-admin-timer-activation' })}
         />
       }
-      header={t('timer-activation.header')}
-      description={t('timer-activation.description')}
+      header={t('AdminActivation.timer-activation.header')}
+      description={t('AdminActivation.timer-activation.description')}
       breadcrumbs={breadcrumbs}
     >
       <SpaceBetween direction="vertical" size="l">
@@ -169,14 +169,14 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
                 }}
                 disabled={buttonDisabled}
               >
-                {t('timer-activation.generate')}
+                {t('AdminActivation.timer-activation.generate')}
               </Button>
             </SpaceBetween>
           }
         >
           <Container>
             <SpaceBetween direction="vertical" size="l">
-              <FormField label={t('timer-activation.fleet')}>
+              <FormField label={t('AdminActivation.timer-activation.fleet')}>
                 <ButtonDropdown
                   items={dropDownFleets}
                   onItemClick={({ detail }) => {
@@ -189,10 +189,10 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
                   {dropDownSelectedItem.fleetName}
                 </ButtonDropdown>
               </FormField>
-              <FormField label={t('timer-activation.hostname')} errorText={hostnameErrorMessage}>
+              <FormField label={t('AdminActivation.timer-activation.hostname')} errorText={hostnameErrorMessage}>
                 <Input
                   value={hostname}
-                  placeholder={t('timer-activation.hostname-placeholder')}
+                  placeholder={t('AdminActivation.timer-activation.hostname-placeholder')}
                   onChange={(fleet) => {
                     setHostname(fleet.detail.value);
                   }}
@@ -204,7 +204,7 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
 
         <Container>
           <Grid gridDefinition={[{ colspan: 2 }, { colspan: 8 }, { colspan: 2 }]}>
-            <Header variant="h3">{t('timer-activation.script')}</Header>
+            <Header variant="h3">{t('AdminActivation.timer-activation.script')}</Header>
             <Container>
               <Box color="text-status-info" textAlign="center">
                 {loading}
@@ -232,7 +232,7 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
           </Grid>
 
           <Grid gridDefinition={[{ colspan: 2 }, { colspan: 8 }, { colspan: 2 }]}>
-            <Header variant="h3">{t('timer-activation.ssm-only')}</Header>
+            <Header variant="h3">{t('AdminActivation.timer-activation.ssm-only')}</Header>
             <Container>
               <Box color="text-status-info" textAlign="center">
                 {loading}
@@ -264,7 +264,7 @@ const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
           <div></div>
           <div>
             <Button href="/timer_activation.sh" iconAlign="right" iconName="external">
-              timer_activation.sh {t('timer-activation.script-lower')}
+              timer_activation.sh {t('AdminActivation.timer-activation.script-lower')}
             </Button>
           </div>
         </Grid>
