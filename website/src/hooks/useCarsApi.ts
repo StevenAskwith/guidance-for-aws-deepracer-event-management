@@ -1,14 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 //
-// AWS Amplify GraphQL API typed wrappers pattern:
-// - Queries/mutations: (API.graphql(...) as Promise<any>).then(...)
-// - Subscriptions: (API.graphql(...) as any).subscribe(...)
-// This matches the pattern used in useRacesApi.ts, useEventsApi.ts, useFleetsApi.ts, etc.
+// Uses typed GraphQL helpers from graphqlHelpers.ts for proper TypeScript coverage.
+// All API.graphql() calls are replaced with graphqlQuery, graphqlMutate, or graphqlSubscribe.
 //
-import { API, graphqlOperation } from 'aws-amplify';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { graphqlQuery, graphqlSubscribe } from '../graphql/graphqlHelpers';
 import {
     carDeleteAllModels as carDeleteAllModelsOperation,
     carEmergencyStop as carEmergencyStopOperation,
@@ -24,16 +22,6 @@ import { useStore } from '../store/store';
 
 interface ApiError {
     message: string;
-}
-
-interface Car {
-    InstanceId: string;
-    ComputerName: string;
-    IpAddress?: string;
-    fleetId?: string;
-    fleetName?: string;
-    LoggingCapable?: boolean;
-    [key: string]: any;
 }
 
 interface SelectedEvent {
@@ -87,10 +75,10 @@ export const useCarsApi = (userHasAccess = false) => {
         try {
             if (userHasAccess) {
                 async function getCars(online: boolean) {
-                    const response: any = await API.graphql(
-                        graphqlOperation(listCars, { online: online })
-                    );
-                    dispatch('ADD_CARS', response.data.listCars);
+                    const response = await graphqlQuery<{ listCars: any[] }>(listCars, {
+                        online: online,
+                    });
+                    dispatch('ADD_CARS', response.listCars);
                 }
                 dispatch('CARS_IS_LOADING', true);
                 getCars(true);
@@ -113,10 +101,10 @@ export const useCarsApi = (userHasAccess = false) => {
     useEffect(() => {
         if (userHasAccess) {
             console.debug('Subscribing to onUpdatedCarsInfo');
-            const subscription = (
-                API.graphql(graphqlOperation(onUpdatedCarsInfo)) as any
-            ).subscribe({
-                next: (event: any) => {
+            const subscription = graphqlSubscribe<{
+                onUpdatedCarsInfo: any[];
+            }>(onUpdatedCarsInfo).subscribe({
+                next: (event) => {
                     const updatedCars = event.value.data.onUpdatedCarsInfo;
                     dispatch('ADD_CARS', updatedCars);
                 },
@@ -182,52 +170,40 @@ export const useCarCmdApi = () => {
     );
 
     // fetch label from Cars
-    function getLabelSync(instanceId: string, carName: string) {
+    async function getLabelSync(instanceId: string, carName: string) {
+        const startNotifId = addNotifications(
+            'getLabelSync',
+            t('devices.notifications.label-start') + ' ' + carName,
+            'info',
+            dispatch
+        );
         try {
-            const startNotifId = addNotifications(
-                'getLabelSync',
-                t('devices.notifications.label-start') + ' ' + carName,
-                'info',
-                dispatch
-            );
-            (
-                API.graphql(
-                    graphqlOperation(carPrintableLabel, { instanceId: instanceId })
-                ) as Promise<any>
-            )
-                .then((response: any) => {
-                    const labelURL = response.data.carPrintableLabel.toString();
-                    dispatch('DISMISS_NOTIFICATION', startNotifId);
-                    addNotifications(
-                        'getLabelSync',
-                        t('devices.notifications.label-ready') + ' ' + carName,
-                        'success',
-                        dispatch
-                    );
-                    window.open(labelURL);
-                })
-                .catch((error: any) => {
-                    dispatch('DISMISS_NOTIFICATION', startNotifId);
-                    addNotifications(
-                        'getLabelSync',
-                        t('devices.notifications.label-error') + ' ' + carName,
-                        'error',
-                        dispatch
-                    );
-                    console.error('Error fetching label', error);
-                });
-        } catch (error) {
+            const response = await graphqlQuery<{ carPrintableLabel: string }>(carPrintableLabel, {
+                instanceId: instanceId,
+            });
+            const labelURL = response.carPrintableLabel.toString();
+            dispatch('DISMISS_NOTIFICATION', startNotifId);
             addNotifications(
                 'getLabelSync',
-                t('devices.notifications.error-label') + ' ' + carName,
+                t('devices.notifications.label-ready') + ' ' + carName,
+                'success',
+                dispatch
+            );
+            window.open(labelURL);
+        } catch (error) {
+            dispatch('DISMISS_NOTIFICATION', startNotifId);
+            addNotifications(
+                'getLabelSync',
+                t('devices.notifications.label-error') + ' ' + carName,
                 'error',
                 dispatch
             );
+            console.error('Error fetching label', error);
         }
     }
 
     // fetch logs from Cars
-    function carFetchLogs(
+    async function carFetchLogs(
         selectedCars: any[],
         selectedEvent: SelectedEvent,
         laterThan: string | null = null,
@@ -244,7 +220,7 @@ export const useCarCmdApi = () => {
                 );
                 continue;
             }
-            const operationInput: any = {
+            const operationInput: Record<string, any> = {
                 carInstanceId: car.InstanceId,
                 carName: car.ComputerName,
                 carFleetId: car.fleetId,
@@ -254,90 +230,73 @@ export const useCarCmdApi = () => {
                 eventName: selectedEvent.eventName,
                 laterThan: laterThan,
                 racerName: racerName,
+                raceData: raceData !== null ? JSON.stringify(raceData) : null,
             };
 
-            if (raceData !== null) {
-                operationInput.raceData = JSON.stringify(raceData);
-            } else {
-                operationInput.raceData = null;
+            try {
+                await graphqlQuery(startFetchFromCar, operationInput);
+                addNotifications(
+                    'carFetchLogs',
+                    t('devices.notifications.fetch-start') + ' ' + car.ComputerName,
+                    'info',
+                    dispatch
+                );
+            } catch (error) {
+                addNotifications(
+                    'carFetchLogs',
+                    t('devices.notifications.fetch-error') + ' ' + car.ComputerName,
+                    'error',
+                    dispatch
+                );
+                console.error('Error fetching logs', error);
             }
-
-            (API.graphql(graphqlOperation(startFetchFromCar, operationInput)) as Promise<any>)
-                .then(() => {
-                    addNotifications(
-                        'carFetchLogs',
-                        t('devices.notifications.fetch-start') + ' ' + car.ComputerName,
-                        'info',
-                        dispatch
-                    );
-                })
-                .catch((error: any) => {
-                    addNotifications(
-                        'carFetchLogs',
-                        t('devices.notifications.fetch-error') + ' ' + car.ComputerName,
-                        'error',
-                        dispatch
-                    );
-                    console.error('Error fetching logs', error);
-                });
         }
     }
 
     // restart service on Cars
-    function carRestartService(selectedCars: string[]) {
-        (
-            API.graphql(
-                graphqlOperation(carRestartServiceOperation, { resourceIds: selectedCars })
-            ) as Promise<any>
-        )
-            .then(() => {
-                addNotifications(
-                    'carRestartService',
-                    t('devices.notifications.restart-start'),
-                    'info',
-                    dispatch
-                );
-            })
-            .catch((error: any) => {
-                addNotifications(
-                    'carRestartService',
-                    t('devices.notifications.restart-error'),
-                    'error',
-                    dispatch
-                );
-                console.error('Error restarting service', error);
-            });
+    async function carRestartService(selectedCars: string[]) {
+        try {
+            await graphqlQuery(carRestartServiceOperation, { resourceIds: selectedCars });
+            addNotifications(
+                'carRestartService',
+                t('devices.notifications.restart-start'),
+                'info',
+                dispatch
+            );
+        } catch (error) {
+            addNotifications(
+                'carRestartService',
+                t('devices.notifications.restart-error'),
+                'error',
+                dispatch
+            );
+            console.error('Error restarting service', error);
+        }
     }
 
     // perform emergency stop on Cars
-    function carEmergencyStop(selectedCars: string[]) {
-        (
-            API.graphql(
-                graphqlOperation(carEmergencyStopOperation, { resourceIds: selectedCars })
-            ) as Promise<any>
-        )
-            .then(() => {
-                addNotifications(
-                    'carEmergencyStop',
-                    t('devices.notifications.emergencystop-start'),
-                    'info',
-                    dispatch
-                );
-            })
-            .catch((error: any) => {
-                addNotifications(
-                    'carEmergencyStop',
-                    t('devices.notifications.emergencystop-error'),
-                    'error',
-                    dispatch
-                );
-                console.error('Error with emergency stop', error);
-            });
+    async function carEmergencyStop(selectedCars: string[]) {
+        try {
+            await graphqlQuery(carEmergencyStopOperation, { resourceIds: selectedCars });
+            addNotifications(
+                'carEmergencyStop',
+                t('devices.notifications.emergencystop-start'),
+                'info',
+                dispatch
+            );
+        } catch (error) {
+            addNotifications(
+                'carEmergencyStop',
+                t('devices.notifications.emergencystop-error'),
+                'error',
+                dispatch
+            );
+            console.error('Error with emergency stop', error);
+        }
     }
 
     // delete Cars (or timers)
-    function carsDelete(selectedCars: string[]) {
-        // Show info notification during processing
+    async function carsDelete(selectedCars: string[]) {
         const notificationId = `carsDelete_N${incrementCounter()}`;
         let timeoutId = createUpdateNotification(
             t('devices.notifications.deletedevice-start', { count: selectedCars.length }),
@@ -346,151 +305,130 @@ export const useCarCmdApi = () => {
             notificationId
         );
 
-        (
-            API.graphql(
-                graphqlOperation(carsDeleteOperation, {
-                    resourceIds: selectedCars,
-                })
-            ) as Promise<any>
-        )
-            .then((response: any) => {
-                console.debug('Delete cars response:', response);
-                const deletedCars = JSON.parse(response.data.carsDelete).cars;
-                for (const car of deletedCars) {
-                    dispatch('DELETE_CAR', car);
-                }
-                // Dismiss the processing notification
-                clearTimeout(timeoutId);
+        try {
+            const response = await graphqlQuery<{ carsDelete: string }>(carsDeleteOperation, {
+                resourceIds: selectedCars,
+            });
+            const deletedCars = JSON.parse(response.carsDelete).cars;
+            for (const car of deletedCars) {
+                dispatch('DELETE_CAR', car);
+            }
+            clearTimeout(timeoutId);
 
-                if (deletedCars.length !== selectedCars.length) {
-                    timeoutId = createUpdateNotification(
-                        t('devices.notifications.deletedevice-warning', {
-                            count: selectedCars.length,
-                            deleted: deletedCars.length,
-                        }),
-                        'warning',
-                        dispatch,
-                        notificationId
-                    );
-                } else {
-                    // Show success notification when complete
-                    timeoutId = createUpdateNotification(
-                        t('devices.notifications.deletedevice-complete', {
-                            count: selectedCars.length,
-                        }),
-                        'success',
-                        dispatch,
-                        notificationId
-                    );
-                }
-            })
-            .catch((error: any) => {
-                // Dismiss the processing notification
-                clearTimeout(timeoutId);
+            if (deletedCars.length !== selectedCars.length) {
                 timeoutId = createUpdateNotification(
-                    t('devices.notifications.deletedevice-error'),
-                    'error',
+                    t('devices.notifications.deletedevice-warning', {
+                        count: selectedCars.length,
+                        deleted: deletedCars.length,
+                    }),
+                    'warning',
                     dispatch,
                     notificationId
                 );
-                console.error('Error with deleting cars', error);
-            });
+            } else {
+                timeoutId = createUpdateNotification(
+                    t('devices.notifications.deletedevice-complete', {
+                        count: selectedCars.length,
+                    }),
+                    'success',
+                    dispatch,
+                    notificationId
+                );
+            }
+        } catch (error) {
+            clearTimeout(timeoutId);
+            timeoutId = createUpdateNotification(
+                t('devices.notifications.deletedevice-error'),
+                'error',
+                dispatch,
+                notificationId
+            );
+            console.error('Error with deleting cars', error);
+        }
     }
 
     // delete all models on Cars
-    function carDeleteAllModels(selectedCars: string[], withSystemLogs = false) {
-        (
-            API.graphql(
-                graphqlOperation(carDeleteAllModelsOperation, {
-                    resourceIds: selectedCars,
-                    withSystemLogs: withSystemLogs,
-                })
-            ) as Promise<any>
-        )
-            .then(() => {
-                addNotifications(
-                    'carDeleteAllModels',
-                    t('devices.notifications.deleteall-start'),
-                    'info',
-                    dispatch
-                );
-            })
-            .catch((error: any) => {
-                addNotifications(
-                    'carDeleteAllModels',
-                    t('devices.notifications.deleteall-error'),
-                    'error',
-                    dispatch
-                );
-                console.error('Error with deleting models', error);
+    async function carDeleteAllModels(selectedCars: string[], withSystemLogs = false) {
+        try {
+            await graphqlQuery(carDeleteAllModelsOperation, {
+                resourceIds: selectedCars,
+                withSystemLogs: withSystemLogs,
             });
+            addNotifications(
+                'carDeleteAllModels',
+                t('devices.notifications.deleteall-start'),
+                'info',
+                dispatch
+            );
+        } catch (error) {
+            addNotifications(
+                'carDeleteAllModels',
+                t('devices.notifications.deleteall-error'),
+                'error',
+                dispatch
+            );
+            console.error('Error with deleting models', error);
+        }
     }
 
     // update fleet assignment on Cars
-    function carsUpdateFleet(selectedCars: string[], fleetName: string, fleetId: string) {
-        (
-            API.graphql(
-                graphqlOperation(carsUpdateFleetOperation, {
-                    resourceIds: selectedCars,
-                    fleetName: fleetName,
-                    fleetId: fleetId,
-                })
-            ) as Promise<any>
-        )
-            .then(() => {
-                addNotifications(
-                    'carsUpdateFleet',
-                    t('devices.notifications.updatefleet-start') + fleetName,
-                    'info',
-                    dispatch
-                );
-            })
-            .catch((error: any) => {
-                addNotifications(
-                    'carsUpdateFleet',
-                    t('devices.notifications.updatefleet-error'),
-                    'error',
-                    dispatch
-                );
-                console.error('Error with updating fleet', error);
+    async function carsUpdateFleet(selectedCars: string[], fleetName: string, fleetId: string) {
+        try {
+            await graphqlQuery(carsUpdateFleetOperation, {
+                resourceIds: selectedCars,
+                fleetName: fleetName,
+                fleetId: fleetId,
             });
+            addNotifications(
+                'carsUpdateFleet',
+                t('devices.notifications.updatefleet-start') + fleetName,
+                'info',
+                dispatch
+            );
+        } catch (error) {
+            addNotifications(
+                'carsUpdateFleet',
+                t('devices.notifications.updatefleet-error'),
+                'error',
+                dispatch
+            );
+            console.error('Error with updating fleet', error);
+        }
     }
 
     // update taillight color on Cars
-    function carsUpdateTaillightColor(selectedCars: string[], taillightColorId: string) {
-        (
-            API.graphql(
-                graphqlOperation(carSetTaillightColorOperation, {
-                    resourceIds: selectedCars,
-                    selectedColor: taillightColorId,
-                })
-            ) as Promise<any>
-        )
-            .then(() => {
-                addNotifications(
-                    'carsUpdateTaillightColor',
-                    t('devices.notifications.settaillight-start'),
-                    'info',
-                    dispatch
-                );
-            })
-            .catch((error: any) => {
-                addNotifications(
-                    'carsUpdateTaillightColor',
-                    t('devices.notifications.settaillight-error'),
-                    'error',
-                    dispatch
-                );
-                console.error('Error with updating taillight colors', error);
+    async function carsUpdateTaillightColor(selectedCars: string[], taillightColorId: string) {
+        try {
+            await graphqlQuery(carSetTaillightColorOperation, {
+                resourceIds: selectedCars,
+                selectedColor: taillightColorId,
             });
+            addNotifications(
+                'carsUpdateTaillightColor',
+                t('devices.notifications.settaillight-start'),
+                'info',
+                dispatch
+            );
+        } catch (error) {
+            addNotifications(
+                'carsUpdateTaillightColor',
+                t('devices.notifications.settaillight-error'),
+                'error',
+                dispatch
+            );
+            console.error('Error with updating taillight colors', error);
+        }
     }
 
     // get available taillight colors
     async function getAvailableTaillightColors() {
         try {
-            const response: any = await API.graphql(graphqlOperation(availableTaillightColors, {}));
-            console.debug('Available taillight colors:', response.data.availableTaillightColors);
-            return response.data.availableTaillightColors;
+            const response = await graphqlQuery<{ availableTaillightColors: any }>(
+                availableTaillightColors,
+                {}
+            );
+            console.debug('Available taillight colors:', response.availableTaillightColors);
+            return response.availableTaillightColors;
         } catch (error) {
             addNotifications(
                 'getAvailableTaillightColors',

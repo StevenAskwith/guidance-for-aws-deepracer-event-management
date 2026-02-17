@@ -1,7 +1,6 @@
-import { GraphQLResult } from '@aws-amplify/api-graphql';
 import { SpaceBetween, Tabs } from '@cloudscape-design/components';
 import Button from '@cloudscape-design/components/button';
-import { API, Auth } from 'aws-amplify';
+import { Auth } from 'aws-amplify';
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
@@ -20,6 +19,7 @@ import {
   FilteringPropertiesProc,
 } from '../../components/tableCarLogsAssetsProcessing';
 import { TableHeader } from '../../components/tableConfig';
+import { graphqlMutate, graphqlSubscribe } from '../../graphql/graphqlHelpers';
 import * as queries from '../../graphql/queries';
 import * as subscriptions from '../../graphql/subscriptions';
 import { useCarLogsApi } from '../../hooks/useCarLogsApi';
@@ -163,15 +163,12 @@ export const CarLogsManagement: React.FC<CarLogsManagementProps> = ({
   const listFetchesFromCar = useCallback(async (): Promise<void> => {
     setIsLoadingJobs(true);
     setJobItems([]);
-    const response = (await API.graphql({
-      query: queries.listFetchesFromCar,
-      variables: {
-        eventId: selectedEvent?.eventId,
-      },
-    })) as GraphQLResult<ListFetchesFromCarResponse>;
-    
-    if (response.data?.listFetchesFromCar) {
-      setJobItems(response.data.listFetchesFromCar);
+    const response = await graphqlMutate<ListFetchesFromCarResponse>(
+      queries.listFetchesFromCar,
+      { eventId: selectedEvent?.eventId }
+    );
+    if (response?.listFetchesFromCar) {
+      setJobItems(response.listFetchesFromCar);
     }
     setIsLoadingJobs(false);
   }, [selectedEvent?.eventId]);
@@ -225,26 +222,22 @@ export const CarLogsManagement: React.FC<CarLogsManagementProps> = ({
     let subscriptionUpdate: GraphQLSubscription | undefined;
 
     async function subscribeToFetches(): Promise<void> {
-      subscriptionCreate = (API.graphql({
-        query: subscriptions.onFetchesFromCarCreated,
-        variables: {
-          eventId: selectedEvent?.eventId,
-        },
-      }) as any).subscribe({
-        next: ({ value }: SubscriptionValue<{ onFetchesFromCarCreated: FetchJob }>) => {
+      subscriptionCreate = graphqlSubscribe<{ onFetchesFromCarCreated: FetchJob }>(
+        subscriptions.onFetchesFromCarCreated,
+        { eventId: selectedEvent?.eventId }
+      ).subscribe({
+        next: ({ value }) => {
           const newFetch = value.data.onFetchesFromCarCreated;
           setJobItems((prevItems) => [...prevItems, newFetch]);
         },
         error: (error: Error) => console.warn(error),
       });
 
-      subscriptionUpdate = (API.graphql({
-        query: subscriptions.onFetchesFromCarUpdated,
-        variables: {
-          eventId: selectedEvent?.eventId,
-        },
-      }) as any).subscribe({
-        next: ({ value }: SubscriptionValue<{ onFetchesFromCarUpdated: FetchJob }>) => {
+      subscriptionUpdate = graphqlSubscribe<{ onFetchesFromCarUpdated: FetchJob }>(
+        subscriptions.onFetchesFromCarUpdated,
+        { eventId: selectedEvent?.eventId }
+      ).subscribe({
+        next: ({ value }) => {
           const updatedFetch = value.data.onFetchesFromCarUpdated;
           setJobItems((prevItems) =>
             prevItems.map((item) => (item.jobId === updatedFetch.jobId ? updatedFetch : item))

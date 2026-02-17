@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
 import { BarChart, Box, Container, Header, SpaceBetween, StatusIndicator } from '@cloudscape-design/components';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
-import { API, graphqlOperation } from 'aws-amplify';
+import React, { useEffect, useState } from 'react';
 import { SimpleHelpPanelLayout } from '../components/help-panels/simple-help-panel';
 import { TableHeader } from '../components/tableConfig';
+import { graphqlMutate, graphqlSubscribe } from '../graphql/graphqlHelpers';
 import * as queries from '../graphql/queries';
 
 import {
@@ -139,13 +139,11 @@ const UploadToCarStatus: React.FC = () => {
   useEffect(() => {
     async function listUploadsToCar() {
       setItems([]);
-      const response: any = await API.graphql({
-        query: queries.listUploadsToCar,
-        variables: {
-          eventId: selectedEvent?.eventId,
-        },
-      });
-      const enrichedData = enrichStatus(response.data.listUploadsToCar);
+      const response = await graphqlMutate<{ listUploadsToCar: UploadToCarItem[] }>(
+        queries.listUploadsToCar,
+        { eventId: selectedEvent?.eventId }
+      );
+      const enrichedData = enrichStatus(response.listUploadsToCar);
       setItems(enrichedData);
       setIsLoading(false);
     }
@@ -260,9 +258,11 @@ const UploadToCarStatus: React.FC = () => {
     const filter = {
       eventId: selectedEvent?.eventId,
     };
-    const subscription = (API.graphql(graphqlOperation(onUploadsToCarCreated, filter)) as any).subscribe(
-      {
-        next: (event: any) => {
+    const subscription = graphqlSubscribe<{ onUploadsToCarCreated: UploadToCarItem }>(
+      onUploadsToCarCreated,
+      filter
+    ).subscribe({
+        next: (event) => {
           console.debug(
             'onUploadsToCarCreated event received',
             event.value.data.onUploadsToCarCreated
@@ -272,8 +272,7 @@ const UploadToCarStatus: React.FC = () => {
           const enrichedItems = enrichStatus(newItems);
           setItems(enrichedItems);
         },
-      }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -285,9 +284,11 @@ const UploadToCarStatus: React.FC = () => {
     const filter = {
       eventId: selectedEvent?.eventId,
     };
-    const subscription = (API.graphql(graphqlOperation(onUploadsToCarUpdated, filter)) as any).subscribe(
-      {
-        next: (event: any) => {
+    const subscription = graphqlSubscribe<{ onUploadsToCarUpdated: UploadToCarItem }>(
+      onUploadsToCarUpdated,
+      filter
+    ).subscribe({
+        next: (event) => {
           const updatedData = event.value.data.onUploadsToCarUpdated;
           console.debug('onUploadsToCarUpdated event received', updatedData);
           const newItems = [...allItems];
@@ -311,8 +312,7 @@ const UploadToCarStatus: React.FC = () => {
           const enrichedItems = enrichStatus(newItems);
           setItems(enrichedItems);
         },
-      }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();

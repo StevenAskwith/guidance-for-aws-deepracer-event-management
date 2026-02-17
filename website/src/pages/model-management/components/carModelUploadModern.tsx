@@ -1,6 +1,3 @@
-import { API, graphqlOperation } from 'aws-amplify';
-import React, { ReactElement, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Badge,
@@ -9,6 +6,9 @@ import {
   Table,
   TableProps,
 } from '@cloudscape-design/components';
+import React, { ReactElement, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { graphqlMutate, graphqlSubscribe } from '../../../graphql/graphqlHelpers';
 import * as mutations from '../../../graphql/mutations';
 import { onUploadsToCarCreated, onUploadsToCarUpdated } from '../../../graphql/subscriptions';
 import { Car, Event, Model } from '../../../types/domain';
@@ -95,13 +95,12 @@ export const UploadModelToCarModern: React.FC<UploadModelToCarModernProps> = ({
         
         console.debug('variables', variables);
 
-        const response = (await API.graphql({
-          query: mutations.startUploadToCar,
-          variables: variables,
-        })) as { data: StartUploadToCarResponse };
-        
-        console.debug('startUploadToCar', response.data.startUploadToCar.jobId);
-        thisJobIds.push(response.data.startUploadToCar.jobId);
+        const response = await graphqlMutate<StartUploadToCarResponse>(
+          mutations.startUploadToCar,
+          variables
+        );
+        console.debug('startUploadToCar', response.startUploadToCar.jobId);
+        thisJobIds.push(response.startUploadToCar.jobId);
       }
       
       setJobIds(thisJobIds);
@@ -116,10 +115,11 @@ export const UploadModelToCarModern: React.FC<UploadModelToCarModernProps> = ({
     
     jobIds.forEach((jobId) => {
       const filter = { jobId };
-      const subscription = (API.graphql(
-        graphqlOperation(onUploadsToCarCreated, filter)
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onUploadsToCarCreated: JobData }>) => {
+      const subscription = graphqlSubscribe<{ onUploadsToCarCreated: JobData }>(
+        onUploadsToCarCreated,
+        filter
+      ).subscribe({
+        next: (event) => {
           console.debug(
             'onUploadsToCarCreated event received',
             event.value.data.onUploadsToCarCreated
@@ -153,10 +153,11 @@ export const UploadModelToCarModern: React.FC<UploadModelToCarModernProps> = ({
     
     jobIds.forEach((jobId) => {
       const filter = { jobId };
-      const subscription = (API.graphql(
-        graphqlOperation(onUploadsToCarUpdated, filter)
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onUploadsToCarUpdated: Partial<JobData> }>) => {
+      const subscription = graphqlSubscribe<{ onUploadsToCarUpdated: Partial<JobData> }>(
+        onUploadsToCarUpdated,
+        filter
+      ).subscribe({
+        next: (event) => {
           const updatedData = event.value.data.onUploadsToCarUpdated;
           console.debug('onUploadsToCarUpdated event received', updatedData);
           

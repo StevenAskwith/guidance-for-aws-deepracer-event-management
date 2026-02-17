@@ -1,5 +1,3 @@
-import { API } from 'aws-amplify';
-import { GraphQLResult } from '@aws-amplify/api-graphql';
 import React, { ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventSelectorModal } from '../../../components/eventSelectorModal';
@@ -25,9 +23,10 @@ import {
 } from '../../../components/tableConfig';
 
 import { ColumnConfiguration } from '../../../components/devices-table/deviceTableConfig';
+import { graphqlMutate } from '../../../graphql/graphqlHelpers';
+import * as mutations from '../../../graphql/mutations';
 import { useStore } from '../../../store/store';
 import { Car, Model } from '../../../types/domain';
-import * as mutations from '../../../graphql/mutations';
 import { StatusModelContent } from './carModelUploadLegacy';
 import { UploadModelToCarModern } from './carModelUploadModern';
 
@@ -92,10 +91,7 @@ export const CarModelUploadModal: React.FC<CarModelUploadModalProps> = ({ models
   async function carDeleteAllModels(): Promise<void> {
     const InstanceIds = selectedCars.map((i) => i.InstanceId).filter(Boolean);
 
-    await API.graphql({
-      query: mutations.carDeleteAllModels,
-      variables: { resourceIds: InstanceIds },
-    }) as GraphQLResult<DeleteAllModelsResponse>;
+    await graphqlMutate(mutations.carDeleteAllModels, { resourceIds: InstanceIds });
   }
 
   const { items, actions, filteredItemsCount, collectionProps, filterProps } =

@@ -1,5 +1,4 @@
 import { Button, SpaceBetween } from '@cloudscape-design/components';
-import { API } from 'aws-amplify';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-
 import { PageLayout } from '../../components/pageLayout';
 import { PageTable } from '../../components/pageTable';
 import { TableHeader } from '../../components/tableConfig';
+import { graphqlMutate } from '../../graphql/graphqlHelpers';
 import * as mutations from '../../graphql/mutations';
 import { useUsers } from '../../hooks/useUsers';
 import { useStore } from '../../store/store';
@@ -47,12 +47,7 @@ const AdminFleets = (): JSX.Element => {
   // Delete Fleet
   async function deleteFleets(): Promise<void> {
     const fleetIdsToDelete = selectedFleetsInTable.map((fleet) => fleet.fleetId);
-    await API.graphql({
-      query: mutations.deleteFleets,
-      variables: {
-        fleetIds: fleetIdsToDelete,
-      },
-    });
+    await graphqlMutate(mutations.deleteFleets, { fleetIds: fleetIdsToDelete });
     setSelectedFleetsInTable([]);
   }
 

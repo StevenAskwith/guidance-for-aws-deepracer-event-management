@@ -1,16 +1,15 @@
 import { SpaceBetween } from '@cloudscape-design/components';
-import { API, graphqlOperation } from 'aws-amplify';
-import { GraphQLResult } from '@aws-amplify/api-graphql';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RaceTypeEnum } from '../admin/events/support-functions/raceConfig';
 import { EventSelectorModal } from '../components/eventSelectorModal';
 import { SimpleHelpPanelLayout } from '../components/help-panels/simple-help-panel';
 import { PageLayout } from '../components/pageLayout';
+import { graphqlQuery, graphqlSubscribe } from '../graphql/graphqlHelpers';
 import { getLeaderboard, getRaces } from '../graphql/queries';
 import { onAddedRace, onNewLeaderboardEntry, onNewOverlayInfo } from '../graphql/subscriptions';
 import { useSelectedEventContext, useSelectedTrackContext } from '../store/contexts/storeProvider';
-import { LeaderboardEntry, Race, OverlayInfo } from '../types/domain';
+import { LeaderboardEntry, OverlayInfo, Race } from '../types/domain';
 import { ActualRacerStatsNew } from './actual-racer-stats-new';
 import { RaceLapInformation } from './race-lap-information';
 
@@ -127,14 +126,14 @@ const CommentatorStats: React.FC = () => {
 
     const eventId = selectedEvent.eventId;
 
-    const response = (await API.graphql(
-      graphqlOperation(getLeaderboard, { eventId: eventId, trackId: selectedTrack.trackId })
-    )) as GraphQLResult<GetLeaderboardResponse>;
+    const response = await graphqlQuery<GetLeaderboardResponse>(
+      getLeaderboard, { eventId: eventId, trackId: selectedTrack.trackId }
+    );
 
     let sortedLeaderboard: LeaderboardEntryWithAverage[] = [];
 
-    if (response.data?.getLeaderboard.entries && response.data.getLeaderboard.entries.length > 0) {
-      sortedLeaderboard = response.data.getLeaderboard.entries.sort(
+    if (response?.getLeaderboard.entries && response.getLeaderboard.entries.length > 0) {
+      sortedLeaderboard = response.getLeaderboard.entries.sort(
         selectedEvent?.raceConfig?.rankingMethod === RaceTypeEnum.BEST_LAP_TIME
           ? fastestSortFunction
           : fastestAverageSortFunction
@@ -164,13 +163,13 @@ const CommentatorStats: React.FC = () => {
     if (!selectedEvent?.eventId) return;
 
     const eventId = selectedEvent.eventId;
-    const response = (await API.graphql(
-      graphqlOperation(getRaces, { eventId: eventId })
-    )) as GraphQLResult<GetRacesResponse>;
+    const response = await graphqlQuery<GetRacesResponse>(
+      getRaces, { eventId: eventId }
+    );
 
-    const tmp = groupBy(response.data?.getRaces || [], ({ userId }) => userId);
+    const tmp = groupBy(response?.getRaces || [], ({ userId }) => userId);
     console.log('Mapped Races: ', tmp);
-    setRaces(response.data?.getRaces || []);
+    setRaces(response?.getRaces || []);
   };
 
   // Show event selector modal if no event has been selected, timekeeper must have an event selected to work
@@ -204,13 +203,11 @@ const CommentatorStats: React.FC = () => {
     const trackId = selectedTrack.trackId;
 
     SetAddedRaceSubscription(
-      (API.graphql(
-        graphqlOperation(onAddedRace, {
-          eventId: eventId,
-          trackId: trackId,
-        })
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onAddedRace: Race }>) => {
+      graphqlSubscribe<{ onAddedRace: Race }>(
+        onAddedRace,
+        { eventId, trackId }
+      ).subscribe({
+        next: (event) => {
           // update Races
           // setRaces((state) => state.concat(event.value.data.onAddedRace));
           // Leaderboard can be calculated from Races
@@ -221,13 +218,11 @@ const CommentatorStats: React.FC = () => {
     );
 
     setNewOverlayInfoSubscription(
-      (API.graphql(
-        graphqlOperation(onNewOverlayInfo, {
-          eventId: eventId,
-          trackId: trackId,
-        })
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onNewOverlayInfo: OverlayInfo }>) => {
+      graphqlSubscribe<{ onNewOverlayInfo: OverlayInfo }>(
+        onNewOverlayInfo,
+        { eventId, trackId }
+      ).subscribe({
+        next: (event) => {
           const eventData = event.value.data.onNewOverlayInfo;
           //if (eventData.raceStatus === 'READY_TO_START') loadLeaderboard();
 
@@ -238,13 +233,11 @@ const CommentatorStats: React.FC = () => {
     );
 
     setNewLeaderboardEntrySubscription(
-      (API.graphql(
-        graphqlOperation(onNewLeaderboardEntry, {
-          eventId: eventId,
-          trackId: trackId,
-        })
-      ) as any).subscribe({
-        next: ({ provider, value }: SubscriptionEvent<{ onNewLeaderboardEntry: LeaderboardEntryWithAverage }>) => {
+      graphqlSubscribe<{ onNewLeaderboardEntry: LeaderboardEntryWithAverage }>(
+        onNewLeaderboardEntry,
+        { eventId, trackId }
+      ).subscribe({
+        next: ({ value }) => {
           console.debug('onNewLeaderboardEntry');
           const newEntry = value.data.onNewLeaderboardEntry;
           console.debug(newEntry);

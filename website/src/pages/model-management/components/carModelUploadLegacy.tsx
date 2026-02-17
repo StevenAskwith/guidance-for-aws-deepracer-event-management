@@ -1,7 +1,3 @@
-import { API } from 'aws-amplify';
-import { GraphQLResult } from '@aws-amplify/api-graphql';
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Badge,
@@ -9,6 +5,9 @@ import {
   Table,
   TableProps,
 } from '@cloudscape-design/components';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { graphqlMutate } from '../../../graphql/graphqlHelpers';
 import * as mutations from '../../../graphql/mutations';
 import * as queries from '../../../graphql/queries';
 import { useInterval } from '../../../hooks/useInterval';
@@ -54,20 +53,19 @@ export const StatusModelContent: React.FC<StatusModelContentProps> = (props) => 
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
 
   async function uploadModelToCar(car: Car, model: Model): Promise<void> {
-    const response = (await API.graphql({
-      query: mutations.uploadModelToCar,
-      variables: {
+    const response = await graphqlMutate<UploadModelToCarResponse>(
+      mutations.uploadModelToCar,
+      {
         entry: {
           carInstanceId: car.InstanceId,
           modelKey: model.fileMetaData?.key,
           username: model.username,
         },
-      },
-    })) as GraphQLResult<UploadModelToCarResponse>;
-    
-    if (response.data?.uploadModelToCar) {
-      setResult(response.data.uploadModelToCar.ssmCommandId);
-      setCommandId(response.data.uploadModelToCar.ssmCommandId);
+      }
+    );
+    if (response?.uploadModelToCar) {
+      setResult(response.uploadModelToCar.ssmCommandId);
+      setCommandId(response.uploadModelToCar.ssmCommandId);
     }
 
     setCurrentInstanceId(car.InstanceId || '');
@@ -84,15 +82,11 @@ export const StatusModelContent: React.FC<StatusModelContentProps> = (props) => 
       return undefined;
     }
 
-    const api_response = (await API.graphql({
-      query: queries.getUploadModelToCarStatus,
-      variables: {
-        carInstanceId: InstanceId,
-        ssmCommandId: CommandId,
-      },
-    })) as GraphQLResult<GetUploadStatusResponse>;
-    
-    const ssmCommandStatus = api_response.data?.getUploadModelToCarStatus?.ssmCommandStatus || '';
+    const api_response = await graphqlMutate<GetUploadStatusResponse>(
+      queries.getUploadModelToCarStatus,
+      { carInstanceId: InstanceId, ssmCommandId: CommandId }
+    );
+    const ssmCommandStatus = api_response?.getUploadModelToCarStatus?.ssmCommandStatus || '';
 
     const modelUser = model.username || '';
     const modelName = model.modelname || '';

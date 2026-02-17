@@ -1,8 +1,7 @@
-import { API, graphqlOperation } from 'aws-amplify';
-import { GraphQLResult } from '@aws-amplify/api-graphql';
-import React, { useEffect, useState, ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TableProps } from '@cloudscape-design/components';
+import { ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { graphqlMutate, graphqlSubscribe } from '../../../graphql/graphqlHelpers';
 import * as mutations from '../../../graphql/mutations';
 import { formatAwsDateTime } from '../../../support-functions/time';
 
@@ -119,14 +118,13 @@ export function UploadModelToCar({ cars, event, modelsToUpload }: UploadModelToC
         console.debug('event', event);
         console.debug('variables', variables);
 
-        const response = (await API.graphql({
-          query: mutations.startUploadToCar,
-          variables: variables,
-        })) as GraphQLResult<StartUploadToCarResponse>;
-        
-        if (response.data?.startUploadToCar?.jobId) {
-          console.debug('startUploadToCar', response.data.startUploadToCar.jobId);
-          thisJobIds.push(response.data.startUploadToCar.jobId);
+        const response = await graphqlMutate<StartUploadToCarResponse>(
+          mutations.startUploadToCar,
+          variables
+        );
+        if (response?.startUploadToCar?.jobId) {
+          console.debug('startUploadToCar', response.startUploadToCar.jobId);
+          thisJobIds.push(response.startUploadToCar.jobId);
         }
       }
       
@@ -142,10 +140,11 @@ export function UploadModelToCar({ cars, event, modelsToUpload }: UploadModelToC
       const filter = {
         jobId: jobId,
       };
-      const subscription = (API.graphql(
-        graphqlOperation(onUploadsToCarCreated, filter)
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onUploadsToCarCreated: UploadToCarEventData }>) => {
+      const subscription = graphqlSubscribe<{ onUploadsToCarCreated: UploadToCarEventData }>(
+        onUploadsToCarCreated,
+        filter
+      ).subscribe({
+        next: (event) => {
           console.debug(
             'onUploadsToCarCreated event received',
             event.value.data.onUploadsToCarCreated
@@ -179,10 +178,11 @@ export function UploadModelToCar({ cars, event, modelsToUpload }: UploadModelToC
       const filter = {
         jobId: jobId,
       };
-      const subscription = (API.graphql(
-        graphqlOperation(onUploadsToCarUpdated, filter)
-      ) as any).subscribe({
-        next: (event: SubscriptionEvent<{ onUploadsToCarUpdated: UploadToCarEventData }>) => {
+      const subscription = graphqlSubscribe<{ onUploadsToCarUpdated: UploadToCarEventData }>(
+        onUploadsToCarUpdated,
+        filter
+      ).subscribe({
+        next: (event) => {
           const updatedData = event.value.data.onUploadsToCarUpdated;
           console.debug('onUploadsToCarUpdated event received', updatedData);
           

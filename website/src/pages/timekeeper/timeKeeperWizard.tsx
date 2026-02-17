@@ -26,10 +26,10 @@ import {
   SpaceBetween,
   Wizard,
 } from '@cloudscape-design/components';
-import { API } from 'aws-amplify';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import WithEventSelected from '../../components/WithEventSelected';
+import { graphqlMutate } from '../../graphql/graphqlHelpers';
 import * as mutations from '../../graphql/mutations';
 import { useCarCmdApi } from '../../hooks/useCarsApi';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -86,10 +86,7 @@ const LocalTimekeeperWizard = () => {
   async function carDeleteAllModels() {
     const InstanceIds = selectedCars.map((i) => i.InstanceId);
 
-    await API.graphql({
-      query: mutations.carDeleteAllModels,
-      variables: { resourceIds: InstanceIds },
-    });
+    await graphqlMutate(mutations.carDeleteAllModels, { resourceIds: InstanceIds });
   }
 
   // check if active index is timekeeper and set isLoading to true if it is

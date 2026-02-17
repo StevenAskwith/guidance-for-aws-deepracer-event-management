@@ -1,21 +1,21 @@
 import {
-    Button,
-    Checkbox,
-    Container,
-    Form,
-    FormField,
-    Grid,
-    Input,
-    Link,
-    SpaceBetween,
+  Button,
+  Checkbox,
+  Container,
+  Form,
+  FormField,
+  Grid,
+  Input,
+  Link,
+  SpaceBetween,
 } from '@cloudscape-design/components';
-import { API } from 'aws-amplify';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CountrySelector } from '../../components/countrySelector';
 import { Flag } from '../../components/flag';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
 import { PageLayout } from '../../components/pageLayout';
+import { graphqlMutate } from '../../graphql/graphqlHelpers';
 import * as mutations from '../../graphql/mutations';
 
 import awsconfig from '../../config.json';
@@ -52,16 +52,12 @@ export function CreateUser(): JSX.Element {
       },
     } as any);
     try {
-      const apiResponse: any = await API.graphql({
-        query: mutations.createUser,
-        variables: {
-          email: email,
-          username: username,
-          countryCode: countryCode,
-        },
-        authMode: 'AMAZON_COGNITO_USER_POOLS',
-      });
-      const response = apiResponse['data']['createUser'];
+      const apiResponse = await graphqlMutate<{ createUser: any }>(
+        mutations.createUser,
+        { email, username, countryCode },
+        { authMode: 'AMAZON_COGNITO_USER_POOLS' }
+      );
+      const response = apiResponse.createUser;
       console.debug(response);
 
       dispatch('ADD_NOTIFICATION', {

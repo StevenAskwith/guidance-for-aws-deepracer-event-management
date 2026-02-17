@@ -1,6 +1,6 @@
-import { API, graphqlOperation } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 
+import { graphqlQuery } from '../graphql/graphqlHelpers';
 import * as queries from '../graphql/queries';
 
 type QueryMethod = keyof typeof queries;
@@ -23,8 +23,8 @@ export default function useQuery<T = any>(
         const queryApi = async (): Promise<void> => {
             try {
                 setLoading(true);
-                const response: any = await API.graphql(graphqlOperation(queries[method], params));
-                setData(response.data[method]);
+                const response: any = await graphqlQuery(queries[method], params);
+                setData(response[method]);
                 setLoading(false);
             } catch (err) {
                 setError(err as Error);

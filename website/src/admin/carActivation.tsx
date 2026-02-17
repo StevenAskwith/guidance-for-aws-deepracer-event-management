@@ -1,8 +1,8 @@
-import { API } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // import { ListOfFleets } from '../components/listOfFleets';
 import { SimpleHelpPanelLayout } from '../components/help-panels/simple-help-panel';
+import { graphqlMutate } from '../graphql/graphqlHelpers';
 import * as mutations from '../graphql/mutations';
 import { Breadcrumbs } from './fleets/support-functions/supportFunctions';
 
@@ -118,17 +118,17 @@ const AdminCarActivation: React.FC<AdminCarActivationProps> = (props) => {
   }, [t, password, hostname, dropDownSelectedItem]);
 
   async function getActivation() {
-    const apiResponse: any = await API.graphql({
-      query: mutations.deviceActivation,
-      variables: {
+    const apiResponse = await graphqlMutate<{ deviceActivation: any }>(
+      mutations.deviceActivation,
+      {
         hostname: hostname,
         deviceType: 'deepracer',
         fleetId: 'fleetId' in dropDownSelectedItem ? dropDownSelectedItem.fleetId : '',
         fleetName: dropDownSelectedItem.fleetName,
         deviceUiPassword: password,
-      },
-    });
-    const response = apiResponse['data']['deviceActivation'];
+      }
+    );
+    const response = apiResponse.deviceActivation;
     setSsmCommand(
       'sudo amazon-ssm-agent -register -code "' +
         response['activationCode'] +

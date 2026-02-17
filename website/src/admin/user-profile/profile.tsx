@@ -1,4 +1,4 @@
-import { API, Auth } from 'aws-amplify';
+import { Auth } from 'aws-amplify';
 
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import React, { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { PageLayout } from '../../components/pageLayout';
 import Container from '@cloudscape-design/components/container';
 import Header from '@cloudscape-design/components/header';
 
+import { graphqlMutate } from '../../graphql/graphqlHelpers';
 import * as mutations from '../../graphql/mutations';
 
 import {
@@ -60,12 +61,7 @@ const ProfileHome: React.FC<ProfileHomeProps> = (props) => {
       Auth.currentAuthenticatedUser()
         .then(async (user) => {
           const username = user.username;
-          const apiResponse = await API.graphql({
-            query: mutations.deleteUser,
-            variables: {
-              username: username,
-            },
-          });
+          const apiResponse = await graphqlMutate(mutations.deleteUser, { username });
           console.debug(apiResponse);
           Auth.signOut();
         })
