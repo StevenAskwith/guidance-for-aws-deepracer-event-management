@@ -9,7 +9,7 @@ import {
 import '@aws-amplify/ui-react/styles.css';
 import { Amplify } from 'aws-amplify';
 import { AwsRum } from 'aws-rum-web';
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import './App.css';
 
@@ -45,16 +45,27 @@ interface ValidationErrors {
  * Extended AWS config type with optional runtime properties
  */
 interface AWSConfig {
-  aws_config: {
+  Auth: {
     region: string;
     userPoolId: string;
-    appClientId: string;
+    userPoolWebClientId: string;
     identityPoolId: string;
   };
-  appsync: {
-    graphqlEndpoint: string;
+  Storage: {
     region: string;
-    authenticationType: string;
+    bucket: string;
+    uploadBucket: string;
+    identityPoolId: string;
+  };
+  API: {
+    aws_appsync_graphqlEndpoint: string;
+    aws_appsync_region: string;
+    aws_appsync_authenticationType: string;
+  };
+  Urls?: {
+    termsAndConditionsUrl: string;
+    leaderboardWebsite?: string;
+    streamingOverlayWebsite?: string;
   };
   Rum?: {
     drem: {
@@ -62,9 +73,6 @@ interface AWSConfig {
       id: string;
       region: string;
     };
-  };
-  Urls?: {
-    termsAndConditionsUrl: string;
   };
 }
 
