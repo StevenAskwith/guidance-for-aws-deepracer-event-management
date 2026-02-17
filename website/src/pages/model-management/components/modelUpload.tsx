@@ -28,7 +28,7 @@ export function ModelUpload(): JSX.Element {
 
   useEffect(() => {
     const getData = async () => {
-      Auth.currentAuthenticatedUser().then((user) => {
+      Auth.currentAuthenticatedUser().then((user: any) => {
         setSub(user.attributes.sub);
         setUsername(user.username);
       });
@@ -56,7 +56,7 @@ export function ModelUpload(): JSX.Element {
           contentType: file.type,
           level: 'private',
           tagging: `lifecycle=true`,
-          progressCallback(progress) {
+          progressCallback(progress: { loaded: number; total: number }) {
             dispatch('ADD_NOTIFICATION', {
               type: 'info',
               content: (
@@ -74,7 +74,7 @@ export function ModelUpload(): JSX.Element {
             });
           },
         })
-          .then((result) => {
+          .then((result: any) => {
             console.debug('MODEL UPLOAD RESULT', result);
             dispatch('ADD_NOTIFICATION', {
               type: 'success',
@@ -98,7 +98,7 @@ export function ModelUpload(): JSX.Element {
               },
             });
           })
-          .catch((err) => {
+          .catch((err: any) => {
             console.info(err);
             dispatch('ADD_NOTIFICATION', {
               header: t('models.notifications.could-not-upload') + ' ' + file.name,

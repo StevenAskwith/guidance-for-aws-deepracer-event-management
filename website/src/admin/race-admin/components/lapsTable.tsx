@@ -1,10 +1,10 @@
 import { useCollection } from '@cloudscape-design/collection-hooks';
 import { Button, Table, TableProps } from '@cloudscape-design/components';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '../../../components/tableConfig';
+import { Lap, Race } from '../../../types/domain';
 import { ColumnConfiguration, LapTableItem } from '../support-functions/lapsTableConfig';
-import { Race, Lap } from '../../../types/domain';
 
 /**
  * Props interface for LapsTable component
@@ -92,7 +92,7 @@ const LapsTable = ({
       onSelectionChange={({ detail }) => {
         onSelectionChange(detail.selectedItems as Lap[]);
       }}
-      selectedItems={selectedLaps}
+      selectedItems={selectedLaps as LapTableItem[]}
       columnDefinitions={columnConfiguration.columnDefinitions}
       items={items}
       trackBy="lapId"

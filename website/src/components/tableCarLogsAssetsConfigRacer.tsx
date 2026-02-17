@@ -151,7 +151,7 @@ export const ColumnConfigurationRacer = (): ColumnConfiguration => {
       {
         id: 'type',
         header: i18next.t('carlogs.assets.type'),
-        cell: (item) => <CarLogsAssetType type={item.type || ''} /> || '-',
+        cell: (item) => <CarLogsAssetType type={item.type || ''} />,
         sortingField: 'type',
         width: 200,
         minWidth: 150,

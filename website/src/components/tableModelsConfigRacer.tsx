@@ -1,6 +1,4 @@
-import React from 'react';
 import { TableProps } from '@cloudscape-design/components';
-import { PropertyFilterProps } from '@cloudscape-design/components';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { ModelUploadStatus } from './modelUploadStatus';
@@ -65,7 +63,7 @@ export const ColumnConfigurationRacer = (): TableConfiguration => {
       {
         id: 'status',
         header: i18next.t('models.status'),
-        cell: (item) => <ModelUploadStatus status={item.status} /> || '-',
+        cell: (item) => <ModelUploadStatus status={item.status} />,
         sortingField: 'status',
         width: 200,
         minWidth: 150,

@@ -155,7 +155,7 @@ export const ColumnConfiguration = (
       {
         id: 'country',
         header: i18next.t('events.country'),
-        cell: (item: Event) => <Flag countryCode={item.countryCode}></Flag> || '-',
+        cell: (item: Event) => <Flag countryCode={item.countryCode}></Flag>,
         sortingField: 'country',
       },
       {
@@ -185,7 +185,7 @@ export const ColumnConfiguration = (
               linkTextPrimary={i18next.t('events.link-same-tab')}
               linkTextExternal={i18next.t('events.link-new-tab')}
             />
-          ) || '-',
+          ),
       },
     ],
     defaultSortingColumn: null as any,  // Will be set below
