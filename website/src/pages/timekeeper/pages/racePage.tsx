@@ -25,7 +25,7 @@ import {
   SpaceBetween,
 } from '@cloudscape-design/components';
 import { useMachine } from '@xstate/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   GetRaceResetsNameFromId,
@@ -334,11 +334,11 @@ export const RacePage = ({
               <Grid
                 gridDefinition={[{ colspan: 6 }, { colspan: 6 }, { colspan: 6 }, { colspan: 6 }]}
               >
-                <span>
+                <span key="current-racer">
                   <Header variant="h5">{t('timekeeper.current-racer')}:</Header>
                   <Header variant="h3">{raceInfo.username}</Header>
                 </span>
-                <span>
+                <span key="current-car">
                   <Header variant="h5">{t('timekeeper.current-car')}:</Header>
                   <Select
                     selectedOption={{
@@ -357,7 +357,7 @@ export const RacePage = ({
               <Grid
                 gridDefinition={[{ colspan: 6 }, { colspan: 6 }, { colspan: 6 }, { colspan: 6 }]}
               >
-                <span>
+                <span key="time-left">
                   <Header variant="h5">{t('timekeeper.time-left')}</Header>
 
                   <RaceTimer
@@ -367,7 +367,7 @@ export const RacePage = ({
                     ref={raceTimerRef}
                   />
                 </span>
-                <span>
+                <span key="current-lap">
                   <Header variant="h5">{t('timekeeper.current-lap')}</Header>
                   <LapTimer ref={lapTimerRef} />
                 </span>
@@ -387,6 +387,7 @@ export const RacePage = ({
               className={styles.root}
             >
               <button
+                key="capturelap"
                 id={styles.capturelap}
                 onClick={() => send('CAPTURE_LAP', { isValid: true })}
                 disabled={btnCaptureLap}
@@ -394,6 +395,7 @@ export const RacePage = ({
                 {t('timekeeper.capture-lap')}
               </button>
               <button
+                key="dnf"
                 id={styles.dnf}
                 onClick={() => send('DID_NOT_FINISH', { isValid: false })}
                 disabled={btnDNF}
@@ -401,19 +403,21 @@ export const RacePage = ({
                 {t('timekeeper.dnf')}
               </button>
               <button
+                key="carreset"
                 id={styles.carreset}
                 onClick={incrementCarResetCounter}
                 disabled={btnCarReset}
               >
                 {t('timekeeper.car-reset')}
               </button>
-              <SpaceBetween>
+              <SpaceBetween key="resets">
                 <Header variant="h5">{t('timekeeper.resets')}</Header>
                 <Header variant="h3">
                   {carResetCounter}/{allowedNrResets}
                 </Header>
               </SpaceBetween>
               <button
+                key="undoreset"
                 id={styles.undoreset}
                 onClick={decrementCarResetCounter}
                 disabled={btnUndoReset}
@@ -421,16 +425,17 @@ export const RacePage = ({
                 -1
               </button>
               <button
+                key="undofalsefinish"
                 id={styles.undofalsefinish}
                 onClick={undoFalseFinishHandler}
                 disabled={btnUndoFalseFinish}
               >
                 {t('timekeeper.undo-false-finish')}
               </button>
-              <button id={styles.endrace} onClick={() => send('END')} disabled={btnEndRace}>
+              <button key="endrace" id={styles.endrace} onClick={() => send('END')} disabled={btnEndRace}>
                 {t('timekeeper.end-race')}
               </button>
-              <button id={styles.startrace} onClick={() => send('TOGGLE')} disabled={btnStartRace}>
+              <button key="startrace" id={styles.startrace} onClick={() => send('TOGGLE')} disabled={btnStartRace}>
                 {startButtonText}
               </button>
             </Grid>
@@ -441,19 +446,19 @@ export const RacePage = ({
                 <SpaceBetween size="m" direction="horizontal">
                   <ColumnLayout columns={2}>
                     <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-                      <b>{t('timekeeper.race-page.race-format-header')}</b>
-                      <br />
-                      {raceType}
+                      <b key="race-format-label">{t('timekeeper.race-page.race-format-header')}</b>
+                      <span key="race-format-value">{raceType}</span>
                     </Grid>
 
                     <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-                      <b>
+                      <b key="auto-timer-label">
                         <nobr>{t('timekeeper.race-page.automated-timer-header')}</nobr>
                       </b>
-                      <br />
+                      <span key="auto-timer-value">
                       {autTimerIsConnected
                         ? t('timekeeper.race-page.automated-timer-connected')
                         : t('timekeeper.race-page.automated-timer-not-connected')}{' '}
+                      </span>
                     </Grid>
                   </ColumnLayout>
                 </SpaceBetween>
