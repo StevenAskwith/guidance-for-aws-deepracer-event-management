@@ -67,6 +67,7 @@ const RaceLapInformation: React.FC<RaceLapInformationProps> = ({
   }, [sortedLeaderboard]);
 
   useLayoutEffect(() => {
+    if (!overlayInformation) return;
     const raceStatus = overlayInformation.raceStatus;
     switch (raceStatus) {
       case 'READY_TO_START':
@@ -89,7 +90,7 @@ const RaceLapInformation: React.FC<RaceLapInformationProps> = ({
           variant="embedded"
           header={t('timekeeper.recorded-laps')}
           laps={Object.values(laps).map(lap => ({ ...lap, time: lap.lapTime, isValid: true }))}
-          averageLapInformation={overlayInformation.averageLaps}
+          averageLapInformation={overlayInformation?.averageLaps}
           rankingMethod={selectedEvent.raceConfig.rankingMethod}
           readonly={true}
         />

@@ -196,6 +196,7 @@ const ActualRacerStatsNew: React.FC<ActualRacerStatsNewProps> = ({ leaderboard, 
   }, [leaderboard, raceFormat]);
 
   useLayoutEffect(() => {
+    if (!overlayInfo) return;
     manageTimer(overlayInfo);
     const raceStatus = overlayInfo.raceStatus;
     switch (raceStatus) {
@@ -229,7 +230,7 @@ const ActualRacerStatsNew: React.FC<ActualRacerStatsNewProps> = ({ leaderboard, 
         <SpaceBetween size="l">
           <Grid gridDefinition={gridDefinition}>
             <ValueWithLabel label={t('commentator.race.status')} color="text-status-info">
-              {t(`commentator.race.status.${overlayInfo.raceStatus}`)}
+              {t(`commentator.race.status.${overlayInfo?.raceStatus ?? 'NO_RACER_SELECTED'}`)}
             </ValueWithLabel>
           </Grid>
           <Grid gridDefinition={gridDefinition}>
