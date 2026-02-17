@@ -1,19 +1,31 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useState } from 'react';
+import { Box, Button, ButtonProps, Modal, SpaceBetween } from '@cloudscape-design/components';
 
-import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
+/**
+ * Props interface for ToggleUserGroup component
+ */
+interface ToggleUserGroupProps {
+  /** Whether the button is disabled */
+  disabled?: boolean;
+  /** Button variant style */
+  variant?: ButtonProps.Variant;
+}
 
-export default ({ disabled, variant }) => {
-  const [visible, setVisible] = useState(false);
-  // const [msgs, setMsgs] = useState([]);
+/**
+ * ToggleUserGroup component that displays a button to toggle user group membership
+ * @param props - Component props
+ * @returns Rendered toggle button with modal
+ */
+const ToggleUserGroup = ({ disabled, variant }: ToggleUserGroupProps): JSX.Element => {
+  const [visible, setVisible] = useState<boolean>(false);
 
-  function modalOpen() {
+  const modalOpen = (): void => {
     setVisible(true);
-  }
+  };
 
-  function modalClose() {
+  const modalClose = (): void => {
     setVisible(false);
-  }
+  };
 
   return (
     <>
@@ -45,3 +57,5 @@ export default ({ disabled, variant }) => {
     </>
   );
 };
+
+export default ToggleUserGroup;

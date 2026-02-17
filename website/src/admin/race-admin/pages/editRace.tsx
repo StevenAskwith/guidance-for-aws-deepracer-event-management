@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, Button, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,21 +12,33 @@ import {
   useSelectedTrackContext,
 } from '../../../store/contexts/storeProvider';
 import { convertStringToMs } from '../../../support-functions/time';
+import { Race, Lap } from '../../../types/domain';
 import { LapsTable } from '../components/lapsTable';
 import { RaceInfoPanel } from '../components/raceInfoPanel';
 
-export const EditRace = () => {
+/**
+ * EditRace component for modifying race data including laps
+ * Allows editing lap times, resets, and validity flags
+ */
+export const EditRace = (): JSX.Element => {
   const { t } = useTranslation();
   const location = useLocation();
-  const selectedRace = location.state;
+  const selectedRace = location.state as Race;
   const navigate = useNavigate();
   const selectedEvent = useSelectedEventContext();
   const selectedTrack = useSelectedTrackContext();
   const [send, loading, errorMessage, data] = useMutation();
-  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [raceConfig, setRaceConfig] = useState({ laps: [] });
-  const [selectedLaps, setSelectedLaps] = useState([]);
+  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState<boolean>(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
+  const [raceConfig, setRaceConfig] = useState<Race>({
+    raceId: '',
+    eventId: '',
+    trackId: '',
+    userId: '',
+    numberOfLaps: 0,
+    laps: [],
+  });
+  const [selectedLaps, setSelectedLaps] = useState<Lap[]>([]);
 
   useEffect(() => {
     setRaceConfig(selectedRace);
@@ -39,41 +50,43 @@ export const EditRace = () => {
     }
   }, [loading, data, errorMessage, navigate]);
 
-  const onSaveRaceHandler = async () => {
-    if (raceConfig.laps.length === 0) {
+  const onSaveRaceHandler = async (): Promise<void> => {
+    if (raceConfig.laps && raceConfig.laps.length === 0) {
       const config = {
-        eventId: selectedEvent.eventId,
-        trackId: selectedTrack.trackId,
+        eventId: selectedEvent?.eventId || '',
+        trackId: selectedTrack?.trackId || '',
         racesToDelete: [{ userId: raceConfig.userId, raceId: raceConfig.raceId }],
       };
-      send('deleteRaces', config);
+      send('deleteRaces' as any, config);
     } else {
-      const payload = { ...raceConfig };
-      payload.laps.map((lap) => {
+      const payload: any = { ...raceConfig };
+      payload.laps?.map((lap: any) => {
         delete lap.timeHr;
         delete lap.avgTime;
       }); // Strip timeHr filed form laps, only used in FE
       payload.averageLaps = getAverageWindows(
-        payload.laps,
-        selectedEvent.raceConfig.averageLapsWindow
+        payload.laps || [],
+        parseInt(selectedEvent?.raceConfig?.averageLapsWindow || '3', 10)
       );
       console.log(payload);
-      send('updateRace', payload);
+      send('updateRace' as any, payload);
     }
   };
 
-  const updateRaceHandler = (attribute) => {
+  const updateRaceHandler = (attribute: Partial<Race>): void => {
     setRaceConfig((prevState) => {
       return { ...prevState, ...attribute };
     });
   };
 
-  const deleteLapHandler = () => {
+  const deleteLapHandler = (): void => {
     setRaceConfig((prevState) => {
       const newState = { ...prevState };
       selectedLaps.map((selectedLap) => {
-        const index = newState.laps.findIndex((lap) => lap.lapId === selectedLap.lapId);
-        newState.laps.splice(index, 1);
+        const index = newState.laps?.findIndex((lap) => lap.lapId === selectedLap.lapId);
+        if (index !== undefined && index !== -1 && newState.laps) {
+          newState.laps.splice(index, 1);
+        }
         return undefined;
       });
       return newState;
@@ -81,16 +94,16 @@ export const EditRace = () => {
     setSelectedLaps([]);
   };
 
-  const tableSelectionChangeHandler = (items) => {
+  const tableSelectionChangeHandler = (items: Lap[]): void => {
     setSelectedLaps(items);
   };
 
   const tableSettings = {
-    selectionType: 'multi',
-    submitEdit: async (currentItem, column, value) => {
+    selectionType: 'multi' as const,
+    submitEdit: async (currentItem: any, column: any, value: any): Promise<void> => {
       await new Promise((resolve) => setTimeout(resolve, 300));
       const idChangedItem = currentItem.lapId;
-      const indexToReplace = raceConfig.laps.findIndex((lap) => lap.lapId === idChangedItem);
+      const indexToReplace = raceConfig.laps?.findIndex((lap) => lap.lapId === idChangedItem);
       if (column.id === 'resets') {
         currentItem[column.id] = value;
       } else if (column.id === 'time') {
@@ -103,15 +116,17 @@ export const EditRace = () => {
       }
       setRaceConfig((prevState) => {
         const newState = { ...prevState };
-        newState.laps[indexToReplace] = currentItem;
+        if (newState.laps && indexToReplace !== undefined && indexToReplace !== -1) {
+          newState.laps[indexToReplace] = currentItem;
+        }
         return newState;
       });
     },
     header: (
       <TableHeader
         nrSelectedItems={selectedLaps.length}
-        nrTotalItems={raceConfig.laps.length}
-        onDelete={() => setDeleteModalVisible(true)}
+        nrTotalItems={raceConfig.laps?.length || 0}
+        onDelete={(() => setDeleteModalVisible(true)) as any}
         header={t('race-admin.laps-table-header')}
       />
     ),
@@ -125,14 +140,14 @@ export const EditRace = () => {
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('admin.breadcrumb'), href: '/admin/home' },
         { text: t('race-admin.breadcrumb'), href: '/admin/races' },
-        { text: t('race-admin.edit-race') },
+        { text: t('race-admin.edit-race'), href: '#' },
       ]}
     >
       <SpaceBetween size="l">
         <RaceInfoPanel race={raceConfig} onChange={updateRaceHandler} />
         <LapsTable
           race={raceConfig}
-          tableSettings={tableSettings}
+          tableSettings={tableSettings as any}
           selectedLaps={selectedLaps}
           onSelectionChange={tableSelectionChangeHandler}
           isEditable={true}

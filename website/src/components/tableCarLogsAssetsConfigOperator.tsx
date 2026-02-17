@@ -1,10 +1,71 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import { ReactNode } from 'react';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { CarLogsAssetType } from './assetType';
 
-export const ColumnConfigurationOperator = () => {
-  var returnObject = {
+interface ModelInfo {
+  modelName?: string;
+}
+
+interface MediaMetaData {
+  duration: number;
+}
+
+interface AssetMetaData {
+  filename: string;
+  uploadedDateTime: string;
+}
+
+interface CarLogAssetItemOperator {
+  username?: string;
+  models?: ModelInfo[];
+  modelname?: string;
+  carName?: string;
+  eventName?: string;
+  type?: string;
+  filename?: string;
+  uploadedDateTime?: string;
+  fetchJobId?: string;
+  mediaMetaData?: MediaMetaData;
+  assetMetaData: AssetMetaData;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: CarLogAssetItemOperator) => string | ReactNode;
+  sortingField?: string;
+  width?: number;
+  minWidth?: number;
+  sortingComparator?: (a: CarLogAssetItemOperator, b: CarLogAssetItemOperator) => number;
+}
+
+interface ColumnConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+  defaultSortingColumn?: ColumnDefinition;
+  defaultSortingIsDescending?: boolean;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const ColumnConfigurationOperator = (): ColumnConfiguration => {
+  const returnObject: ColumnConfiguration = {
     defaultVisibleColumns: [
       'username',
       'modelname',
@@ -82,8 +143,8 @@ export const ColumnConfigurationOperator = () => {
         sortingField: 'modelname',
         sortingComparator: (a, b) => {
           // Compare first model name in each array
-          const aName = a.models && a.models.length > 0 ? a.models[0].modelName : a.modelname || '';
-          const bName = b.models && b.models.length > 0 ? b.models[0].modelName : b.modelname || '';
+          const aName = a.models && a.models.length > 0 ? (a.models[0].modelName || '') : (a.modelname || '');
+          const bName = b.models && b.models.length > 0 ? (b.models[0].modelName || '') : (b.modelname || '');
           return aName.localeCompare(bName);
         },
         width: 200,
@@ -108,7 +169,7 @@ export const ColumnConfigurationOperator = () => {
       {
         id: 'type',
         header: i18next.t('carlogs.assets.type'),
-        cell: (item) => <CarLogsAssetType type={item.type} />,
+        cell: (item) => <CarLogsAssetType type={item.type || ''} />,
         sortingField: 'type',
         width: 200,
         minWidth: 150,
@@ -129,7 +190,7 @@ export const ColumnConfigurationOperator = () => {
         cell: (item) => String(formatAwsDateTime(item.assetMetaData.uploadedDateTime)) || '-',
         sortingField: 'uploadedDateTime',
         sortingComparator: (a, b) =>
-          new Date(a.assetMetaData.uploadedDateTime) - new Date(b.assetMetaData.uploadedDateTime),
+          new Date(a.assetMetaData.uploadedDateTime).getTime() - new Date(b.assetMetaData.uploadedDateTime).getTime(),
         width: 240,
         minWidth: 150,
       },
@@ -163,7 +224,7 @@ export const ColumnConfigurationOperator = () => {
   return returnObject;
 };
 
-export const FilteringPropertiesOperator = () => {
+export const FilteringPropertiesOperator = (): FilteringProperty[] => {
   return [
     {
       key: 'username',

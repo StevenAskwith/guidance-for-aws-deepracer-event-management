@@ -1,8 +1,9 @@
-// @ts-nocheck - Type checking disabled for test file during incremental migration
 import i18next from '../../../i18n';
 import { ColumnDefinitions, VisibleContentOptions } from './raceTableConfig';
 
-i18next.t = jest.fn().mockReturnValue('');
+// Mock i18next with proper typing
+const mockT = jest.fn().mockReturnValue('') as any;
+i18next.t = mockT;
 
 describe('Race Manager', () => {
   describe('Race table config', () => {

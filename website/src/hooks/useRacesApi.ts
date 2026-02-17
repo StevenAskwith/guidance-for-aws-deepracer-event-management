@@ -1,11 +1,42 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, graphqlOperation } from 'aws-amplify';
 import { useEffect } from 'react';
 import { getRaces } from '../graphql/queries';
 import { onAddedRace, onDeletedRaces, onUpdatedRace } from '../graphql/subscriptions';
 import { useStore } from '../store/store';
+import { Race } from '../types';
 
-export const useRacesApi = (userHasAccess, eventId) => {
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: any[];
+}
+
+interface GetRacesData {
+  getRaces: Race[];
+}
+
+interface OnAddedRaceData {
+  onAddedRace: Race;
+}
+
+interface OnUpdatedRaceData {
+  onUpdatedRace: Race;
+}
+
+interface OnDeletedRacesData {
+  onDeletedRaces: {
+    raceIds: string[];
+  };
+}
+
+interface SubscriptionEvent<T> {
+  value: GraphQLResponse<T>;
+}
+
+interface Subscription {
+  unsubscribe: () => void;
+}
+
+export const useRacesApi = (userHasAccess: boolean, eventId: string | undefined): void => {
   const [, dispatch] = useStore();
   useEffect(() => {
     if (!eventId) {
@@ -14,11 +45,13 @@ export const useRacesApi = (userHasAccess, eventId) => {
     } else if (eventId && userHasAccess) {
       console.debug(eventId);
       async function queryApi() {
-        const response = await API.graphql(graphqlOperation(getRaces, { eventId: eventId }));
+        const response = await API.graphql(graphqlOperation(getRaces, { eventId: eventId })) as GraphQLResponse<GetRacesData>;
         console.debug('getRaces');
-        const races = response.data.getRaces;
+        const races = response.data?.getRaces;
 
-        dispatch('NEW_RACES', races);
+        if (races) {
+          dispatch('NEW_RACES', races);
+        }
         dispatch('RACES_IS_LOADING', false);
       }
       queryApi();
@@ -31,14 +64,17 @@ export const useRacesApi = (userHasAccess, eventId) => {
 
   // subscribe to data changes and append them to local array
   useEffect(() => {
-    let subscription;
+    let subscription: Subscription | undefined;
     if (eventId && userHasAccess) {
-      subscription = API.graphql(graphqlOperation(onDeletedRaces, { eventId: eventId })).subscribe({
-        next: (event) => {
-          const deletedRaces = event.value.data.onDeletedRaces;
-          dispatch('DELETE_RACES', deletedRaces.raceIds);
+      const sub = API.graphql(graphqlOperation(onDeletedRaces, { eventId: eventId })) as any;
+      subscription = sub.subscribe({
+        next: (event: SubscriptionEvent<OnDeletedRacesData>) => {
+          const deletedRaces = event.value.data?.onDeletedRaces;
+          if (deletedRaces) {
+            dispatch('DELETE_RACES', deletedRaces.raceIds);
+          }
         },
-        error: (error) => {
+        error: (error: Error) => {
           console.debug(error);
         },
       });
@@ -51,14 +87,17 @@ export const useRacesApi = (userHasAccess, eventId) => {
 
   // subscribe to data changes and append them to local array
   useEffect(() => {
-    let subscription;
+    let subscription: Subscription | undefined;
     if (eventId && userHasAccess) {
-      subscription = API.graphql(graphqlOperation(onAddedRace, { eventId: eventId })).subscribe({
-        next: (event) => {
-          const addedRace = event.value.data.onAddedRace;
-          // Add in the username
-          addedRace['username'] = addedRace['userId'];
-          dispatch('ADD_RACES', [addedRace]);
+      const sub = API.graphql(graphqlOperation(onAddedRace, { eventId: eventId })) as any;
+      subscription = sub.subscribe({
+        next: (event: SubscriptionEvent<OnAddedRaceData>) => {
+          const addedRace = event.value.data?.onAddedRace;
+          if (addedRace) {
+            // Add in the username
+            (addedRace as any)['username'] = addedRace.userId;
+            dispatch('ADD_RACES', [addedRace]);
+          }
         },
       });
     }
@@ -69,16 +108,19 @@ export const useRacesApi = (userHasAccess, eventId) => {
   }, [dispatch, eventId, userHasAccess]);
 
   useEffect(() => {
-    let subscription;
+    let subscription: Subscription | undefined;
     console.debug('ON UPDATE RACE SUBSCRIPTION SETUP', eventId, userHasAccess);
     if (eventId && userHasAccess) {
-      subscription = API.graphql(graphqlOperation(onUpdatedRace, { eventId: eventId })).subscribe({
-        next: (event) => {
-          console.debug('RACE UPDATE RECEIVED', event.value.data.onUpdatedRace);
-          const updatedRace = event.value.data.onUpdatedRace;
-          // Add in the username
-          updatedRace['username'] = updatedRace['userId'];
-          dispatch('UPDATE_RACE', updatedRace);
+      const sub = API.graphql(graphqlOperation(onUpdatedRace, { eventId: eventId })) as any;
+      subscription = sub.subscribe({
+        next: (event: SubscriptionEvent<OnUpdatedRaceData>) => {
+          console.debug('RACE UPDATE RECEIVED', event.value.data?.onUpdatedRace);
+          const updatedRace = event.value.data?.onUpdatedRace;
+          if (updatedRace) {
+            // Add in the username
+            (updatedRace as any)['username'] = updatedRace.userId;
+            dispatch('UPDATE_RACE', updatedRace);
+          }
         },
       });
     }

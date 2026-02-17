@@ -1,22 +1,44 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, Button, SpaceBetween } from '@cloudscape-design/components';
+import { PropertyFilterProps } from '@cloudscape-design/components';
 import i18next from '../i18n';
 
-export const TableNoMatchState = (props) => (
+/**
+ * Props for TableNoMatchState component
+ */
+interface TableNoMatchStateProps {
+  label: string;
+  description: string;
+  buttonLabel: string;
+  onClearFilter: () => void;
+}
+
+/**
+ * Props for TableEmptyState component
+ */
+interface TableEmptyStateProps {
+  resourceName: string;
+}
+
+export const TableNoMatchState: React.FC<TableNoMatchStateProps> = ({
+  label,
+  description,
+  buttonLabel,
+  onClearFilter,
+}) => (
   <Box margin={{ vertical: 'xs' }} textAlign="center" color="inherit">
     <SpaceBetween size="xxs">
       <div>
-        <b>{props.label}</b>
+        <b>{label}</b>
         <Box variant="p" color="inherit">
-          {props.description}
+          {description}
         </Box>
       </div>
-      <Button onClick={props.onClearFilter}>{props.buttonLabel}</Button>
+      <Button onClick={onClearFilter}>{buttonLabel}</Button>
     </SpaceBetween>
   </Box>
 );
 
-export const TableEmptyState = ({ resourceName }) => (
+export const TableEmptyState: React.FC<TableEmptyStateProps> = ({ resourceName }) => (
   <Box margin={{ vertical: 'xs' }} textAlign="center" color="inherit">
     <SpaceBetween size="xxs">
       <b>No {resourceName.toLowerCase()}</b>
@@ -24,8 +46,8 @@ export const TableEmptyState = ({ resourceName }) => (
   </Box>
 );
 
-export const PropertyFilterI18nStrings = (resourceName) => {
-  const strings = {
+export const PropertyFilterI18nStrings = (resourceName: string): PropertyFilterProps.I18nStrings => {
+  const strings: PropertyFilterProps.I18nStrings = {
     filteringAriaLabel: i18next.t('filtering.filtering-aria-label'),
     dismissAriaLabel: i18next.t('filtering.dismiss-aria-label'),
     clearAriaLabel: i18next.t('filtering.clear-aria-label'),

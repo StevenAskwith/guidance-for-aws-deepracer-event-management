@@ -12,14 +12,22 @@ export interface Track {
   trackLength?: number;
   trackDescription?: string;
   trackImageUrl?: string;
+  leaderBoardTitle?: string;
+  leaderBoardFooter?: string;
+  fleetId?: string;
 }
 
 // Race Configuration
 export interface RaceConfig {
-  raceType: RaceTypeEnum;
-  raceFormat: RaceFormatEnum;
-  numberOfLaps: number;
+  raceType?: RaceTypeEnum;
+  raceFormat?: RaceFormatEnum;
+  numberOfLaps?: number;
   rankingMethod?: string;
+  trackType?: string;
+  raceTimeInMin?: string;
+  numberOfResetsPerLap?: string;
+  maxRunsPerRacer?: string;
+  averageLapsWindow?: string;
   resetPoints?: boolean;
   disableSpeedBoosts?: boolean;
 }
@@ -44,6 +52,7 @@ export interface LandingPageConfig {
 export interface Event {
   eventId: string;
   eventName: string;
+  eventDate?: string;
   eventType?: EventTypeEnum;
   countryCode?: string;
   description?: string;
@@ -55,6 +64,7 @@ export interface Event {
   fleetName?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: string;
 }
 
 // Lap interface
@@ -93,6 +103,7 @@ export interface Race {
   resetCount?: number;
   offTrackCount?: number;
   crashCount?: number;
+  racedByProxy?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -107,6 +118,8 @@ export interface Car {
   PlatformName?: string;
   PlatformVersion?: string;
   Status?: DeviceStatusEnum;
+  PingStatus?: 'Online' | 'Offline';
+  Type?: string; // Car type: 'deepracer', etc.
   fleetId?: string;
   fleetName?: string;
   LoggingCapable?: boolean;
@@ -124,6 +137,7 @@ export interface Fleet {
   description?: string;
   deviceIds?: string[];
   createdAt?: string;
+  createdBy?: string;
   updatedAt?: string;
 }
 
@@ -144,8 +158,13 @@ export interface User {
 export interface Model {
   modelId: string;
   modelName: string;
+  modelname?: string; // Legacy alias for modelName
   username: string;
   modelKey?: string;
+  fileMetaData?: {
+    key: string;
+    [key: string]: any;
+  };
   description?: string;
   uploadStatus?: UploadStatusEnum;
   size?: number;

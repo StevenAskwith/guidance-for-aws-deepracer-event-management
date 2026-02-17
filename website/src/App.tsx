@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import {
   Authenticator,
   CheckboxField,
@@ -24,21 +23,70 @@ import initDataStores from './store/initStore';
 import { translations } from '@aws-amplify/ui-react';
 import { I18n } from 'aws-amplify';
 import { useTranslation } from 'react-i18next';
+
+/**
+ * Form data structure for custom sign up validation
+ */
+interface SignUpFormData {
+  username: string;
+  acknowledgement?: string;
+  'custom:countryCode'?: string;
+  [key: string]: any;
+}
+
+/**
+ * Validation errors object
+ */
+interface ValidationErrors {
+  [key: string]: string;
+}
+
+/**
+ * Extended AWS config type with optional runtime properties
+ */
+interface AWSConfig {
+  aws_config: {
+    region: string;
+    userPoolId: string;
+    appClientId: string;
+    identityPoolId: string;
+  };
+  appsync: {
+    graphqlEndpoint: string;
+    region: string;
+    authenticationType: string;
+  };
+  Rum?: {
+    drem: {
+      config: string;
+      id: string;
+      region: string;
+    };
+  };
+  Urls?: {
+    termsAndConditionsUrl: string;
+  };
+}
+
+const config = awsconfig as AWSConfig;
+
 I18n.putVocabularies(translations);
 
 Amplify.configure(awsconfig);
 
 initDataStores();
 
-let awsRum = null;
+let awsRum: AwsRum | null = null;
 try {
-  const config = JSON.parse(awsconfig.Rum.drem.config);
-  const APPLICATION_ID = awsconfig.Rum.drem.id;
+  const rumConfig = JSON.parse(config.Rum?.drem.config || '{}');
+  const APPLICATION_ID = config.Rum?.drem.id || '';
   const APPLICATION_VERSION = '1.0.0';
-  const APPLICATION_REGION = awsconfig.Rum.drem.region;
+  const APPLICATION_REGION = config.Rum?.drem.region || '';
 
   /*eslint no-unused-vars: ["error", { "varsIgnorePattern": "awsRum" }]*/
-  awsRum = new AwsRum(APPLICATION_ID, APPLICATION_VERSION, APPLICATION_REGION, config);
+  if (APPLICATION_ID && APPLICATION_REGION) {
+    awsRum = new AwsRum(APPLICATION_ID, APPLICATION_VERSION, APPLICATION_REGION, rumConfig);
+  }
 } catch (error) {
   // Ignore errors thrown during CloudWatch RUM web client initialization
 }
@@ -59,11 +107,14 @@ const components = {
           {/* Re-use default `Authenticator.SignUp.FormFields` */}
           <Authenticator.SignUp.FormFields />
 
-          <CountrySelector amplify={true} description={validationErrors.countryCode} />
+          <CountrySelector 
+            amplify={true} 
+            description={Array.isArray(validationErrors.countryCode) ? validationErrors.countryCode[0] : validationErrors.countryCode} 
+          />
 
           {/* Append & require Terms & Conditions field to sign up  */}
           <CheckboxField
-            errorMessage={validationErrors.acknowledgement}
+            errorMessage={Array.isArray(validationErrors.acknowledgement) ? validationErrors.acknowledgement[0] : validationErrors.acknowledgement}
             hasError={!!validationErrors.acknowledgement}
             name="acknowledgement"
             value="yes"
@@ -80,7 +131,7 @@ const components = {
     return (
       <View textAlign="center" padding={tokens.space.large}>
         <Link
-          href={awsconfig.Urls.termsAndConditionsUrl + '/terms-and-conditions.html'}
+          href={(config.Urls?.termsAndConditionsUrl || '') + '/terms-and-conditions.html'}
           target="_blank"
         >
           {i18next.t('app.signup.terms-and-conditions')}
@@ -112,8 +163,8 @@ export default function App() {
       <Authenticator
         components={components}
         services={{
-          async validateCustomSignUp(formData) {
-            const errors = {};
+          async validateCustomSignUp(formData: SignUpFormData): Promise<ValidationErrors> {
+            const errors: ValidationErrors = {};
 
             const validUsername = new RegExp(
               '^(?=.{2,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$'
@@ -138,7 +189,7 @@ export default function App() {
           <main>
             <StoreProvider>
               <Router>
-                <TopNav user={user.username} signout={signOut} />
+                <TopNav user={user?.username || ''} signout={signOut} />
               </Router>
             </StoreProvider>
           </main>

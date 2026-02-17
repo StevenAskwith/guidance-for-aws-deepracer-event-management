@@ -1,13 +1,38 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { SelectField } from '@aws-amplify/ui-react';
-import { FormField, Select } from '@cloudscape-design/components';
+import { FormField, Select, SelectProps } from '@cloudscape-design/components';
 import { getNames, registerLocale } from 'i18n-iso-countries';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function CountrySelector(props) {
+/**
+ * Country option for Select dropdown
+ */
+interface CountryOption {
+  label: string;
+  value: string;
+}
+
+/**
+ * Props for CountrySelector component
+ */
+interface CountrySelectorProps {
+  amplify?: boolean;
+  label?: string;
+  description?: string;
+  countryCode?: string;
+  setCountryCode?: (code: string) => void;
+}
+
+export function CountrySelector({
+  amplify = false,
+  label,
+  description,
+  countryCode,
+  setCountryCode,
+}: CountrySelectorProps) {
   const { t } = useTranslation();
-  const [countryOptions, setCountryOptions] = useState();
+  const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
+  const [countryOptionsAmplify, setCountryOptionsAmplify] = useState<JSX.Element[]>([]);
 
   // Populate country options for select dropdown
   useEffect(() => {
@@ -19,9 +44,7 @@ export function CountrySelector(props) {
     );
   }, []);
 
-  const [countryOptionsAmplify, setCountryOptionsAmplify] = useState();
-
-  // Populate country options for select dropdown
+  // Populate country options for Amplify select dropdown
   useEffect(() => {
     registerLocale(require('i18n-iso-countries/langs/en.json'));
     setCountryOptionsAmplify(
@@ -35,29 +58,33 @@ export function CountrySelector(props) {
     );
   }, []);
 
-  const GetCountryOptionFromId = (id) => {
-    if (countryOptions) {
+  const GetCountryOptionFromId = (id?: string): SelectProps.Option | undefined => {
+    if (countryOptions && id) {
       return countryOptions.find((option) => option.value === id);
     }
+    return undefined;
   };
 
-  if (props.amplify === true) {
+  if (amplify === true) {
     return (
       <SelectField
+        label={label || t('users.country-select')}
         name="custom:countryCode"
         placeholder={t('users.country-select')}
-        descriptiveText={props.description}
+        descriptiveText={description}
       >
         {countryOptionsAmplify}
       </SelectField>
     );
   } else {
     return (
-      <FormField label={props.label} description={props.description}>
+      <FormField label={label} description={description}>
         <Select
-          selectedOption={GetCountryOptionFromId(props.countryCode)}
+          selectedOption={GetCountryOptionFromId(countryCode) || null}
           onChange={({ detail }) => {
-            props.setCountryCode(detail.selectedOption.value);
+            if (setCountryCode && detail.selectedOption.value) {
+              setCountryCode(detail.selectedOption.value);
+            }
           }}
           options={countryOptions}
           selectedAriaLabel="Selected"

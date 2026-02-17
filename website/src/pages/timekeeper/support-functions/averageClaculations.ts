@@ -1,21 +1,31 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-export const getAverageWindows = (laps, windowSize) => {
+interface Lap {
+  lapId: number;
+  time: number;
+  isValid: boolean;
+}
+
+interface AverageLapWindow {
+  startLapId: number;
+  endLapId: number;
+  avgTime: number;
+}
+
+export const getAverageWindows = (laps: Lap[], windowSize?: number): AverageLapWindow[] => {
   if (!windowSize) {
     windowSize = 3;
   }
 
-  const averageLapInformation = laps.reduce((acc, _, index, arr) => {
-    if (index + windowSize > arr.length) return acc;
+  const averageLapInformation: AverageLapWindow[] = laps.reduce((acc: AverageLapWindow[], _, index: number, arr: Lap[]) => {
+    if (index + windowSize! > arr.length) return acc;
 
-    const window = arr.slice(index, index + windowSize);
+    const window: Lap[] = arr.slice(index, index + windowSize!);
 
     if (window.every((lap) => lap.isValid)) {
-      const avg = window.reduce((acc, curr) => acc + curr.time, 0) / windowSize;
+      const avg: number = window.reduce((sum, curr) => sum + curr.time, 0) / windowSize!;
       console.log(avg);
       acc = acc.concat({
         startLapId: window[0].lapId,
-        endLapId: window[windowSize - 1].lapId,
+        endLapId: window[windowSize! - 1].lapId,
         avgTime: Math.round(avg),
       });
     }

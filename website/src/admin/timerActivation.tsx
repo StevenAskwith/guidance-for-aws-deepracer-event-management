@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,29 +23,43 @@ import {
 import { PageLayout } from '../components/pageLayout';
 import { useStore } from '../store/store';
 
-const AdminTimerActivation = (props) => {
+interface Fleet {
+  fleetId: string;
+  fleetName: string;
+}
+
+interface DropDownItem {
+  id: string;
+  text: string;
+}
+
+interface AdminTimerActivationProps {
+  // No props currently used
+}
+
+const AdminTimerActivation: React.FC<AdminTimerActivationProps> = (props) => {
   const { t } = useTranslation(['translation', 'help-admin-timer-activation']);
 
-  const [result, setResult] = useState('');
-  const [activationCode, setActivationCode] = useState('');
-  const [activationId, setActivationId] = useState('');
-  const [region, setRegion] = useState('');
-  const [hostname, setHostname] = useState('');
-  const [ssmCommand, setSsmCommand] = useState('');
-  const [updateCommand, setUpdateCommand] = useState('');
-  const [buttonDisabled, setButtonDisabled] = useState(true);
-  const [loading, setLoading] = useState('');
-  const [hostnameErrorMessage, setHostnameErrorMessage] = useState('');
+  const [result, setResult] = useState<string>('');
+  const [activationCode, setActivationCode] = useState<string>('');
+  const [activationId, setActivationId] = useState<string>('');
+  const [region, setRegion] = useState<string>('');
+  const [hostname, setHostname] = useState<string>('');
+  const [ssmCommand, setSsmCommand] = useState<string>('');
+  const [updateCommand, setUpdateCommand] = useState<string>('');
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
+  const [loading, setLoading] = useState<string>('');
+  const [hostnameErrorMessage, setHostnameErrorMessage] = useState<string>('');
 
-  const [dropDownFleets, setDropDownFleets] = useState([{ id: 'none', text: 'none' }]);
-  const [dropDownSelectedItem, setDropDownSelectedItem] = useState({
+  const [dropDownFleets, setDropDownFleets] = useState<DropDownItem[]>([{ id: 'none', text: 'none' }]);
+  const [dropDownSelectedItem, setDropDownSelectedItem] = useState<Fleet | { fleetName: string }>({
     fleetName: t('fleets.edit-cars.select-fleet'),
   });
 
   const [state] = useStore();
-  const fleets = state.fleets.fleets;
+  const fleets = state.fleets?.fleets || [];
 
-  const [dremUrl, setDremUrl] = useState(
+  const [dremUrl, setDremUrl] = useState<string>(
     window.location.protocol +
       '//' +
       window.location.hostname +
@@ -84,12 +97,12 @@ const AdminTimerActivation = (props) => {
   }, [hostname, dropDownSelectedItem]);
 
   async function getActivation() {
-    const apiResponse = await API.graphql({
+    const apiResponse: any = await API.graphql({
       query: mutations.deviceActivation,
       variables: {
         hostname: hostname,
         deviceType: 'timer',
-        fleetId: dropDownSelectedItem.fleetId,
+        fleetId: 'fleetId' in dropDownSelectedItem ? dropDownSelectedItem.fleetId : '',
         fleetName: dropDownSelectedItem.fleetName,
         deviceUiPassword: '',
       },
@@ -129,7 +142,7 @@ const AdminTimerActivation = (props) => {
   }
 
   const breadcrumbs = Breadcrumbs();
-  breadcrumbs.push({ text: t('timer-activation.breadcrumb') });
+  breadcrumbs.push({ text: t('timer-activation.breadcrumb'), href: '#' });
 
   return (
     <PageLayout
@@ -161,7 +174,7 @@ const AdminTimerActivation = (props) => {
             </SpaceBetween>
           }
         >
-          <Container textAlign="center">
+          <Container>
             <SpaceBetween direction="vertical" size="l">
               <FormField label={t('timer-activation.fleet')}>
                 <ButtonDropdown

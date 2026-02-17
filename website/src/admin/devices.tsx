@@ -1,5 +1,4 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, SpaceBetween, BreadcrumbGroupProps } from '@cloudscape-design/components';
 import { default as React, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,38 +15,41 @@ import { PageTable } from '../components/pageTable';
 import { TableHeader } from '../components/tableConfig';
 import { useCarCmdApi } from '../hooks/useCarsApi';
 import { Breadcrumbs } from './fleets/support-functions/supportFunctions';
+import { Car } from '../types/domain';
 
-const AdminDevices = () => {
+type OnlineStatus = 'Online' | 'Offline';
+
+const AdminDevices: React.FC = () => {
   const { t } = useTranslation(['translation', 'help-admin-cars']);
   const [state, dispatch] = useStore();
-  const [carsToDisplay, setCarsToDisplay] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [online, setOnline] = useState('Online');
-  const [onlineBool, setOnlineBool] = useState(true);
-  const [refresh, setRefresh] = useState(false);
+  const [carsToDisplay, setCarsToDisplay] = useState<Car[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedItems, setSelectedItems] = useState<Car[]>([]);
+  const [online, setOnline] = useState<OnlineStatus>('Online');
+  const [onlineBool, setOnlineBool] = useState<boolean>(true);
+  const [refresh, setRefresh] = useState<boolean>(false);
   const [columnConfiguration] = useState(() => ColumnConfiguration());
   const [filteringProperties] = useState(() => FilteringProperties());
   const { getLabelSync } = useCarCmdApi();
 
-  const reloadCars = async () => {
+  const reloadCars = async (): Promise<void> => {
     setIsLoading(true);
     setRefresh(true);
     dispatch('REFRESH_CARS', !onlineBool);
   };
 
   useEffect(() => {
-    setIsLoading(state.cars.isLoading);
-  }, [state.cars.isLoading]);
+    setIsLoading(state.cars?.isLoading ?? false);
+  }, [state.cars]);
 
   useEffect(() => {
-    var onlineBool_ = online === 'Online';
-    const updatedCars = state.cars.cars.filter((car) =>
+    const onlineBool_ = online === 'Online';
+    const updatedCars = (state.cars?.cars ?? []).filter((car) =>
       onlineBool_ ? car.PingStatus === 'Online' : car.PingStatus !== 'Online'
     );
     setOnlineBool(onlineBool_);
     setCarsToDisplay(updatedCars);
-    setIsLoading(state.cars.isLoading);
+    setIsLoading(state.cars?.isLoading ?? false);
     return () => {
       // Unmounting
     };
@@ -63,7 +65,7 @@ const AdminDevices = () => {
     };
   }, [refresh]);
 
-  function getLabels(event) {
+  function getLabels(event: React.MouseEvent): void {
     event.preventDefault();
 
     selectedItems.forEach((selectedCar) => {
@@ -71,7 +73,7 @@ const AdminDevices = () => {
     });
   }
 
-  const HeaderActionButtons = () => {
+  const HeaderActionButtons: React.FC = () => {
     return (
       <SpaceBetween direction="horizontal" size="xs">
         <Button iconName="refresh" variant="normal" disabled={isLoading} onClick={reloadCars} />
@@ -85,7 +87,7 @@ const AdminDevices = () => {
             },
           ]}
           onItemClick={({ detail }) => {
-            setOnline(detail.id);
+            setOnline(detail.id as OnlineStatus);
             setSelectedItems([]);
           }}
         >
@@ -98,7 +100,11 @@ const AdminDevices = () => {
           online={onlineBool}
           variant="primary"
         />
-        <Button variant="primary" onClick={getLabels} disabled={selectedItems.length === 0}>
+        <Button 
+          variant="primary" 
+          onClick={() => getLabels({} as React.MouseEvent)} 
+          disabled={selectedItems.length === 0}
+        >
           {selectedItems.length > 1
             ? t('label-printer.download-printable-labels')
             : t('label-printer.download-printable-label')}
@@ -107,8 +113,8 @@ const AdminDevices = () => {
     );
   };
 
-  const breadcrumbs = Breadcrumbs();
-  breadcrumbs.push({ text: t('devices.breadcrumb') });
+  const breadcrumbs: BreadcrumbGroupProps.Item[] = Breadcrumbs();
+  breadcrumbs.push({ text: t('devices.breadcrumb'), href: '#' });
 
   return (
     <PageLayout
@@ -135,14 +141,14 @@ const AdminDevices = () => {
             nrSelectedItems={selectedItems.length}
             nrTotalItems={carsToDisplay.length}
             header={t('devices.header')}
-            actions={<HeaderActionButtons />}
+            actions={<HeaderActionButtons /> as any}
           />
         }
         itemsIsLoading={isLoading}
         loadingText={t('devices.loading')}
         localStorageKey={'cars-table-preferences'}
         trackBy={'InstanceId'}
-        filteringProperties={filteringProperties}
+        filteringProperties={filteringProperties as any}
         filteringI18nStringsName={'devices'}
       />
     </PageLayout>

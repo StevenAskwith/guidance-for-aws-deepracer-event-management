@@ -1,10 +1,16 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { useEffect, useRef, useState } from 'react';
 
-export default function useWebsocket(url, onMessage) {
-  const [waitingToReconnect, setWaitingToReconnect] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const wsClientRef = useRef();
+interface UseWebsocketReturn {
+  isConnected: boolean;
+}
+
+export default function useWebsocket(
+  url: string,
+  onMessage: (data: string) => void
+): [boolean] {
+  const [waitingToReconnect, setWaitingToReconnect] = useState<boolean | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const wsClientRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     try {

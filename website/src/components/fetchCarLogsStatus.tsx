@@ -1,8 +1,34 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { StatusIndicator } from '@cloudscape-design/components';
 import { useTranslation } from 'react-i18next';
 
-export const FetchCarLogsStatus = ({ status }) => {
+/**
+ * Valid car logs fetch status values
+ */
+type CarLogsStatusType = 
+  | 'CREATED' 
+  | 'REQUESTED_UPLOAD' 
+  | 'WAITING_FOR_UPLOAD' 
+  | 'UPLOAD_FAILED' 
+  | 'UPLOADED' 
+  | 'ANALYZED' 
+  | 'PROCESSING' 
+  | 'DONE' 
+  | 'FAILED';
+
+/**
+ * Props interface for FetchCarLogsStatus component
+ */
+interface FetchCarLogsStatusProps {
+  /** Current status of the car logs fetch operation */
+  status: CarLogsStatusType | string;
+}
+
+/**
+ * FetchCarLogsStatus component that displays a status indicator for car logs operations
+ * @param props - Component props
+ * @returns Rendered status indicator or '-' for unknown status
+ */
+export const FetchCarLogsStatus = ({ status }: FetchCarLogsStatusProps): JSX.Element | string => {
   const { t } = useTranslation();
 
   if (status === 'CREATED')

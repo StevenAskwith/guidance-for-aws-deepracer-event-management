@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Box,
   Button,
@@ -17,11 +16,42 @@ import { PageLayout } from '../../../components/pageLayout';
 import { useCarCmdApi } from '../../../hooks/useCarsApi';
 import useMutation from '../../../hooks/useMutation';
 import { useStore } from '../../../store/store';
+import { Lap as BaseLap, Race as BaseRace, RaceConfig } from '../../../types/domain';
 import { FastestAverageLapTable } from '../components/fastesAverageLapTable';
 import { LapTable } from '../components/lapTable';
 import { Breadcrumbs } from '../support-functions/supportFunctions';
 
-export const RaceFinishPage = ({
+interface AverageLap {
+  averagelapId: string;
+  lapTime: number;
+  lapCount: number;
+  lapTimeString?: string;
+}
+
+// Extended Lap interface with additional fields used in timekeeper
+interface TimekeeperLap extends BaseLap {
+  carName?: string;
+}
+
+// Extended Race interface with additional fields used in timekeeper
+interface TimekeeperRace extends BaseRace {
+  averageLaps?: AverageLap[];
+  laps?: TimekeeperLap[];
+}
+
+interface RaceFinishPageProps {
+  eventName: string;
+  raceInfo: TimekeeperRace;
+  fastestLap?: any[];  // Use any to avoid type conflicts with LapTable
+  fastestAverageLap?: AverageLap[];
+  raceConfig: RaceConfig & { eventName: string };
+  onAction?: (lapId: number) => void;
+  onNext: () => void;
+  startTime: Date;
+  fetchLogsEnable: boolean;
+}
+
+export const RaceFinishPage: React.FC<RaceFinishPageProps> = ({
   eventName,
   raceInfo,
   fastestLap = [],
@@ -34,11 +64,11 @@ export const RaceFinishPage = ({
 }) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-finish']);
   const { carFetchLogs } = useCarCmdApi();
-  const [buttonsIsDisabled, SetButtonsIsDisabled] = useState(false);
+  const [buttonsIsDisabled, SetButtonsIsDisabled] = useState<boolean>(false);
   const [sendMutation, loading, errorMessage, data] = useMutation();
-  const [warningModalVisible, setWarningModalVisible] = useState(false);
+  const [warningModalVisible, setWarningModalVisible] = useState<boolean>(false);
   const [state, dispatch] = useStore();
-  const [fetchLogs, setFetchLogs] = React.useState(fetchLogsEnable);
+  const [fetchLogs, setFetchLogs] = React.useState<boolean>(fetchLogsEnable);
   const messageDisplayTime = 4000;
   const notificationId = '';
 
@@ -53,7 +83,7 @@ export const RaceFinishPage = ({
     }
   }, [errorMessage, loading, data, dispatch, notificationId, onNext]);
 
-  const submitRaceHandler = async () => {
+  const submitRaceHandler = async (): Promise<void> => {
     SetButtonsIsDisabled(true);
     console.log(raceInfo);
 
@@ -68,12 +98,13 @@ export const RaceFinishPage = ({
       timeLeftInMs: 0,
       raceStatus: 'RACE_SUBMITTED',
     });
-    sendMutation('addRace', { ...raceInfo });
+    // Note: 'addRace' may be a custom mutation not in the standard set
+    sendMutation('addRace' as any, { ...raceInfo });
 
-    if (fetchLogs) {
+    if (fetchLogs && raceInfo.laps) {
       const uniqueCars = new Set();
       raceInfo.laps.forEach((lap) => {
-        const car = state.cars.cars.find((car) => {
+        const car = state.cars?.cars.find((car) => {
           return car.ComputerName === lap.carName && car.LoggingCapable;
         });
         if (car) {
@@ -83,7 +114,7 @@ export const RaceFinishPage = ({
 
       console.debug(Array.from(uniqueCars));
 
-      carFetchLogs(
+      (carFetchLogs as any)(
         uniqueCars,
         { eventId: raceInfo.eventId, eventName: raceConfig.eventName },
         new Date(startTime.getTime()).toISOString(),
@@ -93,7 +124,7 @@ export const RaceFinishPage = ({
     }
   };
 
-  const discardRaceHandler = () => {
+  const discardRaceHandler = (): void => {
     SetButtonsIsDisabled(true);
     setWarningModalVisible(false);
     dispatch('ADD_NOTIFICATION', {
@@ -137,7 +168,7 @@ export const RaceFinishPage = ({
 
   let fastestAverageLapInformation = <></>;
   if (raceConfig.rankingMethod === RaceTypeEnum.BEST_AVERAGE_LAP_TIME_X_LAP) {
-    fastestAverageLapInformation = <FastestAverageLapTable fastestAverageLap={fastestAverageLap} />;
+    fastestAverageLapInformation = <FastestAverageLapTable fastestAverageLap={fastestAverageLap as any} />;
   }
 
   const lapsPanel = (
@@ -147,6 +178,7 @@ export const RaceFinishPage = ({
           header={t('timekeeper.fastest-lap')}
           variant="embedded"
           laps={fastestLap}
+          rankingMethod={raceConfig.rankingMethod || ''}
           onAction={onAction}
         />
         {fastestAverageLapInformation}
@@ -154,9 +186,9 @@ export const RaceFinishPage = ({
         <LapTable
           header={t('timekeeper.recorded-laps')}
           variant="embedded"
-          laps={raceInfo.laps}
-          averageLapInformation={raceInfo.averageLaps}
-          rankingMethod={raceConfig.rankingMethod}
+          laps={(raceInfo.laps as any) || []}
+          averageLapInformation={raceInfo.averageLaps as any}
+          rankingMethod={raceConfig.rankingMethod || ''}
           onAction={onAction}
         />
       </SpaceBetween>

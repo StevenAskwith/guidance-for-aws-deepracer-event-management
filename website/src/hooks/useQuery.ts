@@ -1,23 +1,31 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, graphqlOperation } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 
 import * as queries from '../graphql/queries';
 
-export default function useQuery(method, params = '') {
-  const [data, setData] = useState();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type QueryMethod = keyof typeof queries;
+
+interface QueryParams {
+  [key: string]: any;
+}
+
+export default function useQuery<T = any>(
+  method: QueryMethod, 
+  params: QueryParams = {}
+): [T | undefined, boolean, Error | string] {
+  const [data, setData] = useState<T>();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | string>('');
 
   useEffect(() => {
-    const queryApi = async () => {
+    const queryApi = async (): Promise<void> => {
       try {
         setLoading(true);
-        const response = await API.graphql(graphqlOperation(queries[method], params));
+        const response: any = await API.graphql(graphqlOperation(queries[method], params));
         setData(response.data[method]);
         setLoading(false);
-      } catch (error) {
-        setError(error);
+      } catch (err) {
+        setError(err as Error);
         setLoading(false);
       }
     };
@@ -25,7 +33,7 @@ export default function useQuery(method, params = '') {
     return () => {
       // abort();
     };
-  }, [method]);
+  }, [method, params]);
 
   return [data, loading, error];
 }

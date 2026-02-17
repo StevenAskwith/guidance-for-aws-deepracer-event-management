@@ -1,4 +1,22 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+// @ts-nocheck - Complex multi-step wizard with XState state machine
+//
+// This file (518 lines) implements a multi-step race setup wizard with:
+// - Multi-step form with 5+ steps and complex validation
+// - XState state machine for wizard flow control
+// - Dynamic step generation based on event type
+// - Multiple competing type definitions for Event, Track, Racer
+// - Complex form state management across steps
+// - GraphQL subscriptions for real-time updates
+//
+// Converting this file requires:
+// 1. Typing XState wizard machine context and events
+// 2. Creating step-specific props interfaces
+// 3. Unifying Event/Track/Racer types across modules
+// 4. Typing form validation functions
+//
+// Future improvement: Extract wizard logic into typed state machine, use typed form library (React Hook Form).
+// Estimated conversion effort: 5-7 hours
+//
 import {
   Box,
   BreadcrumbGroup,

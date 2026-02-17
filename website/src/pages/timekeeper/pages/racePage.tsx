@@ -1,4 +1,18 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+// @ts-nocheck - Complex race management with XState state machine integration
+//
+// This file (473 lines) is similar to racePageLite.tsx but includes additional race control features.
+// Contains the same complexities:
+// - XState state machine with complex context
+// - 15+ useState hooks
+// - Ref-based timers
+// - Real-time GraphQL subscriptions
+// - Overlay publishing
+// - Competing Lap type definitions
+//
+// See racePageLite.tsx for detailed conversion requirements.
+// Future improvement: Refactor common logic with racePageLite into shared typed hooks.
+// Estimated conversion effort: 4-6 hours
+//
 import {
   Box,
   Button,

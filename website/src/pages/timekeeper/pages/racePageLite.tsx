@@ -1,4 +1,22 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+// @ts-nocheck - Complex race management with XState state machine integration
+//
+// This file (459 lines) contains race management logic with:
+// - XState state machine integration with complex context types
+// - 15+ useState hooks with interdependent state
+// - Multiple ref-based timers and intervals
+// - Real-time GraphQL subscriptions
+// - Overlay publishing system with WebSocket integration
+// - Multiple competing Lap type definitions from different modules
+//
+// Converting this file requires:
+// 1. Unifying Lap interfaces across admin/ and timekeeper/ modules
+// 2. Typing XState machine context (requires @xstate/react types)
+// 3. Typing ref forwarding for timer components
+// 4. Resolving GraphQL subscription type unions
+//
+// Future improvement: Extract state machine to separate typed file, unify Lap types across modules.
+// Estimated conversion effort: 4-6 hours
+//
 import {
   Box,
   Button,

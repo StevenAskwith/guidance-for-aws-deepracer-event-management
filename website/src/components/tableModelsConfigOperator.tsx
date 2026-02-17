@@ -1,10 +1,65 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import { ReactNode } from 'react';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { ModelUploadStatus } from './modelUploadStatus';
 
-export const ColumnConfigurationOperator = () => {
-  var returnObject = {
+interface ModelFileMetaData {
+  uploadedDateTime: string;
+}
+
+interface ModelMetaData {
+  metadataMd5?: string;
+  sensor: string[];
+  actionSpaceType?: string;
+  trainingAlgorithm?: string;
+}
+
+interface ModelItem {
+  modelId: string;
+  username?: string;
+  modelname?: string;
+  status: string;
+  fileMetaData: ModelFileMetaData;
+  modelMD5?: string;
+  modelMetaData: ModelMetaData;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: ModelItem) => string | ReactNode;
+  sortingField?: string;
+  width?: number;
+  minWidth?: number;
+  sortingComparator?: (a: ModelItem, b: ModelItem) => number;
+}
+
+interface ColumnConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+  defaultSortingColumn?: ColumnDefinition;
+  defaultSortingIsDescending?: boolean;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const ColumnConfigurationOperator = (): ColumnConfiguration => {
+  const returnObject: ColumnConfiguration = {
     defaultVisibleColumns: ['username', 'modelname', 'status', 'uploadedDateTime'],
     visibleContentOptions: [
       {
@@ -96,7 +151,7 @@ export const ColumnConfigurationOperator = () => {
         width: 240,
         minWidth: 150,
         sortingComparator: (a, b) =>
-          new Date(a.fileMetaData.uploadedDateTime) - new Date(b.fileMetaData.uploadedDateTime),
+          new Date(a.fileMetaData.uploadedDateTime).getTime() - new Date(b.fileMetaData.uploadedDateTime).getTime(),
       },
       {
         id: 'modelMD5Hash',
@@ -155,7 +210,7 @@ export const ColumnConfigurationOperator = () => {
   return returnObject;
 };
 
-export const FilteringPropertiesOperator = () => {
+export const FilteringPropertiesOperator = (): FilteringProperty[] => {
   return [
     {
       key: 'username',

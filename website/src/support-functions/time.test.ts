@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled for test file during incremental migration
 import { convertMsToString, convertStringToMs } from './time';
 
 describe('Support functions', () => {

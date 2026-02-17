@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Container,
   DatePicker,
@@ -7,6 +6,7 @@ import {
   Header,
   Input,
   Select,
+  SelectProps,
   SpaceBetween,
 } from '@cloudscape-design/components';
 import { getNames, registerLocale } from 'i18n-iso-countries';
@@ -16,7 +16,35 @@ import { Flag } from '../../../components/flag';
 import { useStore } from '../../../store/store';
 import { EventTypeConfig, GetTypeOfEventOptionFromId } from '../support-functions/eventDomain';
 
-export const EventInfoPanel = ({
+/**
+ * Country option for dropdown
+ */
+interface CountryOption {
+  label: string;
+  value: string;
+}
+
+/**
+ * Props for EventInfoPanel component
+ */
+interface EventInfoPanelProps {
+  onFormIsValid: () => void;
+  onFormIsInvalid: () => void;
+  onChange: (update: {
+    typeOfEvent?: string;
+    eventName?: string;
+    eventDate?: string;
+    countryCode?: string;
+    sponsor?: string;
+  }) => void;
+  typeOfEvent?: string;
+  eventName?: string;
+  countryCode?: string;
+  eventDate?: string;
+  sponsor?: string;
+}
+
+export const EventInfoPanel: React.FC<EventInfoPanelProps> = ({
   onFormIsValid,
   onFormIsInvalid,
   onChange,
@@ -27,12 +55,12 @@ export const EventInfoPanel = ({
   sponsor,
 }) => {
   const { t } = useTranslation();
-  const [errorMessage, setErrorMessage] = useState();
-  const [typeOfEventErrorMessage, setTypeOfEventErrorMessage] = useState();
-  const [countryOptions, setCountryOptions] = useState();
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [typeOfEventErrorMessage, setTypeOfEventErrorMessage] = useState<string>('');
+  const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
   const eventTypeOptions = EventTypeConfig();
   const [state] = useStore();
-  const events = state.events.events;
+  const events = state?.events?.events || [];
 
   // Populate country options for select dropdown
   useEffect(() => {
@@ -65,10 +93,11 @@ export const EventInfoPanel = ({
     }
   }, [typeOfEvent, onFormIsInvalid, onFormIsValid]);
 
-  const GetCountryOptionFromId = (id) => {
-    if (countryOptions) {
-      return countryOptions.find((option) => option.value === id);
+  const GetCountryOptionFromId = (id: string | undefined): CountryOption | null => {
+    if (countryOptions && id) {
+      return countryOptions.find((option) => option.value === id) || null;
     }
+    return null;
   };
 
   return (
@@ -80,7 +109,7 @@ export const EventInfoPanel = ({
           errorText={typeOfEventErrorMessage}
         >
           <Select
-            selectedOption={GetTypeOfEventOptionFromId(typeOfEvent)}
+            selectedOption={GetTypeOfEventOptionFromId(typeOfEvent) || null}
             onChange={({ detail }) => onChange({ typeOfEvent: detail.selectedOption.value })}
             options={eventTypeOptions}
             selectedAriaLabel="Selected"
@@ -96,7 +125,7 @@ export const EventInfoPanel = ({
           <Input
             placeholder={t('events.event-name-placeholder')}
             ariaRequired={true}
-            value={eventName}
+            value={eventName || ''}
             onChange={(event) => onChange({ eventName: event.detail.value })}
           />
         </FormField>
@@ -104,7 +133,7 @@ export const EventInfoPanel = ({
         <FormField label={t('events.event-date')} description={t('events.event-date-description')}>
           <DatePicker
             onChange={({ detail }) => onChange({ eventDate: detail.value })}
-            value={eventDate ?? eventDate | ''}
+            value={eventDate || ''}
             openCalendarAriaLabel={(selectedDate) =>
               t('events.event-date-choose') +
               (selectedDate ? `, ` + t('events.event-date-selected') + ` ${selectedDate}` : '')
@@ -113,7 +142,7 @@ export const EventInfoPanel = ({
             placeholder={t('events.event-date-placeholder')}
             previousMonthAriaLabel={t('events.event-date-previous-month')}
             todayAriaLabel={t('events.event-date-today')}
-            isDateEnabled={(date) => date >= new Date().setHours(0, 0, 0, 0)}
+            isDateEnabled={(date) => date >= new Date(new Date().setHours(0, 0, 0, 0))}
           />
         </FormField>
         <FormField label={t('events.country')} description={t('events.country-description')}>
@@ -132,7 +161,7 @@ export const EventInfoPanel = ({
           label={t('events.leaderboard.sponsor')}
           description={t('events.leaderboard.sponsor-description')}
         >
-          <Input onChange={({ detail }) => onChange({ sponsor: detail.value })} value={sponsor} />
+          <Input onChange={({ detail }) => onChange({ sponsor: detail.value })} value={sponsor || ''} />
         </FormField>
       </SpaceBetween>
     </Container>

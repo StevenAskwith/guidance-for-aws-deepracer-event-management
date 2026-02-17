@@ -1,11 +1,21 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+import React from 'react';
+import { TableProps } from '@cloudscape-design/components';
 import { ModelUploadStatus } from '../../../components/modelUploadStatus';
 import i18next from '../../../i18n';
 import { formatAwsDateTime } from '../../../support-functions/time';
+import { Model } from '../../../types/domain';
 
-export const VisibleContentOptions = () => {
+interface VisibleContentOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentGroup {
+  label: string;
+  options: VisibleContentOption[];
+}
+
+export const VisibleContentOptions = (): VisibleContentGroup[] => {
   return [
     {
       label: i18next.t('models.model-information'),
@@ -51,8 +61,8 @@ export const VisibleContentOptions = () => {
   ];
 };
 
-export function ColumnsConfig() {
-  const rowHeaders = [
+export function ColumnsConfig(): TableProps.ColumnDefinition<any>[] {
+  const rowHeaders: TableProps.ColumnDefinition<any>[] = [
     {
       id: 'userName',
       header: i18next.t('models.user-name'),

@@ -1,3 +1,7 @@
+
+> drem@0.1.0 build
+> DISABLE_ESLINT_PLUGIN='true' react-scripts --max_old_space_size=4096 build
+
 Creating an optimized production build...
 Compiled with warnings.
 
@@ -12,9 +16,9 @@ To ignore, add // eslint-disable-next-line to the line before.
 
 File sizes after gzip:
 
-  718.68 kB  build/static/js/main.48052392.js
-  273.08 kB  build/static/css/main.7cc80231.css
-  2.07 kB    build/static/js/488.389cbbd4.chunk.js
+  721.35 kB (+381 B)  build/static/js/main.57256063.js
+  273.08 kB           build/static/css/main.7cc80231.css
+  2.07 kB             build/static/js/488.389cbbd4.chunk.js
 
 The bundle size is significantly larger than recommended.
 Consider reducing it with code splitting: https://goo.gl/9VhYWB

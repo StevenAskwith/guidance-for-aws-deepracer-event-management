@@ -14,7 +14,8 @@ dayjs.extend(relativeTime);
  * @param  dateTime An extended ISO 8601 date and time string in the format YYYY-MM-DDThh:mm:ss.sssZ.
  * @return string representation YYYY-MM-DD HH:mm:ss (z)
  */
-export const formatAwsDateTime = (dateTime: string): string | undefined => {
+export const formatAwsDateTime = (dateTime: string | undefined): string | undefined => {
+  if (!dateTime) return undefined;
   const result = dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss (z)');
   if (result === 'Invalid Date') {
     return undefined;

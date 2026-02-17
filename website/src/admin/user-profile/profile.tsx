@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API, Auth } from 'aws-amplify';
 
 import ColumnLayout from '@cloudscape-design/components/column-layout';
@@ -22,22 +21,26 @@ import {
   SpaceBetween,
 } from '@cloudscape-design/components';
 
-const ProfileHome = (props) => {
+interface ProfileHomeProps {
+  // No props currently used
+}
+
+const ProfileHome: React.FC<ProfileHomeProps> = (props) => {
   const { t } = useTranslation();
 
-  const [username, setUsername] = useState();
-  const [identityId, setIdentityId] = useState();
-  const [deleteUserModalVisible, setDeleteUserModalVisible] = useState(false);
-  const [buttonDisabled, setButtonDisabled] = useState(true);
-  const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-  const [newPasswordErrorMessage, setNewPasswordErrorMessage] = useState('');
-  const [formErrorMessage, setFormErrorMessage] = useState('');
-  const [formSubmitMessage, setFormSubmitMessage] = useState('');
+  const [username, setUsername] = useState<string | undefined>();
+  const [identityId, setIdentityId] = useState<string | undefined>();
+  const [deleteUserModalVisible, setDeleteUserModalVisible] = useState<boolean>(false);
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState<string>('');
+  const [newPasswordErrorMessage, setNewPasswordErrorMessage] = useState<string>('');
+  const [formErrorMessage, setFormErrorMessage] = useState<string>('');
+  const [formSubmitMessage, setFormSubmitMessage] = useState<string>('');
 
   //new password fields
-  const [current_password, setCurrentPassword] = useState('');
-  const [new_password, setNewPassword] = useState('');
-  const [new_password_confirm, setNewPasswordConfirm] = useState('');
+  const [current_password, setCurrentPassword] = useState<string>('');
+  const [new_password, setNewPassword] = useState<string>('');
+  const [new_password_confirm, setNewPasswordConfirm] = useState<string>('');
 
   useEffect(() => {
     const getData = async () => {
@@ -114,7 +117,7 @@ const ProfileHome = (props) => {
     };
   }, [current_password, new_password, new_password_confirm]);
 
-  const ValueWithLabel = ({ label, children }) => (
+  const ValueWithLabel = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div>
       <Box variant="awsui-key-label">{label}</Box>
       <div>{children}</div>
@@ -128,7 +131,7 @@ const ProfileHome = (props) => {
         description={t('user-profile.description')}
         breadcrumbs={[
           { text: t('home.breadcrumb'), href: '/' },
-          { text: t('user-profile.breadcrumb') },
+          { text: t('user-profile.breadcrumb'), href: '#' },
           { text: t('user-profile.settings.breadcrumb'), href: '/' },
         ]}
       >
@@ -165,7 +168,7 @@ const ProfileHome = (props) => {
                 </SpaceBetween>
               }
             >
-              <Container textAlign="center">
+              <Container>
                 <SpaceBetween direction="vertical" size="l">
                   <FormField
                     label={t('user-profile.settings.form.label.current_pw')}

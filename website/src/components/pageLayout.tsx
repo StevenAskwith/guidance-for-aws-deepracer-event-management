@@ -1,6 +1,6 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   BreadcrumbGroup,
+  BreadcrumbGroupProps,
   ContentLayout,
   Header,
   Link,
@@ -8,6 +8,20 @@ import {
 } from '@cloudscape-design/components';
 import { useEffect } from 'react';
 import { useStore } from '../store/store';
+
+/**
+ * Props for PageLayout component
+ */
+interface PageLayoutProps {
+  onLinkClick?: (event: React.MouseEvent) => void;
+  breadcrumbs: BreadcrumbGroupProps.Item[];
+  description?: string;
+  header: string;
+  simplified?: boolean;
+  helpPanelHidden?: boolean;
+  helpPanelContent?: React.ReactNode;
+  children?: React.ReactNode;
+}
 
 export function PageLayout({
   onLinkClick,
@@ -17,8 +31,8 @@ export function PageLayout({
   simplified = false,
   helpPanelHidden = true,
   helpPanelContent = undefined,
-  ...props
-}) {
+  children,
+}: PageLayoutProps) {
   const [, dispatch] = useStore();
 
   // Help panel
@@ -31,7 +45,8 @@ export function PageLayout({
     return () => {
       dispatch('RESET_HELP_PANEL');
     };
-  }, [dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [helpPanelHidden, helpPanelContent]);
 
   if (simplified === true) {
     return (
@@ -41,7 +56,7 @@ export function PageLayout({
         <Header variant="h1" description={description}>
           {header}
         </Header>
-        {props.children}
+        {children}
       </>
     );
   } else {
@@ -70,7 +85,7 @@ export function PageLayout({
           </SpaceBetween>
         }
       >
-        {props.children}
+        {children}
       </ContentLayout>
     );
   }

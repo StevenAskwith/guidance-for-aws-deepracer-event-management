@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, graphqlOperation } from 'aws-amplify';
 import { useCallback, useState } from 'react';
 
@@ -6,17 +5,32 @@ import { useTranslation } from 'react-i18next';
 import * as mutations from '../graphql/mutations';
 import { useStore } from '../store/store';
 
-export default function useMutation() {
+interface NotificationInfo {
+  id: string;
+  itemType: string;
+  action: string;
+  name: string;
+}
+
+type MutationMethod = keyof typeof mutations;
+type MutationStatus = 'success' | 'error';
+
+export default function useMutation(): [
+  (method: MutationMethod, payload: any) => Promise<void>,
+  boolean,
+  string,
+  any
+] {
   const { t } = useTranslation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState();
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [data, setData] = useState<any>();
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [, dispatch] = useStore();
 
   const generateRequestNotification = useCallback(
-    (method, payload) => {
+    (method: MutationMethod, payload: any): NotificationInfo => {
       const lowerCaseMethod = method.toLowerCase();
-      let notificationInfo = {
+      let notificationInfo: NotificationInfo = {
         id: '',
         itemType: '',
         action: '',
@@ -26,18 +40,21 @@ export default function useMutation() {
         notificationInfo = {
           id: payload.eventName ?? '',
           itemType: t('notifications.item-type-event'),
+          action: '',
           name: payload.eventName ?? '',
         };
       } else if (lowerCaseMethod.includes('user')) {
         notificationInfo = {
           id: payload.username ?? '',
           itemType: t('notifications.item-type-user'),
+          action: '',
           name: payload.username ?? '',
         };
       } else if (lowerCaseMethod.includes('race')) {
         notificationInfo = {
           id: payload.raceId ?? '',
           itemType: t('notifications.item-type-race'),
+          action: '',
           name: payload.raceId ?? '',
         };
       } else if (lowerCaseMethod.includes('model')) {
@@ -45,6 +62,7 @@ export default function useMutation() {
         notificationInfo = {
           id: payload.modelId ?? '',
           itemType: t('notifications.item-type-model'),
+          action: '',
           name: payload.modelname ?? '',
         };
       } else if (lowerCaseMethod.includes('carlogsasset')) {
@@ -52,23 +70,26 @@ export default function useMutation() {
         notificationInfo = {
           id: payload.assetId ?? '',
           itemType: t('notifications.item-type-asset'),
+          action: '',
           name: payload.filename ?? '',
         };
       } else if (lowerCaseMethod.includes('fleet')) {
         notificationInfo = {
           id: payload.fleetId ?? '',
           itemType: t('notifications.item-type-fleet'),
+          action: '',
           name: payload.fleetName ?? '',
         };
       } else {
         notificationInfo = {
           id: 'common',
           itemType: 'unknown',
+          action: '',
           name: '',
         };
       }
 
-      let notificationHeader;
+      let notificationHeader: string | undefined;
       const itemType = notificationInfo.itemType;
       const itemName = notificationInfo.name;
       if (lowerCaseMethod.includes('add')) {
@@ -107,8 +128,8 @@ export default function useMutation() {
   );
 
   const generateResponseNotification = useCallback(
-    (notificationInfo, status, errorMessage) => {
-      let notificationHeader;
+    (notificationInfo: NotificationInfo, status: MutationStatus, errorMessage?: string): void => {
+      let notificationHeader: string | undefined;
       const itemType = notificationInfo.itemType;
       const itemName = notificationInfo.name;
       if (notificationInfo.action === 'add' && status === 'success')
@@ -154,25 +175,24 @@ export default function useMutation() {
   );
 
   const send = useCallback(
-    async (method, payload) => {
+    async (method: MutationMethod, payload: any): Promise<void> => {
       setIsLoading(true);
-      setData();
+      setData(undefined);
       const notificationInfo = generateRequestNotification(method, payload);
 
-      API.graphql(graphqlOperation(mutations[method], payload))
-        .then((response) => {
-          setData({ ...response.data[method] });
-          generateResponseNotification(notificationInfo, 'success');
-          setIsLoading(false);
-          setErrorMessage('');
-        })
-        .catch((error) => {
-          generateResponseNotification(notificationInfo, 'error', error.errors[0].message);
-          console.warn(error.errors[0].message);
-          setIsLoading(false);
-          setErrorMessage(error.errors[0].message);
-          setData();
-        });
+      try {
+        const response: any = await API.graphql(graphqlOperation(mutations[method], payload));
+        setData({ ...response.data[method] });
+        generateResponseNotification(notificationInfo, 'success');
+        setIsLoading(false);
+        setErrorMessage('');
+      } catch (error: any) {
+        generateResponseNotification(notificationInfo, 'error', error.errors[0].message);
+        console.warn(error.errors[0].message);
+        setIsLoading(false);
+        setErrorMessage(error.errors[0].message);
+        setData(undefined);
+      }
     },
     [generateResponseNotification, generateRequestNotification]
   );

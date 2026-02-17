@@ -1,16 +1,26 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Header, Table } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { convertMsToString } from '../../../support-functions/time';
 
-const FastestAverageLapTable = (props) => {
+/**
+ * Represents an average lap time window
+ */
+interface AverageLap {
+  startLapId: number;
+  endLapId: number;
+  avgTime: number;
+}
+
+interface FastestAverageLapTableProps {
+  fastestAverageLap?: AverageLap[];
+}
+
+const FastestAverageLapTable: React.FC<FastestAverageLapTableProps> = (props) => {
   const { t } = useTranslation();
-  const [lapsJsx, SetLapsJsx] = useState([]);
+  const [lapsJsx, SetLapsJsx] = useState<AverageLap[]>([]);
 
   const { fastestAverageLap } = props;
-
-  //lap.current = [...fastestAverageLap];
 
   useEffect(() => {
     if (fastestAverageLap && fastestAverageLap.length > 0) {
@@ -21,26 +31,25 @@ const FastestAverageLapTable = (props) => {
   }, [fastestAverageLap]);
 
   return (
-    <Table
-      display="none"
+    <Table<AverageLap>
       variant="embedded"
       columnDefinitions={[
         {
           id: 'fromLap',
           header: t('timekeeper.avg-lap-table.from-lap'),
-          cell: (item) => item.startLapId + 1 || '',
+          cell: (item: AverageLap) => item.startLapId + 1 || '',
           width: '100px',
         },
         {
           id: 'toLap',
           header: t('timekeeper.avg-lap-table.to-lap'),
-          cell: (item) => item.endLapId + 1 || '',
+          cell: (item: AverageLap) => item.endLapId + 1 || '',
           width: '100px',
         },
         {
           id: 'average',
           header: t('timekeeper.avg-lap-table.average'),
-          cell: (item) => convertMsToString(item.avgTime) || 0,
+          cell: (item: AverageLap) => convertMsToString(item.avgTime) || 0,
           width: '100px',
         },
       ]}

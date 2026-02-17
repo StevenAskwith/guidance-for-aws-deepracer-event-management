@@ -1,11 +1,54 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import Button from '@cloudscape-design/components/button';
+import { ReactNode } from 'react';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { FetchCarLogsStatus } from './fetchCarLogsStatus';
 
-export const ColumnConfigurationProc = (navigateToAssetTabWithFilter) => {
-  var returnObject = {
+interface CarLogAssetProcessing {
+  carName?: string;
+  carFleetName?: string;
+  startTime?: string;
+  status: string;
+  jobId?: string;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: CarLogAssetProcessing) => string | ReactNode;
+  sortingField?: string;
+  width?: number;
+  minWidth?: number;
+}
+
+interface ColumnConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+  defaultSortingColumn?: ColumnDefinition;
+  defaultSortingIsDescending?: boolean;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const ColumnConfigurationProc = (
+  navigateToAssetTabWithFilter: (jobId: string) => void
+): ColumnConfiguration => {
+  const returnObject: ColumnConfiguration = {
     defaultVisibleColumns: ['carname', 'carfleetname', 'starttime', 'status', 'actions'],
     visibleContentOptions: [
       {
@@ -85,7 +128,7 @@ export const ColumnConfigurationProc = (navigateToAssetTabWithFilter) => {
         cell: (item) => (
           <Button
             onClick={() => {
-              navigateToAssetTabWithFilter(item.jobId);
+              navigateToAssetTabWithFilter(item.jobId || '');
             }}
             variant="inline-link"
             iconName="list-view"
@@ -101,7 +144,7 @@ export const ColumnConfigurationProc = (navigateToAssetTabWithFilter) => {
   return returnObject;
 };
 
-export const FilteringPropertiesProc = () => {
+export const FilteringPropertiesProc = (): FilteringProperty[] => {
   return [
     {
       key: 'carname',

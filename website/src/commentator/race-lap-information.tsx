@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Grid } from '@cloudscape-design/components';
 import Container from '@cloudscape-design/components/container';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
@@ -7,14 +6,54 @@ import { LapTable } from '../pages/timekeeper/components/lapTable';
 import { RaceGraph } from './race-graph';
 import { getFacestAvgFromOverlayInfo } from './support-functions';
 
-const RaceLapInformation = ({ overlayInformation, selectedEvent, sortedLeaderboard }) => {
+interface Lap {
+  lapId: number;
+  lapTime: number;
+}
+
+interface AverageLap {
+  startLapId: number;
+  endLapId: number;
+  avgTime: number;
+}
+
+interface OverlayInformation {
+  raceStatus: 'READY_TO_START' | 'RACE_IN_PROGRESS' | 'RACE_PAUSED' | 'NO_RACER_SELECTED' | 'RACE_FINSIHED' | string;
+  laps: Record<string, Lap>;
+  averageLaps: AverageLap[];
+}
+
+interface RaceConfig {
+  rankingMethod: string;
+}
+
+interface SelectedEvent {
+  raceConfig: RaceConfig;
+}
+
+interface LeaderboardEntry {
+  fastestLapTime?: number;
+  fastestAverageLap?: AverageLap;
+}
+
+interface RaceLapInformationProps {
+  overlayInformation: OverlayInformation;
+  selectedEvent: SelectedEvent;
+  sortedLeaderboard: LeaderboardEntry[];
+}
+
+const RaceLapInformation: React.FC<RaceLapInformationProps> = ({ 
+  overlayInformation, 
+  selectedEvent, 
+  sortedLeaderboard 
+}) => {
   const { t } = useTranslation();
 
-  const [laps, SetLaps] = useState({});
-  const [thresholds, setThresholds] = useState({});
-  const [fastestRaceAvgLap, SetFastestRaceAvgLap] = useState({});
+  const [laps, SetLaps] = useState<Record<string, Lap>>({});
+  const [thresholds, setThresholds] = useState<LeaderboardEntry>({});
+  const [fastestRaceAvgLap, SetFastestRaceAvgLap] = useState<AverageLap | Record<string, never>>({});
 
-  const updateUI = (overlayInfo) => {
+  const updateUI = (overlayInfo: OverlayInformation): void => {
     SetLaps(overlayInfo.laps);
     SetFastestRaceAvgLap(getFacestAvgFromOverlayInfo(overlayInfo));
   };
@@ -49,7 +88,7 @@ const RaceLapInformation = ({ overlayInformation, selectedEvent, sortedLeaderboa
         <LapTable
           variant="embedded"
           header={t('timekeeper.recorded-laps')}
-          laps={laps}
+          laps={Object.values(laps).map(lap => ({ ...lap, time: lap.lapTime, isValid: true }))}
           averageLapInformation={overlayInformation.averageLaps}
           rankingMethod={selectedEvent.raceConfig.rankingMethod}
           readonly={true}
@@ -57,11 +96,11 @@ const RaceLapInformation = ({ overlayInformation, selectedEvent, sortedLeaderboa
       </Container>
       <Container>
         <RaceGraph
-          laps={laps}
+          laps={Object.values(laps).map(lap => ({ ...lap, time: lap.lapTime, isValid: true }))}
           fastestEventLapTime={thresholds.fastestLapTime}
           fastestEventAvgLap={thresholds.fastestAverageLap}
           raceFormat={selectedEvent.raceConfig.rankingMethod}
-          fastestRaceAvgLap={fastestRaceAvgLap}
+          fastestRaceAvgLap={fastestRaceAvgLap.avgTime !== undefined ? fastestRaceAvgLap as AverageLap : undefined}
         ></RaceGraph>
       </Container>
     </Grid>

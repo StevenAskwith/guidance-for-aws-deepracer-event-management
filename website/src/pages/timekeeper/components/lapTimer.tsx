@@ -1,15 +1,30 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Header } from '@cloudscape-design/components';
 import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
-import useInterval from '../../../hooks/useInterval';
+import { useInterval } from '../../../hooks/useInterval';
 
 const interval = 10;
 
-const LapTimer = forwardRef((props, ref) => {
-  const isRunning = useRef(false);
-  const prevTime = useRef(null);
-  const timeInMilliseconds = useRef(0);
-  const [time, setTime] = useState({
+interface Time {
+  minutes: string | number;
+  seconds: string | number;
+  milliseconds: string | number;
+}
+
+export interface LapTimerHandle {
+  start: () => void;
+  pause: () => void;
+  reset: (startingTime?: number) => void;
+  getCurrentTimeInMs: () => number;
+  getIsRunning: () => boolean;
+}
+
+interface LapTimerProps {}
+
+const LapTimer = forwardRef<LapTimerHandle, LapTimerProps>((props, ref) => {
+  const isRunning = useRef<boolean>(false);
+  const prevTime = useRef<number | null>(null);
+  const timeInMilliseconds = useRef<number>(0);
+  const [time, setTime] = useState<Time>({
     minutes: 0,
     seconds: 0,
     milliseconds: 0,
@@ -23,7 +38,7 @@ const LapTimer = forwardRef((props, ref) => {
     pause() {
       isRunning.current = false;
     },
-    reset(startingTime = 0) {
+    reset(startingTime: number = 0) {
       prevTime.current = null;
       timeInMilliseconds.current = startingTime;
       setTime((prevState) => toTime(startingTime));
@@ -36,10 +51,10 @@ const LapTimer = forwardRef((props, ref) => {
     },
   }));
 
-  const toTime = useCallback((time) => {
-    let milliseconds = parseInt(time % 1000, 10);
-    let seconds = Math.floor((time / 1000) % 60);
-    let minutes = Math.floor(time / (1000 * 60));
+  const toTime = useCallback((time: number): Time => {
+    let milliseconds: string | number = parseInt(String(time % 1000), 10);
+    let seconds: string | number = Math.floor((time / 1000) % 60);
+    let minutes: string | number = Math.floor(time / (1000 * 60));
 
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
@@ -75,5 +90,7 @@ const LapTimer = forwardRef((props, ref) => {
     </Header>
   );
 });
+
+LapTimer.displayName = 'LapTimer';
 
 export default LapTimer;

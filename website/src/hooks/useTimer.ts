@@ -1,26 +1,45 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { useState } from 'react';
-import useInterval from './useInterval';
+import { useInterval } from './useInterval';
 
 export const Direction = {
   Up: 'Up',
   Down: 'Down',
-};
+} as const;
 
-export default function useTimer(interval = 27, direction = Direction.Up) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [prevTime, setPrevTime] = useState(null);
-  const [timeInMilliseconds, setTimeInMilliseconds] = useState(0);
-  const [time, setTime] = useState({
+export type DirectionType = typeof Direction[keyof typeof Direction];
+
+interface Time {
+  minutes: string | number;
+  seconds: string | number;
+  milliseconds: string | number;
+}
+
+type TimerReturnType = [
+  Time,
+  number,
+  boolean,
+  () => void,
+  () => void,
+  (startingTime?: number) => void
+];
+
+export default function useTimer(
+  interval: number = 27,
+  direction: DirectionType = Direction.Up
+): TimerReturnType {
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [prevTime, setPrevTime] = useState<number | null>(null);
+  const [timeInMilliseconds, setTimeInMilliseconds] = useState<number>(0);
+  const [time, setTime] = useState<Time>({
     minutes: 0,
     seconds: 0,
     milliseconds: 0,
   });
 
-  const toTime = (time) => {
-    let milliseconds = parseInt(time % 1000, 10);
-    let seconds = Math.floor((time / 1000) % 60);
-    let minutes = Math.floor(time / (1000 * 60));
+  const toTime = (time: number): Time => {
+    let milliseconds: string | number = parseInt((time % 1000).toString(), 10);
+    let seconds: string | number = Math.floor((time / 1000) % 60);
+    let minutes: string | number = Math.floor(time / (1000 * 60));
 
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
@@ -41,7 +60,7 @@ export default function useTimer(interval = 27, direction = Direction.Up) {
     () => {
       const prev = prevTime ? prevTime : Date.now();
       const diffTime = Date.now() - prev;
-      let newMilliTime;
+      let newMilliTime: number;
       if (direction === Direction.Up) {
         newMilliTime = timeInMilliseconds + diffTime;
       } else {
@@ -55,20 +74,19 @@ export default function useTimer(interval = 27, direction = Direction.Up) {
     isRunning ? interval : null
   );
 
-  const handleStart = () => {
+  const handleStart = (): void => {
     console.debug('start lap timer');
     setIsRunning(true);
     setPrevTime(null);
     setTime(toTime(0));
   };
 
-  const handlePause = () => {
+  const handlePause = (): void => {
     console.debug('Pause lap timer');
-    // clearInterval(countRef.current);
     setIsRunning(false);
   };
 
-  const handleReset = (startingTime = 0) => {
+  const handleReset = (startingTime: number = 0): void => {
     console.debug('Reset lap time');
     setPrevTime(null);
     setTimeInMilliseconds(startingTime);

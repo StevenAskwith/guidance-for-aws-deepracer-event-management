@@ -1,48 +1,51 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, SpaceBetween } from '@cloudscape-design/components';
 import { API } from 'aws-amplify';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '../../components/pageLayout';
-import * as mutations from '../../graphql/mutations';
-
 import { DeleteModal, ItemList } from '../../components/deleteModal';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
-import { TableHeader } from '../../components/tableConfig';
-
+import { PageLayout } from '../../components/pageLayout';
 import { PageTable } from '../../components/pageTable';
+import { TableHeader } from '../../components/tableConfig';
+import * as mutations from '../../graphql/mutations';
 import { useUsers } from '../../hooks/useUsers';
 import { useStore } from '../../store/store';
+import { FleetConfig } from './fleetDomain';
 import { ColumnConfiguration, FilteringProperties } from './fleetsTableConfig';
 import { Breadcrumbs } from './support-functions/supportFunctions';
 
-const AdminFleets = () => {
+/**
+ * AdminFleets component for managing fleet configurations
+ * @returns Rendered fleet management page
+ */
+const AdminFleets = (): JSX.Element => {
   const { t } = useTranslation(['translation', 'help-admin-fleets']);
-  const [selectedFleetsInTable, setSelectedFleetsInTable] = useState([]);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedFleetsInTable, setSelectedFleetsInTable] = useState<FleetConfig[]>([]);
+  const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
 
   const [state] = useStore();
-  const fleets = state.fleets.fleets;
-  const isLoading = state.fleets.isLoading;
-  const [, , getUserNameFromId] = useUsers();
+  const fleets = (state.fleets?.fleets || []) as FleetConfig[];
+  const isLoading = state.fleets?.isLoading || false;
+  const userFunctions = useUsers();
+  const getUserNameFromId = userFunctions[2] as (userId: string) => string;
 
   const navigate = useNavigate();
   const [columnConfiguration] = useState(() => ColumnConfiguration(getUserNameFromId));
   const [filteringProperties] = useState(() => FilteringProperties());
 
   // Edit Fleet
-  const editFleetHandler = () => {
+  const editFleetHandler = (): void => {
     navigate('/admin/fleets/edit', { state: selectedFleetsInTable[0] });
   };
 
   // Create Fleet
-  const createFleetHandler = () => {
+  const createFleetHandler = (): void => {
     navigate('/admin/fleets/create');
   };
 
   // Delete Fleet
-  async function deleteFleets() {
+  async function deleteFleets(): Promise<void> {
     const fleetIdsToDelete = selectedFleetsInTable.map((fleet) => fleet.fleetId);
     await API.graphql({
       query: mutations.deleteFleets,
@@ -53,7 +56,7 @@ const AdminFleets = () => {
     setSelectedFleetsInTable([]);
   }
 
-  const HeaderActionButtons = () => {
+  const HeaderActionButtons = (): JSX.Element => {
     const disableEditButton =
       selectedFleetsInTable.length === 0 || selectedFleetsInTable.length > 1;
     const disableDeleteButton = selectedFleetsInTable.length === 0;
@@ -73,7 +76,7 @@ const AdminFleets = () => {
   };
 
   const breadcrumbs = Breadcrumbs();
-  breadcrumbs.push({ text: t('fleets.breadcrumb') });
+  breadcrumbs.push({ text: t('fleets.breadcrumb'), href: '' });
 
   return (
     <PageLayout
@@ -83,10 +86,11 @@ const AdminFleets = () => {
           headerContent={t('header', { ns: 'help-admin-fleets' })}
           bodyContent={t('content', { ns: 'help-admin-fleets' })}
           footerContent={t('footer', { ns: 'help-admin-fleets' })}
-        />
+        /> as any
       }
       header={t('fleets.header')}
       description={t('fleets.description')}
+      onLinkClick={(event: React.MouseEvent) => event.preventDefault()}
       breadcrumbs={breadcrumbs}
     >
       <PageTable
@@ -100,14 +104,14 @@ const AdminFleets = () => {
             nrSelectedItems={selectedFleetsInTable.length}
             nrTotalItems={fleets.length}
             header={t('fleets.table-header')}
-            actions={<HeaderActionButtons />}
+            actions={<HeaderActionButtons /> as any}
           />
         }
         itemsIsLoading={isLoading}
         loadingText={t('fleets.loading')}
         localStorageKey={'fleets-table-preferences'}
         trackBy={'fleetId'}
-        filteringProperties={filteringProperties}
+        filteringProperties={filteringProperties as any}
         filteringI18nStringsName={'fleets'}
       />
 

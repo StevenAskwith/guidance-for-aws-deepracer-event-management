@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useEffect, useState } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import {
@@ -12,26 +11,35 @@ import { RaceSetupPage } from './pages/raceSetupPage';
 import { getAverageWindows } from './support-functions/averageClaculations';
 import { defaultRace } from './support-functions/raceDomain';
 
-export const Timekeeper = () => {
-  const [activeStepIndex, setActiveStepIndex] = useLocalStorage('DREM-timekeeper-state', 0);
-  const [raceConfig, setRaceConfig] = useLocalStorage('DREM-timekeeper-race-config', {});
-  const [race, setRace] = useLocalStorage('DREM-timekeeper-current-race', defaultRace);
-  const [fetchLogsEnable, setFetchLogsEnable] = useState(false);
-  const [fastestLap, setFastestLap] = useState([]);
-  const [fastestAverageLap, setFastestAverageLap] = useState([]);
-  const [startTime, setStartTime] = useState(undefined);
+interface Lap {
+  lapTime: number;
+  [key: string]: any;
+}
+
+/**
+ * Timekeeper component for managing race timing and lap tracking
+ * Handles race setup, active race timing, and race completion
+ */
+export const Timekeeper = (): JSX.Element => {
+  const [activeStepIndex, setActiveStepIndex] = useLocalStorage<number>('DREM-timekeeper-state', 0);
+  const [raceConfig, setRaceConfig] = useLocalStorage<any>('DREM-timekeeper-race-config', {});
+  const [race, setRace] = useLocalStorage<any>('DREM-timekeeper-current-race', defaultRace);
+  const [fetchLogsEnable, setFetchLogsEnable] = useState<boolean>(false);
+  const [fastestLap, setFastestLap] = useState<Lap[]>([]);
+  const [fastestAverageLap, setFastestAverageLap] = useState<Lap[]>([]);
+  const [startTime, setStartTime] = useState<number | undefined>(undefined);
   const selectedEvent = useSelectedEventContext();
   const selectedTrack = useSelectedTrackContext();
 
   const [state, dispatch] = useStore();
   // change event info and race config when a user select another event
   useEffect(() => {
-    if (selectedEvent.eventId !== race.eventId) {
-      let raceDetails = selectedEvent.raceConfig;
-      raceDetails['eventName'] = selectedEvent.eventName;
+    if (selectedEvent?.eventId !== race.eventId) {
+      let raceDetails: any = selectedEvent?.raceConfig;
+      raceDetails['eventName'] = selectedEvent?.eventName;
       setRaceConfig(raceDetails);
 
-      const modifiedRace = { ...race, eventId: selectedEvent.eventId };
+      const modifiedRace = { ...race, eventId: selectedEvent?.eventId };
       setRace(modifiedRace);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,26 +64,26 @@ export const Timekeeper = () => {
   useEffect(() => {
     if (race.laps && race.laps.length) {
       // Get all valid laps
-      const validLaps = race.laps.filter((o) => {
+      const validLaps = race.laps.filter((o: Lap) => {
         return o.isValid === true;
       });
       if (validLaps.length) {
         // Find fastest time
         var res = Math.min.apply(
           Math,
-          validLaps.map((o) => {
+          validLaps.map((o: Lap) => {
             return o.time;
           })
         );
         // Get object with the fastest time
-        const obj = validLaps.find((o) => {
+        const obj = validLaps.find((o: Lap) => {
           return o.time === res;
         });
-        setFastestLap([obj]);
+        setFastestLap(obj ? [obj] : []);
         // Find if any car is able to log
         if (!fetchLogsEnable) {
-          validLaps.some((lap) => {
-            const car = state.cars.cars.find((car) => {
+          validLaps.some((lap: Lap) => {
+            const car = state.cars?.cars.find((car: any) => {
               return car.ComputerName === lap.carName && car.LoggingCapable;
             });
             if (car) {
@@ -95,7 +103,7 @@ export const Timekeeper = () => {
 
     race.averageLaps = getAverageWindows(race.laps, raceConfig.averageLapsWindow);
     if (race.averageLaps.length > 0) {
-      const fastestAvgLap = race.averageLaps.reduce((acc, currentValue) => {
+      const fastestAvgLap = race.averageLaps.reduce((acc: any, currentValue: any) => {
         return acc.avgTime > currentValue.avgTime ? currentValue : acc;
       });
       setFastestAverageLap([fastestAvgLap]);
@@ -106,7 +114,7 @@ export const Timekeeper = () => {
   }, [race.laps]);
 
   // handlers functions
-  const actionHandler = (id) => {
+  const actionHandler = (id: number): void => {
     console.debug('alter lap status for lap id: ' + id);
     const lapsCopy = [...race.laps];
     const updatedLap = { ...race.laps[id] };
@@ -115,7 +123,7 @@ export const Timekeeper = () => {
     setRace({ ...race, laps: lapsCopy });
   };
 
-  const raceSetupHandler = (event) => {
+  const raceSetupHandler = (event: any): void => {
     console.info(event);
     setRace({ ...race, ...event.race });
     setRaceConfig({ ...raceConfig, ...event.config });
@@ -123,17 +131,17 @@ export const Timekeeper = () => {
     setActiveStepIndex(1);
   };
 
-  const raceIsDoneHandler = () => {
+  const raceIsDoneHandler = (): void => {
     setActiveStepIndex(2);
   };
 
-  const raceInfoHandler = (event) => {
+  const raceInfoHandler = (event: any): void => {
     console.info('Race Info Handler');
     console.info(event);
     setRace({ ...race, ...event });
   };
 
-  const resetRacehandler = () => {
+  const resetRacehandler = (): void => {
     setRace(defaultRace);
     setRaceConfig({});
     setFastestLap([]);
@@ -143,7 +151,7 @@ export const Timekeeper = () => {
     setFetchLogsEnable(false);
   };
 
-  const stateMachine = (activeStep) => {
+  const stateMachine = (activeStep: number): JSX.Element | undefined => {
     let pageToDisplay = undefined;
     switch (activeStep) {
       case 0:
@@ -167,12 +175,12 @@ export const Timekeeper = () => {
           <RaceFinishPage
             eventName={raceConfig.eventName}
             raceInfo={race}
-            fastestLap={fastestLap}
-            fastestAverageLap={fastestAverageLap}
+            fastestLap={fastestLap as any}
+            fastestAverageLap={fastestAverageLap as any}
             raceConfig={raceConfig}
             onAction={actionHandler}
             onNext={resetRacehandler}
-            startTime={startTime}
+            startTime={startTime ? new Date(startTime) : new Date()}
             fetchLogsEnable={fetchLogsEnable}
           />
         );

@@ -8,7 +8,7 @@ interface LapSummary {
   timeSum: number | null;
 }
 
-interface RaceMetrics {
+export interface RaceMetrics {
   numberOfUniqueRacers: number | null;
   numberOfRaces: number | null;
   mostNumberOfRacesByUser: number | null;

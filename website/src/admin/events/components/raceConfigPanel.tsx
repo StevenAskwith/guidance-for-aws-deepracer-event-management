@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Container,
   ExpandableSection,
@@ -9,8 +8,10 @@ import {
 } from '@cloudscape-design/components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RaceConfig } from '../../../types/domain';
 import {
   AverageLapWindowConfig,
+  ConfigOption,
   GetAverageLapWindowFromId,
   GetMaxRunsPerRacerOptionFromId,
   GetRaceTimeOptionFromId,
@@ -25,9 +26,40 @@ import {
   TrackTypeConfig,
 } from '../support-functions/raceConfig';
 
-const RaceCustomizationsFooter = (props) => {
+/**
+ * Props for RaceCustomizationsFooter component
+ */
+interface RaceCustomizationsFooterProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Props for DefaultRacingFooter component
+ */
+interface DefaultRacingFooterProps {
+  numberOfResetsPerLap?: string;
+  maxRunsPerRacer?: string;
+  maxRunsPerRacerOptions: ConfigOption[];
+  averageLapsWindowConfig: ConfigOption[];
+  averageLapsWindow?: string;
+  rankingMehtod?: string;
+  raceTimeInMin?: string;
+  onChange: (attr: Partial<RaceConfig>) => void;
+  raceTimeOptions: ConfigOption[];
+  resetOptions: ConfigOption[];
+}
+
+/**
+ * Props for RaceConfigPanel component
+ */
+interface RaceConfigPanelProps {
+  raceConfig: RaceConfig;
+  onChange: (update: { raceConfig: RaceConfig }) => void;
+}
+
+const RaceCustomizationsFooter: React.FC<RaceCustomizationsFooterProps> = ({ children }) => {
   const { t } = useTranslation();
-  const [custIsExpanded, setCustIsExpanded] = useState(false);
+  const [custIsExpanded, setCustIsExpanded] = useState<boolean>(false);
 
   // Keep race customizations open after user click on included items
   const custIsExpandedHandler = () => {
@@ -41,12 +73,12 @@ const RaceCustomizationsFooter = (props) => {
       variant="footer"
       onChange={custIsExpandedHandler}
     >
-      {props.children}
+      {children}
     </ExpandableSection>
   );
 };
 
-const DefaultRacingFooter = ({
+const DefaultRacingFooter: React.FC<DefaultRacingFooterProps> = ({
   numberOfResetsPerLap,
   maxRunsPerRacer,
   maxRunsPerRacerOptions,
@@ -66,7 +98,7 @@ const DefaultRacingFooter = ({
         description={t('events.race.race-time-description')}
       >
         <Select
-          selectedOption={GetRaceTimeOptionFromId(raceTimeInMin)}
+          selectedOption={GetRaceTimeOptionFromId(raceTimeInMin) || null}
           onChange={({ detail }) => onChange({ raceTimeInMin: detail.selectedOption.value })}
           options={raceTimeOptions}
           selectedAriaLabel="Selected"
@@ -78,7 +110,7 @@ const DefaultRacingFooter = ({
         description={t('events.race.resets-per-lap-description')}
       >
         <Select
-          selectedOption={GetResetOptionFromId(numberOfResetsPerLap)}
+          selectedOption={GetResetOptionFromId(numberOfResetsPerLap) || null}
           onChange={({ detail }) => onChange({ numberOfResetsPerLap: detail.selectedOption.value })}
           options={resetOptions}
           selectedAriaLabel="Selected"
@@ -90,7 +122,7 @@ const DefaultRacingFooter = ({
         description={t('events.race.allowed-races-per-racer-description')}
       >
         <Select
-          selectedOption={GetMaxRunsPerRacerOptionFromId(maxRunsPerRacer)}
+          selectedOption={GetMaxRunsPerRacerOptionFromId(maxRunsPerRacer) || null}
           onChange={({ detail }) => onChange({ maxRunsPerRacer: detail.selectedOption.value })}
           options={maxRunsPerRacerOptions}
           selectedAriaLabel="Selected"
@@ -102,7 +134,7 @@ const DefaultRacingFooter = ({
         description={t('events.race.average-time-window-description')}
       >
         <Select
-          selectedOption={GetAverageLapWindowFromId(averageLapsWindow)}
+          selectedOption={GetAverageLapWindowFromId(averageLapsWindow) || null}
           onChange={({ detail }) => onChange({ averageLapsWindow: detail.selectedOption.value })}
           options={averageLapsWindowConfig}
           selectedAriaLabel="Selected"
@@ -114,24 +146,25 @@ const DefaultRacingFooter = ({
   );
 };
 
-export const RaceConfigPanel = ({ raceConfig, onChange }) => {
+export const RaceConfigPanel: React.FC<RaceConfigPanelProps> = ({ raceConfig, onChange }) => {
   const raceTimeOptions = RaceTimeConfig();
   const raceRankingOptions = RaceTypeConfig();
   const maxRunsPerRacerOptions = MaxRunsPerRacerConfig();
   const averageLapWindowConfig = AverageLapWindowConfig();
-  //const
   const resetOptions = ResetConfig();
   const trackOptions = TrackTypeConfig();
   const { t } = useTranslation();
+  
   const UpdateConfig = useCallback(
-    (attr) => {
+    (attr: Partial<RaceConfig>) => {
       const updatePayload = { raceConfig: { ...raceConfig, ...attr } };
       console.log(raceConfig);
       onChange(updatePayload);
     },
     [raceConfig, onChange]
   );
-  const [raceCustomizationsFooter, setRaceCustomizationsFooter] = useState(
+  
+  const [raceCustomizationsFooter, setRaceCustomizationsFooter] = useState<React.ReactNode>(
     <DefaultRacingFooter
       numberOfResetsPerLap={raceConfig.numberOfResetsPerLap}
       raceTimeInMin={raceConfig.raceTimeInMin}
@@ -162,8 +195,18 @@ export const RaceConfigPanel = ({ raceConfig, onChange }) => {
         averageLapsWindowConfig={averageLapWindowConfig}
       />
     );
-    // }
-  }, [UpdateConfig, raceConfig.numberOfResetsPerLap, raceConfig.raceTimeInMin]);
+  }, [
+    UpdateConfig,
+    raceConfig.numberOfResetsPerLap,
+    raceConfig.raceTimeInMin,
+    raceConfig.maxRunsPerRacer,
+    raceConfig.rankingMethod,
+    raceConfig.averageLapsWindow,
+    resetOptions,
+    raceTimeOptions,
+    maxRunsPerRacerOptions,
+    averageLapWindowConfig,
+  ]);
 
   // JSX
   return (
@@ -175,7 +218,7 @@ export const RaceConfigPanel = ({ raceConfig, onChange }) => {
           description={t('events.tracks.choose-description')}
         >
           <Select
-            selectedOption={GetTrackOptionFromId(raceConfig.trackType)}
+            selectedOption={GetTrackOptionFromId(raceConfig.trackType) || null}
             onChange={({ detail }) => UpdateConfig({ trackType: detail.selectedOption.value })}
             options={trackOptions}
             selectedAriaLabel="Selected"
@@ -187,7 +230,7 @@ export const RaceConfigPanel = ({ raceConfig, onChange }) => {
           description={t('events.race.ranking-method-description')}
         >
           <Select
-            selectedOption={GetRankingOptionFromId(raceConfig.rankingMethod)}
+            selectedOption={GetRankingOptionFromId(raceConfig.rankingMethod) || null}
             onChange={({ detail }) => UpdateConfig({ rankingMethod: detail.selectedOption.value })}
             options={raceRankingOptions}
             selectedAriaLabel="Selected"

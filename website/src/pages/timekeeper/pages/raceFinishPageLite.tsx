@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Box,
   Button,
@@ -11,11 +10,53 @@ import {
 } from '@cloudscape-design/components';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RaceTypeEnum } from '../../../admin/events/support-functions/raceConfig';
+import { RaceType, RaceTypeEnum } from '../../../admin/events/support-functions/raceConfig';
 import { FastestAverageLapTable } from '../components/fastesAverageLapTable';
 import { LapTable } from '../components/lapTable';
 
-export const RaceFinishPage = ({
+interface Lap {
+  lapId: number;
+  time: number;
+  isValid: boolean;
+  resets?: number;
+  carName?: string;
+}
+
+interface AverageLapInfo {
+  startLapId: number;
+  endLapId: number;
+  avgTime: number;
+  laps?: Lap[];
+}
+
+interface RaceInfo {
+  trackId: string;
+  username: string;
+  racedByProxy: boolean;
+  laps: Lap[];
+  averageLaps?: AverageLapInfo[];
+  [key: string]: any;
+}
+
+interface RaceConfig {
+  rankingMethod: RaceType;
+  [key: string]: any;
+}
+
+interface RaceFinishPageProps {
+  eventName: string;
+  raceInfo: RaceInfo;
+  fastestLap?: Lap[];
+  fastestAverageLap?: AverageLapInfo[];
+  raceConfig: RaceConfig;
+  onAction: (lapId: number) => void;
+  discardRaceHandler: () => void;
+  fetchLogsEnable: boolean;
+  fetchLogs: boolean;
+  setFetchLogs: (value: boolean) => void;
+}
+
+export const RaceFinishPage: React.FC<RaceFinishPageProps> = ({
   eventName,
   raceInfo,
   fastestLap = [],
@@ -28,8 +69,8 @@ export const RaceFinishPage = ({
   setFetchLogs,
 }) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-finish']);
-  const [buttonsIsDisabled] = useState(false);
-  const [warningModalVisible, setWarningModalVisible] = useState(false);
+  const [buttonsIsDisabled] = useState<boolean>(false);
+  const [warningModalVisible, setWarningModalVisible] = useState<boolean>(false);
 
   const raceInfoPanel = (
     <Container header={<Header>{t('timekeeper.end-session.race-info')}</Header>}>
@@ -74,6 +115,7 @@ export const RaceFinishPage = ({
           header={t('timekeeper.fastest-lap')}
           variant="embedded"
           laps={fastestLap}
+          rankingMethod={raceConfig.rankingMethod}
           onAction={onAction}
         />
         {fastestAverageLapInformation}

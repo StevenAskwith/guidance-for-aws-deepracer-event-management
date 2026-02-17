@@ -1,10 +1,37 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-import { Input, Select } from '@cloudscape-design/components';
+import { Input, Select, TableProps } from '@cloudscape-design/components';
 import i18next from '../../../i18n';
 import { convertMsToString } from '../../../support-functions/time';
+import { Lap } from '../../../types/domain';
 
-export const ColumnConfiguration = (isEditable) => {
+/**
+ * Extended lap interface with additional properties used in table display
+ */
+export interface LapTableItem extends Lap {
+  time: number; // Alias for lapTime
+  avgTime?: number;
+  resets?: number;
+  carName?: string;
+  autTimeConnected?: boolean;
+}
+
+/**
+ * Table configuration return type
+ */
+interface LapsTableConfiguration {
+  defaultVisibleColumns: string[][];
+  visibleContentOptions: Array<{
+    label: string;
+    options: Array<{ id: string; label: string }>;
+  }>;
+  columnDefinitions: TableProps.ColumnDefinition<LapTableItem>[];
+}
+
+/**
+ * Generate column configuration for laps table
+ * @param isEditable - Whether the table columns should be editable
+ * @returns Table configuration object
+ */
+export const ColumnConfiguration = (isEditable: boolean): LapsTableConfiguration => {
   const columnDefinitions = isEditable ? EditableColumnDefinitions() : ColumnDefinitions();
 
   return {
@@ -48,14 +75,18 @@ export const ColumnConfiguration = (isEditable) => {
   };
 };
 
-export const ColumnDefinitions = () => {
+/**
+ * Generate read-only column definitions for laps table
+ * @returns Array of column definitions
+ */
+export const ColumnDefinitions = (): TableProps.ColumnDefinition<LapTableItem>[] => {
   return [
     {
       id: 'lapId',
       header: i18next.t('race-admin.lap-id'),
       cell: (item) => item.lapId || '-',
       sortingField: 'lapId',
-      sortingComparator: (a, b) => (a.lapId > b.labId ? 1 : -1),
+      sortingComparator: (a, b) => (a.lapId > b.lapId ? 1 : -1),
       width: 100,
     },
     {
@@ -108,7 +139,11 @@ export const ColumnDefinitions = () => {
   ];
 };
 
-export const EditableColumnDefinitions = () => {
+/**
+ * Generate editable column definitions for laps table
+ * @returns Array of editable column definitions
+ */
+export const EditableColumnDefinitions = (): TableProps.ColumnDefinition<LapTableItem>[] => {
   return [
     {
       id: 'lapId',
@@ -198,23 +233,23 @@ export const EditableColumnDefinitions = () => {
         editIconAriaLabel: 'editable',
         errorIconAriaLabel: 'Error',
         editingCell: (item, { currentValue, setValue }) => {
-          const value = currentValue ?? item.isValid;
+          const value = currentValue ?? String(item.isValid);
           return (
             <Select
               autoFocus={true}
               expandToViewport={true}
               selectedOption={
                 [
-                  { label: i18next.t('timekeeper.lap-table.valid'), value: true },
-                  { label: i18next.t('timekeeper.lap-table.not-valid'), value: false },
+                  { label: i18next.t('timekeeper.lap-table.valid'), value: 'true' },
+                  { label: i18next.t('timekeeper.lap-table.not-valid'), value: 'false' },
                 ].find((option) => option.value === value) ?? null
               }
               onChange={(event) => {
-                setValue(event.detail.selectedOption.value ?? item.isValid);
+                setValue(event.detail.selectedOption.value ?? String(item.isValid));
               }}
               options={[
-                { label: i18next.t('timekeeper.lap-table.valid'), value: true },
-                { label: i18next.t('timekeeper.lap-table.not-valid'), value: false },
+                { label: i18next.t('timekeeper.lap-table.valid'), value: 'true' },
+                { label: i18next.t('timekeeper.lap-table.not-valid'), value: 'false' },
               ]}
             />
           );

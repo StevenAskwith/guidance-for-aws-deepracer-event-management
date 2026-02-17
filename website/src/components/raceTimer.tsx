@@ -1,16 +1,56 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useEffect, useState } from 'react';
-import useInterval from '../hooks/useInterval';
+import { useInterval } from '../hooks/useInterval';
 
 const interval = 500;
 
-const RaceTimer = ({ timeLeftInMs, timerIsRunning }) => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [prevTime, setPrevTime] = useState(null);
-  const [timeInMilliseconds, setTimeInMilliseconds] = useState(0);
-  const [time, setTime] = useState({
-    minutes: 0,
-    seconds: 0,
+/**
+ * Time structure for displaying minutes and seconds
+ */
+interface TimeDisplay {
+  minutes: string;
+  seconds: string;
+}
+
+/**
+ * Props interface for RaceTimer component
+ */
+interface RaceTimerProps {
+  /** Time remaining in milliseconds */
+  timeLeftInMs: number;
+  /** Whether the timer is currently running */
+  timerIsRunning: boolean | null;
+}
+
+/**
+ * Converts milliseconds to a formatted time display
+ * @param time - Time in milliseconds
+ * @returns Formatted time with minutes and seconds
+ */
+const toTime = (time: number): TimeDisplay => {
+  let seconds: number | string = Math.floor((time / 1000) % 60);
+  let minutes: number | string = Math.floor(time / (1000 * 60));
+
+  minutes = minutes < 10 ? '0' + minutes : minutes.toString();
+  seconds = seconds < 10 ? '0' + seconds : seconds.toString();
+
+  return {
+    seconds,
+    minutes,
+  };
+};
+
+/**
+ * RaceTimer component that displays a countdown timer
+ * @param props - Component props
+ * @returns Rendered timer display
+ */
+const RaceTimer = ({ timeLeftInMs, timerIsRunning }: RaceTimerProps): JSX.Element => {
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [prevTime, setPrevTime] = useState<number | null>(null);
+  const [timeInMilliseconds, setTimeInMilliseconds] = useState<number>(0);
+  const [time, setTime] = useState<TimeDisplay>({
+    minutes: '00',
+    seconds: '00',
   });
 
   useEffect(() => {
@@ -28,19 +68,6 @@ const RaceTimer = ({ timeLeftInMs, timerIsRunning }) => {
     }
     setIsRunning(timerIsRunning);
   }, [timerIsRunning]);
-
-  const toTime = (time) => {
-    let seconds = Math.floor((time / 1000) % 60);
-    let minutes = Math.floor(time / (1000 * 60));
-
-    minutes = minutes < 10 ? '0' + minutes : minutes;
-    seconds = seconds < 10 ? '0' + seconds : seconds;
-
-    return {
-      seconds,
-      minutes,
-    };
-  };
 
   useInterval(
     () => {

@@ -1,9 +1,23 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { SplitPanel } from '@cloudscape-design/components';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const DrSplitPanel = ({ header, children }) => {
+/**
+ * Props interface for DrSplitPanel component
+ */
+interface DrSplitPanelProps {
+  /** Header content for the split panel */
+  header: string;
+  /** Child elements to render within the split panel */
+  children: ReactNode;
+}
+
+/**
+ * DrSplitPanel component that wraps CloudScape SplitPanel with internationalization
+ * @param props - Component props
+ * @returns Rendered split panel with i18n strings
+ */
+export const DrSplitPanel = ({ header, children }: DrSplitPanelProps): JSX.Element => {
   const { t } = useTranslation();
   const i18nStrings = {
     preferencesTitle: t('common.panel.split-panel-preference-title'),
@@ -18,7 +32,6 @@ export const DrSplitPanel = ({ header, children }) => {
     resizeHandleAriaLabel: t('common.panel.split-panel-resize-label'),
   };
 
-  // JSX
   return (
     <SplitPanel header={header} i18nStrings={{ ...i18nStrings }}>
       {children}

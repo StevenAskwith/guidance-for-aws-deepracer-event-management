@@ -1,26 +1,39 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { FormField, Header, Input, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Track } from '../../../types/domain';
 import { CarFleetPanel } from './carFleetPanel';
 
-export const LeaderBoardConfigPanel = ({
+/**
+ * Props for LeaderBoardConfigPanel component
+ */
+interface LeaderBoardConfigPanelProps {
+  trackConfig: Track;
+  onChange: (update: Partial<Track>) => void;
+  onFormIsValid: () => void;
+  onFormIsInvalid: () => void;
+}
+
+export const LeaderBoardConfigPanel: React.FC<LeaderBoardConfigPanelProps> = ({
   trackConfig,
   onChange,
   onFormIsValid,
   onFormIsInvalid,
 }) => {
   const { t } = useTranslation();
-  const [errorMessage, setErrorMessage] = useState();
-  const [tempConfigtStore, setTempConfigStore] = useState({
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [tempConfigtStore, setTempConfigStore] = useState<Track>({
+    trackId: '',
+    trackName: '',
     leaderBoardTitle: '',
     leaderBoardFooter: '',
   });
 
   const UpdateConfig = () => {
-    const updatePayload = {
+    const updatePayload: Partial<Track> = {
       trackId: trackConfig.trackId,
-      ...tempConfigtStore,
+      leaderBoardTitle: tempConfigtStore.leaderBoardTitle,
+      leaderBoardFooter: tempConfigtStore.leaderBoardFooter,
     };
     onChange(updatePayload);
   };
@@ -55,7 +68,7 @@ export const LeaderBoardConfigPanel = ({
               return { ...prevValue, leaderBoardTitle: detail.value };
             })
           }
-          value={tempConfigtStore.leaderBoardTitle}
+          value={tempConfigtStore.leaderBoardTitle || ''}
         />
       </FormField>
       <FormField
@@ -69,14 +82,14 @@ export const LeaderBoardConfigPanel = ({
               return { ...prevValue, leaderBoardFooter: detail.value };
             })
           }
-          value={tempConfigtStore.leaderBoardFooter}
+          value={tempConfigtStore.leaderBoardFooter || ''}
         />
       </FormField>
 
       {/* Car fleet is not used for the combined leaderboard */}
       {trackConfig.trackId.toString() !== 'combined' ? (
         <CarFleetPanel
-          fleetId={trackConfig.fleetId}
+          fleetId={trackConfig.fleetId || ''}
           onChange={(detail) => onChange({ trackId: trackConfig.trackId, fleetId: detail })}
         />
       ) : (

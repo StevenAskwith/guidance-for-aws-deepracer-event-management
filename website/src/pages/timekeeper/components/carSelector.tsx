@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,18 +13,45 @@ import {
 } from '../../../components/devices-table/deviceTableConfig';
 import { useStore } from '../../../store/store';
 
-export const CarSelector = ({
+interface QueryToken {
+  propertyKey?: string;
+  value?: string;
+  operator?: string;
+}
+
+interface Query {
+  tokens: QueryToken[];
+  operation: 'and' | 'or';
+}
+
+interface Car {
+  InstanceId: string;
+  PingStatus: string;
+  Type: string;
+  key?: string;
+  modelId?: string;
+  uploadedDateTime?: string;
+  status?: string;
+}
+
+interface CarSelectorProps {
+  query?: Query;
+  selectedCars: Car[];
+  setSelectedCars: (cars: Car[]) => void;
+}
+
+export const CarSelector: React.FC<CarSelectorProps> = ({
   query = { tokens: [], operation: 'and' },
   selectedCars,
   setSelectedCars,
 }) => {
   const { t } = useTranslation();
 
-  const [state] = useStore();
-  const cars = state.cars.cars.filter(
-    (car) => car.PingStatus === 'Online' && car.Type === 'deepracer'
+  const [state] = useStore() as any; // TODO: Type store properly
+  const cars: Car[] = state.cars.cars.filter(
+    (car: Car) => car.PingStatus === 'Online' && car.Type === 'deepracer'
   );
-  const enrichedCars = cars.map((car) => {
+  const enrichedCars: Car[] = cars.map((car) => {
     car['key'] = car['InstanceId'];
     console.log('car:', car);
     return car;
@@ -41,6 +67,7 @@ export const CarSelector = ({
           <EmptyState
             title={t('carmodelupload.no-cars')}
             subtitle={t('carmodelupload.no-cars-online')}
+            action={<div />}
           />
         ),
         noMatch: (
@@ -70,19 +97,19 @@ export const CarSelector = ({
     <PageTable
       selectedItems={selectedCars}
       setSelectedItems={setSelectedCars}
-      tableItems={items}
+      tableItems={[...items] as any[]}
       selectionType="single"
-      columnConfiguration={columnConfiguration}
+      columnConfiguration={columnConfiguration as any}
       trackBy="modelId"
-      sortingColumn="uploadedDateTime"
+      sortingColumn={{ sortingField: 'uploadedDateTime' } as any}
       header={tabeleHeaderContent}
       itemsIsLoading={false}
       //isItemDisabled={(item) => !['AVAILABLE', 'OPTIMIZED'].includes(item.status)}
       loadingText={t('cars.loading-models')}
       localStorageKey="cars-table-preferences"
-      filteringProperties={filteringProperties}
+      filteringProperties={filteringProperties as any}
       filteringI18nStringsName="cars"
-      query={query}
+      query={query as any}
     />
   );
 };

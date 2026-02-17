@@ -1,12 +1,34 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Box, Button, Modal, RadioGroup, SpaceBetween } from '@cloudscape-design/components';
+import { Box, Button, Modal, RadioGroup, RadioGroupProps, SpaceBetween } from '@cloudscape-design/components';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const ChangeRoleModal = ({ onDismiss, visible, onSave }) => {
+/**
+ * Role types available in the system
+ */
+type RoleType = 'admin' | 'operator' | 'commentator' | 'registration' | 'racer';
+
+/**
+ * Props interface for ChangeRoleModal component
+ */
+interface ChangeRoleModalProps {
+  /** Callback when modal is dismissed */
+  onDismiss: () => void;
+  /** Whether the modal is visible */
+  visible: boolean;
+  /** Callback when role is saved with selected role value */
+  onSave: (role: RoleType | undefined) => void;
+}
+
+/**
+ * ChangeRoleModal component that allows changing a user's role
+ * @param props - Component props
+ * @returns Rendered modal with role selection
+ */
+export const ChangeRoleModal = ({ onDismiss, visible, onSave }: ChangeRoleModalProps): JSX.Element => {
   const { t } = useTranslation();
-  const [selectedRole, setSelectedRole] = useState();
-  const roles = [
+  const [selectedRole, setSelectedRole] = useState<RoleType | undefined>();
+  
+  const roles: RadioGroupProps.RadioButtonDefinition[] = [
     { value: 'admin', label: 'Administrator' },
     { value: 'operator', label: 'Operator' },
     { value: 'commentator', label: 'Commentator' },
@@ -30,10 +52,10 @@ export const ChangeRoleModal = ({ onDismiss, visible, onSave }) => {
         </Box>
       }
     >
-      <Box fontWeight="heavy">{t('users-admin.change-role-modal-sub')}</Box> 
+      <Box fontWeight="heavy">{t('users-admin.change-role-modal-sub')}</Box> 
       <RadioGroup
-        onChange={({ detail }) => setSelectedRole(detail.value)}
-        value={selectedRole}
+        onChange={({ detail }) => setSelectedRole(detail.value as RoleType)}
+        value={selectedRole || null}
         items={roles}
       />
     </Modal>

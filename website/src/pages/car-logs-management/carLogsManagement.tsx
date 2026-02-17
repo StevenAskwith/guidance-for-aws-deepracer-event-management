@@ -1,8 +1,8 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { SpaceBetween, Tabs } from '@cloudscape-design/components';
+import { SpaceBetween, Tabs, TabsProps } from '@cloudscape-design/components';
 import Button from '@cloudscape-design/components/button';
 import { API, Auth } from 'aws-amplify';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { GraphQLResult } from '@aws-amplify/api-graphql';
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
 import { PageLayout } from '../../components/pageLayout';
@@ -25,36 +25,71 @@ import * as subscriptions from '../../graphql/subscriptions';
 import { useCarLogsApi } from '../../hooks/useCarLogsApi';
 import { useSelectedEventContext } from '../../store/contexts/storeProvider';
 import { useStore } from '../../store/store';
+import { CarLogAsset } from '../../types/domain';
 import { DeleteAssetModal } from './components/deleteAssetModal';
 import { DownloadAssetModal } from './components/downloadAssetModal';
 
-export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets = true }) => {
+// Type definitions
+interface CarLogsManagementProps {
+  isOperatorView?: boolean;
+  onlyDisplayOwnAssets?: boolean;
+}
+
+interface FetchJob {
+  jobId: string;
+  type?: string;
+  [key: string]: any;
+}
+
+interface FilterState {
+  tokens: Array<{ propertyKey: string; operator: string; value: string }>;
+  operation: string;
+}
+
+interface ListFetchesFromCarResponse {
+  listFetchesFromCar: FetchJob[];
+}
+
+interface SubscriptionValue<T> {
+  value: {
+    data: T;
+  };
+}
+
+type GraphQLSubscription = {
+  unsubscribe: () => void;
+};
+
+export const CarLogsManagement: React.FC<CarLogsManagementProps> = ({ 
+  isOperatorView = false, 
+  onlyDisplayOwnAssets = true 
+}) => {
   const { t } = useTranslation(['translation', 'help-model-carlogs', 'help-admin-model-carlogs']);
   const [columnConfiguration, setColumnConfiguration] = useState(() => ColumnConfigurationRacer());
   const [filteringProperties, setFilteringProperties] = useState(() => FilteringPropertiesRacer());
-  const [activeTab, setActiveTab] = useState('tab1');
-  const [filters, setFilters] = useState({ tokens: [], operation: 'and' });
+  const [activeTab, setActiveTab] = useState<string>('tab1');
+  const [filters, setFilters] = useState<FilterState>({ tokens: [], operation: 'and' });
   const [filteringPropertiesProc] = useState(() => FilteringPropertiesProc());
-  const [selectedAssets, setSelectedAssets] = useState([]);
-  const [breadcrumbs, setBreadcrumbs] = useState([]);
-  const [allJobItems, setJobItems] = useState([]);
+  const [selectedAssets, setSelectedAssets] = useState<CarLogAsset[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ text: string; href?: string }>>([]);
+  const [allJobItems, setJobItems] = useState<FetchJob[]>([]);
   const [state] = useStore();
-  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
-  const isLoading = state.assets.isLoading;
+  const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
+  const isLoading = state.assets?.isLoading || false;
   const [, dispatch] = useStore();
-  const assets = state.assets.assets;
+  const assets: CarLogAsset[] = state.assets?.assets || [];
   const { triggerReload } = useCarLogsApi();
   const selectedEvent = useSelectedEventContext();
 
-  const assetsToDisplay = onlyDisplayOwnAssets
-    ? assets.filter((asset) => asset.sub === Auth.user.attributes.sub)
+  const assetsToDisplay: CarLogAsset[] = onlyDisplayOwnAssets
+    ? assets.filter((asset: any) => asset.sub === (Auth as any).user?.attributes?.sub || asset.username === (Auth as any).user?.attributes?.sub)
     : assets;
 
-  const reloadAssets = async () => {
+  const reloadAssets = async (): Promise<void> => {
     await triggerReload();
   };
 
-  const operatorHelpPanel = useMemo(() => {
+  const operatorHelpPanel: ReactElement = useMemo(() => {
     return (
       <SimpleHelpPanelLayout
         headerContent={t('header', { ns: 'help-admin-model-carlogs' })}
@@ -64,7 +99,7 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
     );
   }, [t]);
 
-  const helpPanel = useMemo(() => {
+  const helpPanel: ReactElement = useMemo(() => {
     return (
       <SimpleHelpPanelLayout
         headerContent={t('header', { ns: 'help-model-carlogs' })}
@@ -74,7 +109,7 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
     );
   }, [t]);
 
-  const navigateToAssetTabWithFilter = (jobId) => {
+  const navigateToAssetTabWithFilter = (jobId: string): void => {
     setActiveTab('tab1');
     setFilters({
       tokens: [{ propertyKey: 'fetchJobId', operator: '=', value: jobId }],
@@ -88,8 +123,8 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
 
   useMemo(() => {
     if (isOperatorView) {
-      setColumnConfiguration(() => ColumnConfigurationOperator());
-      setFilteringProperties(() => FilteringPropertiesOperator());
+      setColumnConfiguration(ColumnConfigurationOperator() as any);
+      setFilteringProperties(FilteringPropertiesOperator() as any);
     }
   }, [isOperatorView]);
 
@@ -120,34 +155,37 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
     }
   }, [isOperatorView, dispatch, t, operatorHelpPanel, helpPanel]);
 
-  const removeAssetHandler = () => {
+  const removeAssetHandler = (): void => {
     setSelectedAssets([]);
   };
 
-  const listFetchesFromCar = useCallback(async () => {
+  const listFetchesFromCar = useCallback(async (): Promise<void> => {
     setIsLoadingJobs(true);
     setJobItems([]);
-    const response = await API.graphql({
+    const response = (await API.graphql({
       query: queries.listFetchesFromCar,
       variables: {
-        eventId: selectedEvent.eventId,
+        eventId: selectedEvent?.eventId,
       },
-    });
-    setJobItems(response.data.listFetchesFromCar);
+    })) as GraphQLResult<ListFetchesFromCarResponse>;
+    
+    if (response.data?.listFetchesFromCar) {
+      setJobItems(response.data.listFetchesFromCar);
+    }
     setIsLoadingJobs(false);
-  }, [selectedEvent.eventId]);
+  }, [selectedEvent?.eventId]);
 
   const actionButtons = (
     <SpaceBetween direction="horizontal" size="xs">
       <Button iconName="refresh" variant="normal" disabled={isLoading} onClick={reloadAssets} />
       <DeleteAssetModal
         disabled={selectedAssets.length === 0}
-        selectedAssets={selectedAssets}
+        selectedAssets={selectedAssets as any}
         onDelete={removeAssetHandler}
       />
       <DownloadAssetModal
         disabled={selectedAssets.length === 0}
-        selectedAssets={selectedAssets}
+        selectedAssets={selectedAssets as any}
         onDownload={removeAssetHandler}
         variant="primary"
       />
@@ -166,7 +204,7 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
   );
 
   useEffect(() => {
-    if (typeof selectedEvent.eventId !== 'undefined' && isOperatorView) {
+    if (typeof selectedEvent?.eventId !== 'undefined' && isOperatorView) {
       listFetchesFromCar();
     }
     return () => {
@@ -182,36 +220,36 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
   }, [activeTab]);
 
   useEffect(() => {
-    let subscriptionCreate;
-    let subscriptionUpdate;
+    let subscriptionCreate: GraphQLSubscription | undefined;
+    let subscriptionUpdate: GraphQLSubscription | undefined;
 
-    async function subscribeToFetches() {
-      subscriptionCreate = API.graphql({
+    async function subscribeToFetches(): Promise<void> {
+      subscriptionCreate = (API.graphql({
         query: subscriptions.onFetchesFromCarCreated,
         variables: {
-          eventId: selectedEvent.eventId,
+          eventId: selectedEvent?.eventId,
         },
-      }).subscribe({
-        next: ({ value }) => {
+      }) as any).subscribe({
+        next: ({ value }: SubscriptionValue<{ onFetchesFromCarCreated: FetchJob }>) => {
           const newFetch = value.data.onFetchesFromCarCreated;
           setJobItems((prevItems) => [...prevItems, newFetch]);
         },
-        error: (error) => console.warn(error),
+        error: (error: Error) => console.warn(error),
       });
 
-      subscriptionUpdate = API.graphql({
+      subscriptionUpdate = (API.graphql({
         query: subscriptions.onFetchesFromCarUpdated,
         variables: {
-          eventId: selectedEvent.eventId,
+          eventId: selectedEvent?.eventId,
         },
-      }).subscribe({
-        next: ({ value }) => {
+      }) as any).subscribe({
+        next: ({ value }: SubscriptionValue<{ onFetchesFromCarUpdated: FetchJob }>) => {
           const updatedFetch = value.data.onFetchesFromCarUpdated;
           setJobItems((prevItems) =>
             prevItems.map((item) => (item.jobId === updatedFetch.jobId ? updatedFetch : item))
           );
         },
-        error: (error) => console.warn(error),
+        error: (error: Error) => console.warn(error),
       });
     }
 
@@ -236,7 +274,7 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
         helpPanelContent={operatorHelpPanel}
         header={t('carlogs.assets.header')}
         description={t('carlogs.assets.operator.description')}
-        breadcrumbs={breadcrumbs}
+        breadcrumbs={breadcrumbs as any}
       >
         <Tabs
           activeTabId={activeTab}
@@ -251,7 +289,7 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
                   setSelectedItems={setSelectedAssets}
                   tableItems={assetsToDisplay}
                   selectionType="multi"
-                  columnConfiguration={columnConfiguration}
+                  columnConfiguration={columnConfiguration as any}
                   trackBy="assetId"
                   header={
                     <TableHeader
@@ -262,12 +300,12 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
                     />
                   }
                   itemsIsLoading={isLoading}
-                  isItemDisabled={(item) => ['NONE'].includes(item.type)}
+                  isItemDisabled={(item: any) => ['NONE'].includes(item.type)}
                   loadingText={t('carlogs.assets.loading-models')}
                   localStorageKey="assets-table-preferences"
-                  filteringProperties={filteringProperties}
+                  filteringProperties={filteringProperties as any}
                   filteringI18nStringsName="assets"
-                  query={filters}
+                  query={filters as any}
                 />
               ),
             },
@@ -276,21 +314,24 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
               id: 'tab2',
               content: (
                 <PageTable
+                  selectedItems={[]}
+                  setSelectedItems={() => {}}
                   tableItems={allJobItems}
-                  columnConfiguration={columnConfigurationProc}
+                  columnConfiguration={columnConfigurationProc as any}
                   trackBy="jobId"
                   header={
                     <TableHeader
                       nrTotalItems={allJobItems.length}
                       header={t('carlogs.assets.proc-header')}
                       actions={fetchActionButtons}
+                      nrSelectedItems={0}
                     />
                   }
                   itemsIsLoading={isLoadingJobs}
-                  isItemDisabled={(item) => ['NONE'].includes(item.type)}
+                  isItemDisabled={(item: any) => ['NONE'].includes(item.type)}
                   loadingText={t('carlogs.assets.loading-processing')}
                   localStorageKey="assets-proc-table-preferences"
-                  filteringProperties={filteringPropertiesProc}
+                  filteringProperties={filteringPropertiesProc as any}
                   filteringI18nStringsName="assets"
                 />
               ),
@@ -306,14 +347,14 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
         helpPanelContent={helpPanel}
         header={t('carlogs.assets.header')}
         description={t('carlogs.assets.description')}
-        breadcrumbs={breadcrumbs}
+        breadcrumbs={breadcrumbs as any}
       >
         <PageTable
           selectedItems={selectedAssets}
           setSelectedItems={setSelectedAssets}
           tableItems={assetsToDisplay}
           selectionType="multi"
-          columnConfiguration={columnConfiguration}
+          columnConfiguration={columnConfiguration as any}
           trackBy="assetId"
           header={
             <TableHeader
@@ -324,10 +365,10 @@ export const CarLogsManagement = ({ isOperatorView = false, onlyDisplayOwnAssets
             />
           }
           itemsIsLoading={isLoading}
-          isItemDisabled={(item) => ['NONE'].includes(item.type)}
+          isItemDisabled={(item: any) => ['NONE'].includes(item.type)}
           loadingText={t('carlogs.assets.loading-models')}
           localStorageKey="assets-table-preferences"
-          filteringProperties={filteringProperties}
+          filteringProperties={filteringProperties as any}
           filteringI18nStringsName="assets"
         />
       </PageLayout>

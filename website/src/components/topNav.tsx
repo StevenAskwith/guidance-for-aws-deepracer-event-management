@@ -1,13 +1,14 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   AppLayout,
   Badge,
   Flashbar,
   SideNavigation,
+  SideNavigationProps,
   TopNavigation,
+  TopNavigationProps,
 } from '@cloudscape-design/components';
 
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 
 import { Route, Routes, useLocation } from 'react-router-dom';
 
@@ -35,7 +36,7 @@ import { useEventsApi } from '../hooks/useEventsApi';
 import { useFleetsApi } from '../hooks/useFleetsApi';
 import useLink from '../hooks/useLink';
 import { useModelsApi } from '../hooks/useModelsApi';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions, Permissions } from '../hooks/usePermissions';
 import { useRacesApi } from '../hooks/useRacesApi';
 import { useUsersApi } from '../hooks/useUsersApi';
 import { useWindowSize } from '../hooks/useWindowsSize';
@@ -51,20 +52,31 @@ import {
 } from '../store/contexts/storeProvider';
 import { useStore } from '../store/store';
 import { EventSelectorModal } from './eventSelectorModal';
-function cwr(operation, payload) {
+
+// Type definitions
+interface TopNavProps {
+  user: string;
+  signout: ((data?: any) => void) | (() => void) | undefined;
+}
+
+interface MenuRoutesProps {
+  permissions: Permissions;
+}
+
+function cwr(operation: string, payload: string): void {
   // Instrument Routing to Record Page Views
   // https://github.com/aws-observability/aws-rum-web/blob/main/docs/cdn_react.md
   return void 0;
 }
 
-function usePageViews() {
+function usePageViews(): void {
   const location = useLocation();
   React.useEffect(() => {
     // console.debug(location.pathname);
     cwr('recordPageView', location.pathname);
   }, [location]);
 }
-const defaultRoutes = [
+const defaultRoutes: ReactElement[] = [
   <Route key="home" path="/" element={<Home />} />,
   <Route key="home-wildcard" path="*" element={<Home />} />,
   <Route key="user-profile" path="/user/profile" element={<ProfileHome />} />,
@@ -72,15 +84,15 @@ const defaultRoutes = [
   <Route key="models-assets" path="/models/assets" element={<CarLogsManagement />} />,
 ];
 
-const registrationRoutes = [
+const registrationRoutes: ReactElement[] = [
   <Route key="registration-createuser" path="/registration/createuser" element={<CreateUser />} />,
 ];
 
-const commentatorRoutes = [
+const commentatorRoutes: ReactElement[] = [
   <Route key="commentator" path="/commentator" element={<CommentatorStats />} />,
 ];
 
-const operatorRoutes = [
+const operatorRoutes: ReactElement[] = [
   <Route key="admin-home" path="/admin/home" element={<AdminHome />} />,
   <Route key="admin-devices" path="/admin/devices" element={<AdminDevices />} />,
   <Route key="admin-events" path="/admin/events" element={<AdminEvents />} />,
@@ -124,11 +136,11 @@ const operatorRoutes = [
   />,
 ];
 
-const adminRoutes = [
+const adminRoutes: ReactElement[] = [
   <Route key="admin-user-management" path="/admin/user-management" element={<UserManagement />} />,
 ];
 
-const MenuRoutes = ({ permissions }) => {
+const MenuRoutes: React.FC<MenuRoutesProps> = ({ permissions }) => {
   usePageViews();
   let routes = defaultRoutes;
   if (permissions.sideNavItems.registration) {
@@ -147,7 +159,7 @@ const MenuRoutes = ({ permissions }) => {
   return <Routes>{routes}</Routes>;
 };
 
-export function TopNav(props) {
+export function TopNav({ user, signout }: TopNavProps): JSX.Element {
   const { t } = useTranslation();
   const windowSize = useWindowSize();
 
@@ -160,18 +172,18 @@ export function TopNav(props) {
 
   const permissions = usePermissions();
   useUsersApi(permissions.api.users);
-  useRacesApi(permissions.api.races, selectedEvent.eventId);
+  useRacesApi(permissions.api.races, selectedEvent?.eventId);
   useCarsApi(permissions.api.cars);
-  useCarLogsApi(permissions.api.carLogs);
+  useCarLogsApi(false); // TODO: Add carLogs permission to Permissions interface
   useFleetsApi(permissions.api.fleets);
-  useEventsApi(selectedEvent, setSelectedEvent, permissions.api.events);
+  useEventsApi(selectedEvent as any, setSelectedEvent as any, permissions.api.events);
   useModelsApi(permissions.api.allModels);
 
-  const [eventSelectModalVisible, setEventSelectModalVisible] = useState(false);
+  const [eventSelectModalVisible, setEventSelectModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
-    if (windowSize.width < 900) dispatch('SIDE_NAV_IS_OPEN', false);
-    else if (windowSize.width >= 900) dispatch('SIDE_NAV_IS_OPEN', true);
+    if (windowSize.width && windowSize.width < 900) dispatch('SIDE_NAV_IS_OPEN', false);
+    else if (windowSize.width && windowSize.width >= 900) dispatch('SIDE_NAV_IS_OPEN', true);
   }, [windowSize, dispatch]);
 
   const defaultSideNavItems = [
@@ -301,33 +313,32 @@ export function TopNav(props) {
     },
   ];
 
-  const SideNavItems = () => {
-    let items = defaultSideNavItems;
+  const SideNavItems = (): SideNavigationProps.Item[] => {
+    let items: SideNavigationProps.Item[] = defaultSideNavItems as SideNavigationProps.Item[];
     if (permissions.sideNavItems.registration) {
-      items = items.concat(registrationSideNavItems);
+      items = items.concat(registrationSideNavItems as SideNavigationProps.Item[]);
     }
     if (permissions.sideNavItems.commentator) {
-      items = items.concat(commentatorSideNavItems);
+      items = items.concat(commentatorSideNavItems as SideNavigationProps.Item[]);
     }
     if (permissions.sideNavItems.operator) {
-      items = items.concat(operatorSideNavItems);
+      items = items.concat(operatorSideNavItems as SideNavigationProps.Item[]);
     }
     if (permissions.sideNavItems.admin) {
-      items = items.concat(adminSideNavItems);
+      items = items.concat(adminSideNavItems as SideNavigationProps.Item[]);
     }
     return items;
   };
 
-  const topNavItems = [
+  const topNavItems: TopNavigationProps.Utility[] = [
     {
       type: 'menu-dropdown',
-      text: props.user,
+      text: user,
       iconName: 'user-profile',
       items: [
         {
           id: 'user-profile',
           text: t('topnav.user-profile'),
-          type: 'link',
           href: '/user/profile',
         },
         {
@@ -336,8 +347,8 @@ export function TopNav(props) {
         },
       ],
       onItemClick: ({ detail }) => {
-        if (detail.id === 'signout') {
-          props.signout();
+        if (detail.id === 'signout' && signout) {
+          signout();
         }
       },
     },
@@ -354,7 +365,7 @@ export function TopNav(props) {
     // event selector
     topNavItems.unshift({
       type: 'button',
-      text: selectedEvent.eventName,
+      text: selectedEvent?.eventName || 'No event selected',
       onClick: () => setEventSelectModalVisible(true),
     });
   }
@@ -385,15 +396,18 @@ export function TopNav(props) {
       <AppLayout
         stickyNotifications
         notifications={
-          <Flashbar items={state.notifications} stackItems={state.notifications.length > 3} />
+          <Flashbar 
+            items={state.notifications?.notifications || []} 
+            stackItems={((state.notifications?.notifications?.length || 0) > 3)} 
+          />
         }
-        tools={state.helpPanel.content}
-        toolsOpen={state.helpPanel.isOpen}
-        toolsHide={state.helpPanel.isHidden}
+        tools={state.helpPanel?.content}
+        toolsOpen={state.helpPanel?.isOpen}
+        toolsHide={state.helpPanel?.isHidden}
         onToolsChange={(item) => dispatch('HELP_PANEL_IS_OPEN', item.detail.open)}
         headerSelector="#h"
         ariaLabels={{ navigationClose: 'close' }}
-        navigationOpen={state.sideNav.isOpen}
+        navigationOpen={state.sideNav?.isOpen}
         navigation={
           <SideNavigation
             activeHref={window.location.pathname}
@@ -404,8 +418,8 @@ export function TopNav(props) {
         contentType="table"
         content={<MenuRoutes permissions={permissions} />}
         onNavigationChange={({ detail }) => dispatch('SIDE_NAV_IS_OPEN', detail.open)}
-        splitPanel={state.splitPanel.content}
-        splitPanelOpen={state.splitPanel.isOpen}
+        splitPanel={state.splitPanel?.content}
+        splitPanelOpen={state.splitPanel?.isOpen}
         onSplitPanelToggle={(item) => dispatch('SPLIT_PANEL_IS_OPEN', item.detail.open)}
       />
 

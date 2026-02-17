@@ -1,8 +1,23 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import i18next from '../i18n';
 
-const HomeCards = () => {
-  const cards = [
+/**
+ * Card configuration interface for home page cards
+ */
+export interface CardConfig {
+  /** Display name of the card */
+  name: string;
+  /** Navigation link path */
+  link: string;
+  /** Card description text */
+  description: string;
+}
+
+/**
+ * Returns cards configuration for regular user home page
+ * @returns Array of card configurations
+ */
+const HomeCards = (): CardConfig[] => {
+  const cards: CardConfig[] = [
     {
       name: i18next.t('homeCards.homeCards.models'),
       link: '/models/view',
@@ -12,8 +27,12 @@ const HomeCards = () => {
   return cards;
 };
 
-const AdminHomeCards = () => {
-  const cards = [
+/**
+ * Returns cards configuration for admin home page
+ * @returns Array of admin card configurations
+ */
+const AdminHomeCards = (): CardConfig[] => {
+  const cards: CardConfig[] = [
     {
       name: i18next.t('homeCards.adminHomeCards.registration'),
       link: '/registration/createuser',
@@ -57,4 +76,5 @@ const AdminHomeCards = () => {
   ];
   return cards;
 };
+
 export { AdminHomeCards, HomeCards };

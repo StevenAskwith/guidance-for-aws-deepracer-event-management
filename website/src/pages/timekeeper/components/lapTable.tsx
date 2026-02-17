@@ -1,13 +1,44 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Button, Header, StatusIndicator, Table } from '@cloudscape-design/components';
+import { Button, Header, StatusIndicator, Table, TableProps } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RaceTypeEnum } from '../../../admin/events/support-functions/raceConfig';
 import { convertMsToString } from '../../../support-functions/time';
 
-const LapTable = (props) => {
+interface Lap {
+  lapId: number;
+  time: number;
+  isValid: boolean;
+  resets?: number;
+  carName?: string;
+}
+
+interface AverageLapInfo {
+  endLapId: string | number;
+  avgTime: number;
+}
+
+interface LapTableItem {
+  lapId: number;
+  time: string;
+  average?: string;
+  resets?: number;
+  valid: JSX.Element;
+  carName?: string;
+}
+
+interface LapTableProps {
+  laps: Lap[];
+  onAction?: (lapId: number) => void;
+  averageLapInformation?: AverageLapInfo[];
+  rankingMethod: string;
+  readonly?: boolean;
+  variant?: TableProps.Variant;
+  header?: string;
+}
+
+const LapTable: React.FC<LapTableProps> = (props) => {
   const { t } = useTranslation();
-  const [lapsJsx, SetLapsJsx] = useState([]);
+  const [lapsJsx, SetLapsJsx] = useState<LapTableItem[]>([]);
 
   const { laps, onAction, averageLapInformation, rankingMethod, readonly = false } = props;
 
@@ -15,38 +46,38 @@ const LapTable = (props) => {
     {
       id: 'id',
       header: t('timekeeper.lap-table.lap-number'),
-      cell: (item) => item.lapId || '',
+      cell: (item: LapTableItem) => item.lapId || '',
       sortingField: 'id',
       width: '100px',
     },
     {
       id: 'time',
       header: t('timekeeper.lap-table.lap-time'),
-      cell: (item) => item.time || '',
+      cell: (item: LapTableItem) => item.time || '',
       sortingField: 'time',
     },
     {
       id: 'average',
       header: t('timekeeper.lap-table.average'),
-      cell: (item) => item.average || '',
+      cell: (item: LapTableItem) => item.average || '',
       sortingField: 'average',
     },
     {
       id: 'resets',
       header: t('timekeeper.lap-table.resets'),
-      cell: (item) => item.resets || 0,
+      cell: (item: LapTableItem) => item.resets || 0,
       sortingField: 'resets',
     },
     {
       id: 'valid',
       header: t('timekeeper.lap-table.valid-header'),
-      cell: (item) => item.valid || '',
+      cell: (item: LapTableItem) => item.valid || '',
       width: '200px',
     },
     {
       id: 'car',
       header: t('timekeeper.lap-table.lap-car'),
-      cell: (item) => item.carName || '',
+      cell: (item: LapTableItem) => item.carName || '',
     },
   ];
 
@@ -56,11 +87,11 @@ const LapTable = (props) => {
 
   useEffect(() => {
     if (laps && laps.length) {
-      const items = laps.map((lap) => {
+      const items: LapTableItem[] = laps.map((lap) => {
         if (lap.isValid) {
         }
 
-        let averageLap;
+        let averageLap: AverageLapInfo | undefined;
         if (averageLapInformation) {
           averageLap = averageLapInformation.find(
             (avg) => Number(avg.endLapId) === Number(lap.lapId)
@@ -77,7 +108,7 @@ const LapTable = (props) => {
             </StatusIndicator>
           ) : (
             <>
-              <Button onClick={() => onAction(lap.lapId)}>
+              <Button onClick={() => onAction && onAction(lap.lapId)}>
                 <StatusIndicator type={lap.isValid ? 'success' : 'error'}>
                   {lap.isValid
                     ? t('timekeeper.lap-table.valid')
@@ -92,7 +123,7 @@ const LapTable = (props) => {
     } else {
       SetLapsJsx([]);
     }
-  }, [laps, onAction]);
+  }, [laps, onAction, readonly, t, averageLapInformation]);
 
   return (
     <Table

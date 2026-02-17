@@ -1,6 +1,6 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   AttributeEditor,
+  AttributeEditorProps,
   Container,
   Header,
   Input,
@@ -9,16 +9,60 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const LandingPageConfigPanel = ({ onChange, onFormIsValid, onFormIsInvalid }) => {
+/**
+ * Landing page link configuration
+ */
+interface LandingPageLink {
+  linkName?: string;
+  linkDescription?: string;
+  linkHref?: string;
+}
+
+/**
+ * Landing page configuration structure
+ */
+interface LandingPageConfig {
+  landingPageConfig: {
+    links: LandingPageLink[];
+  };
+}
+
+/**
+ * Props for LandingPageConfigPanel component
+ */
+interface LandingPageConfigPanelProps {
+  onChange: (config: LandingPageConfig) => void;
+  onFormIsValid: () => void;
+  onFormIsInvalid: () => void;
+}
+
+/**
+ * Props for Control component
+ */
+interface ControlProps {
+  value?: string;
+  index: number;
+  placeholder: string;
+  setItems: React.Dispatch<React.SetStateAction<LandingPageLink[]>>;
+  prop: keyof LandingPageLink;
+}
+
+export const LandingPageConfigPanel: React.FC<LandingPageConfigPanelProps> = ({
+  onChange,
+  onFormIsValid,
+  onFormIsInvalid,
+}) => {
   const { t } = useTranslation();
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<LandingPageLink[]>([]);
 
   useEffect(() => {
     console.debug(items);
     UpdateConfig(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
-  const UpdateConfig = (attr) => {
-    const landingPageConfig = {
+
+  const UpdateConfig = (attr: LandingPageLink[]) => {
+    const landingPageConfig: LandingPageConfig = {
       landingPageConfig: {
         // We merge this data upstream, so removing elements becomes impossible.
         links: items,
@@ -27,10 +71,10 @@ export const LandingPageConfigPanel = ({ onChange, onFormIsValid, onFormIsInvali
     onChange(landingPageConfig);
   };
 
-  const Control = React.memo(({ value, index, placeholder, setItems, prop }) => {
+  const Control: React.FC<ControlProps> = React.memo(({ value, index, placeholder, setItems, prop }) => {
     return (
       <Input
-        value={value}
+        value={value || ''}
         placeholder={placeholder}
         onChange={({ detail }) => {
           setItems((items) => {
@@ -46,7 +90,7 @@ export const LandingPageConfigPanel = ({ onChange, onFormIsValid, onFormIsInvali
     );
   });
 
-  const definition = useMemo(
+  const definition: AttributeEditorProps.FieldDefinition<LandingPageLink>[] = useMemo(
     () => [
       {
         label: t('events.landing-page.settings.link-name'),
@@ -85,14 +129,14 @@ export const LandingPageConfigPanel = ({ onChange, onFormIsValid, onFormIsInvali
         ),
       },
     ],
-    []
+    [t]
   );
 
   const onAddButtonClick = useCallback(() => {
     setItems((items) => [...items, {}]);
   }, []);
 
-  const onRemoveButtonClick = useCallback(({ detail: { itemIndex } }) => {
+  const onRemoveButtonClick = useCallback(({ detail: { itemIndex } }: { detail: { itemIndex: number } }) => {
     setItems((items) => {
       const newItems = items.slice();
       newItems.splice(itemIndex, 1);

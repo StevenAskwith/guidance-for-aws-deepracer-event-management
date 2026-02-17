@@ -1,8 +1,8 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useEffect } from 'react';
 
 import { useCollection } from '@cloudscape-design/collection-hooks';
-import { PropertyFilter, Table } from '@cloudscape-design/components';
+import { PropertyFilter, Table, TableProps } from '@cloudscape-design/components';
+import type { PropertyFilterProps } from '@cloudscape-design/components';
 import { useTranslation } from 'react-i18next';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { PropertyFilterI18nStrings, TableEmptyState, TableNoMatchState } from './tableCommon';
@@ -13,7 +13,42 @@ import {
   TablePreferences,
 } from './tableConfig';
 
-export const PageTable = ({
+interface ColumnConfiguration<T> {
+  columnDefinitions: TableProps.ColumnDefinition<T>[];
+  defaultVisibleColumns: string[];
+  visibleContentOptions: Array<{
+    id?: string;
+    label: string;
+    editable?: boolean;
+    options?: Array<{ id: string; label: string; editable?: boolean }>;
+  }>;
+  defaultSortingColumn?: TableProps.ColumnDefinition<T> | string;
+  defaultSortingIsDescending?: boolean;
+}
+
+interface PropertyFilterQuery {
+  tokens: PropertyFilterProps.Token[];
+  operation: PropertyFilterProps.JoinOperation;
+}
+
+interface PageTableProps<T> extends Omit<TableProps<T>, 'items' | 'columnDefinitions'> {
+  localStorageKey: string;
+  selectedItems: T[];
+  setSelectedItems: (items: T[]) => void;
+  tableItems: T[];
+  itemsIsLoading: boolean;
+  loadingText: string;
+  header: React.ReactNode;
+  trackBy: string | ((item: T) => string);
+  filteringProperties?: PropertyFilterProps.FilteringProperty[];
+  filteringI18nStringsName: string;
+  selectionType?: TableProps.SelectionType;
+  columnConfiguration: ColumnConfiguration<T>;
+  stickyHeader?: boolean;
+  query?: PropertyFilterQuery;
+}
+
+export const PageTable = <T,>({
   localStorageKey,
   selectedItems,
   setSelectedItems,
@@ -27,9 +62,9 @@ export const PageTable = ({
   selectionType,
   columnConfiguration,
   stickyHeader = true,
-  query = { tokens: [], operation: 'and' },
+  query = { tokens: [], operation: 'and' as const },
   ...props
-}) => {
+}: PageTableProps<T>) => {
   const { t } = useTranslation(['translation']);
 
   const [preferences, setPreferences] = useLocalStorage(`DREM-${localStorageKey}`, {
@@ -75,7 +110,7 @@ export const PageTable = ({
       : undefined,
     pagination: { pageSize: preferences.pageSize },
     sorting: { defaultState: { 
-      sortingColumn: columnConfiguration.defaultSortingColumn,
+      sortingColumn: columnConfiguration.defaultSortingColumn as any,
       isDescending: columnConfiguration.defaultSortingIsDescending
     } },
     selection: {},
@@ -101,7 +136,7 @@ export const PageTable = ({
       columnDefinitions={columnConfiguration.columnDefinitions}
       items={items}
       stripedRows={preferences.stripedRows}
-      contentDensity={preferences.contentDensity}
+      contentDensity={preferences.contentDensity as 'comfortable' | 'compact'}
       wrapLines={preferences.wrapLines}
       loading={itemsIsLoading}
       loadingText={loadingText}
@@ -115,7 +150,7 @@ export const PageTable = ({
           }}
           // query={thisQuery}
           i18nStrings={PropertyFilterI18nStrings(filteringI18nStringsName)}
-          countText={MatchesCountText(filteredItemsCount)}
+          countText={MatchesCountText(filteredItemsCount ?? 0)}
           expandToViewport={true}
         />
       }

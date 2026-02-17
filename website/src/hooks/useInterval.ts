@@ -1,25 +1,29 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
-// https://gist.github.com/EduVencovsky/466eae6c71c7021a86c3bd5afa6bfcc4
 import { useEffect, useRef } from 'react';
 
-function useInterval(callback, delay) {
-  const savedCallback = useRef();
+/**
+ * Custom hook for declarative setInterval
+ * Based on: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
+ * 
+ * @param callback - Function to call on each interval tick
+ * @param delay - Delay in milliseconds (null to pause)
+ */
+export function useInterval(callback: () => void, delay: number | null): void {
+  const savedCallback = useRef<() => void>();
 
-  // Remember the latest callback.
+  // Remember the latest callback
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
 
-  // Set up the interval.
+  // Set up the interval
   useEffect(() => {
     function tick() {
-      savedCallback.current();
+      savedCallback.current?.();
     }
+    
     if (delay !== null) {
       const id = setInterval(tick, delay);
       return () => clearInterval(id);
     }
   }, [delay]);
 }
-
-export default useInterval;

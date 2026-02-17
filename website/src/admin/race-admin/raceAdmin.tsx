@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,19 +13,24 @@ import { useUsers } from '../../hooks/useUsers';
 import { useSelectedEventContext } from '../../store/contexts/storeProvider';
 import { useStore } from '../../store/store';
 import { formatAwsDateTime } from '../../support-functions/time';
+import { Race } from '../../types/domain';
 import { LapsTable } from './components/lapsTable';
 import { MultiChoicePanelContent } from './components/multiChoicePanelContent';
 import { ColumnConfiguration, FilteringProperties } from './support-functions/raceTableConfig';
 
-const RaceAdmin = () => {
+/**
+ * RaceAdmin component for managing races in the admin interface
+ * Provides view, edit, and delete operations for races with detailed lap information
+ */
+const RaceAdmin = (): JSX.Element => {
   const { t } = useTranslation(['translation', 'help-admin-race-admin']);
   const selectedEvent = useSelectedEventContext();
   const [send] = useMutation();
-  const [SelectedRacesInTable, setSelectedRacesInTable] = useState([]);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [SelectedRacesInTable, setSelectedRacesInTable] = useState<Race[]>([]);
+  const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [state, dispatch] = useStore();
-  const races = state.races.races;
-  const isLoading = state.races.isLoading;
+  const races = state.races?.races || [];
+  const isLoading = state.races?.isLoading || false;
   const [, usersIsLoading, getUserNameFromId] = useUsers();
 
   const navigate = useNavigate();
@@ -34,16 +38,16 @@ const RaceAdmin = () => {
     navigate('/admin/races/edit', { state: SelectedRacesInTable[0] });
   };
 
-  async function deleteRaces() {
+  async function deleteRaces(): Promise<void> {
     const racesToDelete = SelectedRacesInTable.map((race) => {
       return { userId: race.userId, raceId: race.raceId, trackId: race.trackId };
     });
     const deleteVariables = {
-      eventId: selectedEvent.eventId,
+      eventId: selectedEvent?.eventId || '',
       racesToDelete: racesToDelete,
     };
     console.info(deleteVariables);
-    send('deleteRaces', deleteVariables);
+    send('deleteRaces' as any, deleteVariables);
     setSelectedRacesInTable([]);
   }
 
@@ -60,17 +64,23 @@ const RaceAdmin = () => {
   });
 
   useEffect(() => {
-    const selectPanelContent = (selectedItems) => {
+    const selectPanelContent = (selectedItems: Race[]) => {
       if (selectedItems.length === 0) {
         return (
-          <DrSplitPanel header="0 races selected" noSelectedItems={selectedItems.length}>
+          <DrSplitPanel header="0 races selected">
             {t('race-admin.select-a-race')}
           </DrSplitPanel>
         );
       } else if (selectedItems.length === 1) {
         return (
           <DrSplitPanel header="Laps">
-            <LapsTable race={selectedItems[0]} tableSettings={{ variant: 'embedded' }} />
+            <LapsTable
+              race={selectedItems[0]}
+              tableSettings={{ variant: 'embedded' }}
+              onSelectionChange={() => {}}
+              selectedLaps={[]}
+              isEditable={false}
+            />
           </DrSplitPanel>
         );
       } else if (selectedItems.length > 1) {
@@ -92,7 +102,7 @@ const RaceAdmin = () => {
     };
   }, [SelectedRacesInTable, dispatch, t]);
 
-  const HeaderActionButtons = () => {
+  const HeaderActionButtons = (): JSX.Element => {
     const disableEditButton = SelectedRacesInTable.length === 0 || SelectedRacesInTable.length > 1;
     const disableDeleteButton = SelectedRacesInTable.length === 0;
     return (
@@ -124,7 +134,7 @@ const RaceAdmin = () => {
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('operator.breadcrumb'), href: '/admin/home' },
         { text: t('event-management.breadcrumb'), href: '/admin/home' },
-        { text: t('race-admin.breadcrumb') },
+        { text: t('race-admin.breadcrumb'), href: '#' },
       ]}
     >
       <PageTable
@@ -138,14 +148,14 @@ const RaceAdmin = () => {
             nrSelectedItems={SelectedRacesInTable.length}
             nrTotalItems={races.length}
             header={t('race-admin.races-table-header')}
-            actions={<HeaderActionButtons />}
+            actions={<HeaderActionButtons /> as any}
           />
         }
         itemsIsLoading={isLoading || usersIsLoading}
         loadingText={t('race-admin.loading-resources')}
         localStorageKey={'races-table-preferences'}
         trackBy={'raceId'}
-        filteringProperties={filteringProperties}
+        filteringProperties={filteringProperties as any}
         filteringI18nStringsName={'races'}
       />
 

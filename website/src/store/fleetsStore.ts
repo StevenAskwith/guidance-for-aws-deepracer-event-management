@@ -1,18 +1,20 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
+import { GlobalState, FleetsState } from './storeTypes';
+import { Fleet } from '../types/domain';
 
-const configureStore = () => {
+const configureStore = (): void => {
   const actions = {
-    ADD_FLEETS: (curState, fleets) => {
+    ADD_FLEETS: (curState: GlobalState, fleets: Fleet[]): Partial<GlobalState> => {
       console.debug('ADD_FLEETS DISPATCH FUNCTION');
-      const updatedFleets = { ...curState.fleets };
+      const updatedFleets: FleetsState = { ...(curState.fleets || { fleets: [], isLoading: false }) };
       updatedFleets.fleets = fleets;
       return { fleets: updatedFleets };
     },
-    UPDATE_FLEET: (curState, fleet) => {
+    UPDATE_FLEET: (curState: GlobalState, fleet: Fleet): Partial<GlobalState> => {
       console.debug('UPDATE_FLEET DISPATCH FUNCTION');
-      const updatedFleets = { ...curState.fleets };
-      const fleetIndex = curState.fleets.fleets.findIndex((r) => r.fleetId === fleet.fleetId);
+      const currentFleets = curState.fleets?.fleets || [];
+      const updatedFleets: FleetsState = { ...(curState.fleets || { fleets: [], isLoading: false }) };
+      const fleetIndex = currentFleets.findIndex((r) => r.fleetId === fleet.fleetId);
       if (fleetIndex === -1) {
         updatedFleets.fleets.push(fleet);
       } else {
@@ -20,19 +22,18 @@ const configureStore = () => {
       }
       return { fleets: updatedFleets };
     },
-    DELETE_FLEETS: (curState, fleetIdsToDelete) => {
+    DELETE_FLEETS: (curState: GlobalState, fleetIdsToDelete: string[]): Partial<GlobalState> => {
       console.debug('DELETE_FLEET DISPATCH FUNCTION');
-      const updatedFleets = { ...curState.fleets };
-      updatedFleets.fleets = updatedFleets.fleets.filter((fleet) => {
-        return !fleetIdsToDelete.find((fleetIdToDelete) => {
-          return fleetIdToDelete === fleet.fleetId;
-        });
-      });
+      const currentFleets = curState.fleets?.fleets || [];
+      const updatedFleets: FleetsState = {
+        ...(curState.fleets || { fleets: [], isLoading: false }),
+        fleets: currentFleets.filter((fleet) => !fleetIdsToDelete.includes(fleet.fleetId))
+      };
       return { fleets: updatedFleets };
     },
-    FLEETS_IS_LOADING: (curState, isLoading) => {
+    FLEETS_IS_LOADING: (curState: GlobalState, isLoading: boolean): Partial<GlobalState> => {
       console.debug('FLEETS_IS_LOADING DISPATCH FUNCTION', isLoading);
-      const updatedFleets = { ...curState.fleets };
+      const updatedFleets: FleetsState = { ...(curState.fleets || { fleets: [], isLoading: false }) };
       updatedFleets.isLoading = isLoading;
       return { fleets: updatedFleets };
     },

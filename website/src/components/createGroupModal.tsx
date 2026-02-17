@@ -1,20 +1,31 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useState } from 'react';
+import { Box, Button, ButtonProps, Modal, SpaceBetween } from '@cloudscape-design/components';
 
-import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
+/**
+ * Props interface for CreateGroupModal component
+ */
+interface CreateGroupModalProps {
+  /** Whether the button is disabled */
+  disabled?: boolean;
+  /** Button variant style */
+  variant?: ButtonProps.Variant;
+}
 
-/* eslint import/no-anonymous-default-export: [2, {"allowArrowFunction": true}] */
-export default ({ disabled, variant }) => {
-  const [visible, setVisible] = useState(false);
-  // const [msgs, setMsgs] = useState([]);
+/**
+ * CreateGroupModal component that displays a modal for creating a group
+ * @param props - Component props
+ * @returns Rendered button and modal
+ */
+const CreateGroupModal = ({ disabled, variant }: CreateGroupModalProps): JSX.Element => {
+  const [visible, setVisible] = useState<boolean>(false);
 
-  function modealOpen() {
+  const modalOpen = (): void => {
     setVisible(true);
-  }
+  };
 
-  function modalClose() {
+  const modalClose = (): void => {
     setVisible(false);
-  }
+  };
 
   return (
     <>
@@ -22,7 +33,7 @@ export default ({ disabled, variant }) => {
         disabled={disabled}
         variant={variant}
         onClick={() => {
-          modealOpen();
+          modalOpen();
         }}
       >
         Create group
@@ -46,3 +57,5 @@ export default ({ disabled, variant }) => {
     </>
   );
 };
+
+export default CreateGroupModal;

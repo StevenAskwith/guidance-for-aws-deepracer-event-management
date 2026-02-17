@@ -1,18 +1,20 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
+import { GlobalState, EventsState } from './storeTypes';
+import { Event } from '../types/domain';
 
-const configureStore = () => {
+const configureStore = (): void => {
   const actions = {
-    ADD_EVENTS: (curState, events) => {
+    ADD_EVENTS: (curState: GlobalState, events: Event[]): Partial<GlobalState> => {
       console.debug('ADD_EVENTS DISPATCH FUNCTION');
-      const updatedEvents = { ...curState.events };
+      const updatedEvents: EventsState = { ...(curState.events || { events: [], isLoading: false }) };
       updatedEvents.events = events;
       return { events: updatedEvents };
     },
-    UPDATE_EVENT: (curState, event) => {
+    UPDATE_EVENT: (curState: GlobalState, event: Event): Partial<GlobalState> => {
       console.debug('UPDATE_EVENT DISPATCH FUNCTION');
-      const updatedEvents = { ...curState.events };
-      const eventIndex = curState.events.events.findIndex((e) => e.eventId === event.eventId);
+      const currentEvents = curState.events?.events || [];
+      const updatedEvents: EventsState = { ...(curState.events || { events: [], isLoading: false }) };
+      const eventIndex = currentEvents.findIndex((e) => e.eventId === event.eventId);
       if (eventIndex === -1) {
         updatedEvents.events.push(event);
       } else {
@@ -20,19 +22,18 @@ const configureStore = () => {
       }
       return { events: updatedEvents };
     },
-    DELETE_EVENTS: (curState, eventIdsToDelete) => {
+    DELETE_EVENTS: (curState: GlobalState, eventIdsToDelete: string[]): Partial<GlobalState> => {
       console.debug('DELETE_EVENT DISPATCH FUNCTION');
-      const updatedEvents = { ...curState.events };
-      updatedEvents.events = updatedEvents.events.filter((event) => {
-        return !eventIdsToDelete.find((eventIdToDelete) => {
-          return eventIdToDelete === event.eventId;
-        });
-      });
+      const currentEvents = curState.events?.events || [];
+      const updatedEvents: EventsState = { 
+        ...(curState.events || { events: [], isLoading: false }),
+        events: currentEvents.filter((event) => !eventIdsToDelete.includes(event.eventId))
+      };
       return { events: updatedEvents };
     },
-    EVENTS_IS_LOADING: (curState, isLoading) => {
+    EVENTS_IS_LOADING: (curState: GlobalState, isLoading: boolean): Partial<GlobalState> => {
       console.debug('EVENTS_IS_LOADING DISPATCH FUNCTION', isLoading);
-      const updatedEvents = { ...curState.events };
+      const updatedEvents: EventsState = { ...(curState.events || { events: [], isLoading: false }) };
       updatedEvents.isLoading = isLoading;
       return { events: updatedEvents };
     },

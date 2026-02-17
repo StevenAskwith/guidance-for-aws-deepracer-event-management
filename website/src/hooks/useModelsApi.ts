@@ -1,42 +1,64 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, Auth, graphqlOperation } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { getAllModels } from '../graphql/queries';
 import { onAddedModel, onDeletedModel, onUpdatedModel } from '../graphql/subscriptions';
 import { useStore } from '../store/store';
+import { Model } from '../types/domain';
+import { Dispatch } from '../store/store';
 
 // CONSTANTS
 const MODELS_GET_LIMIT = 200;
 
-export const useModelsApi = (allowedToFetchAllModels = false) => {
+interface SubscriptionVariables {
+  sub?: string;
+}
+
+interface GraphQLError {
+  message: string;
+}
+
+interface GetAllModelsResponse {
+  data: {
+    getAllModels: {
+      models: Model[];
+      nextToken: string | null;
+    };
+  };
+}
+
+export const useModelsApi = (allowedToFetchAllModels: boolean = false): void => {
   const [, dispatch] = useStore();
-  const [subscriptionVariables, setSubscriptionVariables] = useState({});
+  const [subscriptionVariables, setSubscriptionVariables] = useState<SubscriptionVariables>({});
 
   // If a user is not allowed to fetch all models the sub need to be provided to filter the subscription.
   useEffect(() => {
-    if (allowedToFetchAllModels) {
-      setSubscriptionVariables({});
-    } else {
-      const sub = Auth.user.attributes.sub;
-      setSubscriptionVariables({ sub: sub });
+    async function getSubscriptionVariables(): Promise<void> {
+      if (allowedToFetchAllModels) {
+        setSubscriptionVariables({});
+      } else {
+        const currentUser = await Auth.currentAuthenticatedUser();
+        const sub = currentUser.attributes.sub;
+        setSubscriptionVariables({ sub: sub });
+      }
     }
+    getSubscriptionVariables();
   }, [allowedToFetchAllModels]);
 
   // initial data load
   useEffect(() => {
-    const getModelApiCall = async (nextToken = undefined) => {
+    const getModelApiCall = async (nextToken: string | null = null): Promise<string | null> => {
       const response = await API.graphql(
         graphqlOperation(getAllModels, { limit: MODELS_GET_LIMIT, nextToken: nextToken })
-      );
+      ) as GetAllModelsResponse;
       const models = response.data.getAllModels.models;
       dispatch('ADD_MODELS', models);
       return response.data.getAllModels.nextToken;
     };
 
-    const getModels = async () => {
+    const getModels = async (): Promise<void> => {
       dispatch('MODELS_IS_LOADING', true);
       try {
-        let nextToken = undefined;
+        let nextToken: string | null = null;
         nextToken = await getModelApiCall(nextToken);
 
         dispatch('MODELS_IS_LOADING', false);
@@ -44,7 +66,7 @@ export const useModelsApi = (allowedToFetchAllModels = false) => {
         while (nextToken) {
           nextToken = await getModelApiCall(nextToken);
         }
-      } catch (error) {
+      } catch (error: any) {
         addErrorNotifications('getAllModels query', error.errors, dispatch);
       } finally {
         dispatch('MODELS_IS_LOADING', false);
@@ -60,15 +82,15 @@ export const useModelsApi = (allowedToFetchAllModels = false) => {
 
   // subscribe to data changes and append them to local array
   useEffect(() => {
-    const subscription = API.graphql(
+    const subscription = (API.graphql(
       graphqlOperation(onAddedModel, subscriptionVariables)
-    ).subscribe({
-      next: (event) => {
-        const addedModel = event.value.data.onAddedModel;
+    ) as any).subscribe({
+      next: (event: any) => {
+        const addedModel: Model = event.value.data.onAddedModel;
         dispatch('UPDATE_MODEL', addedModel);
       },
-      error: (error) => {
-        const errors = error.error.errors;
+      error: (error: any) => {
+        const errors: GraphQLError[] = error.error.errors;
         addErrorNotifications('onAddedModel subscription', errors, dispatch);
       },
     });
@@ -80,15 +102,15 @@ export const useModelsApi = (allowedToFetchAllModels = false) => {
 
   // subscribe to delete data changes and delete them from local array
   useEffect(() => {
-    const subscription = API.graphql(
+    const subscription = (API.graphql(
       graphqlOperation(onDeletedModel, subscriptionVariables)
-    ).subscribe({
-      next: (event) => {
-        const deletedModel = event.value.data.onDeletedModel;
+    ) as any).subscribe({
+      next: (event: any) => {
+        const deletedModel: Model = event.value.data.onDeletedModel;
         dispatch('DELETE_MODELS', [deletedModel]);
       },
-      error: (error) => {
-        const errors = error.error.errors;
+      error: (error: any) => {
+        const errors: GraphQLError[] = error.error.errors;
         addErrorNotifications('onDeletedModel subscription', errors, dispatch);
       },
     });
@@ -99,15 +121,15 @@ export const useModelsApi = (allowedToFetchAllModels = false) => {
   }, [subscriptionVariables, dispatch]);
 
   useEffect(() => {
-    const subscription = API.graphql(
+    const subscription = (API.graphql(
       graphqlOperation(onUpdatedModel, subscriptionVariables)
-    ).subscribe({
-      next: (event) => {
-        const updatedModel = event.value.data.onUpdatedModel;
+    ) as any).subscribe({
+      next: (event: any) => {
+        const updatedModel: Model = event.value.data.onUpdatedModel;
         dispatch('UPDATE_MODEL', updatedModel);
       },
-      error: (error) => {
-        const errors = error.error.errors;
+      error: (error: any) => {
+        const errors: GraphQLError[] = error.error.errors;
         addErrorNotifications('onUpdateModel subscription', errors, dispatch);
       },
     });
@@ -119,7 +141,11 @@ export const useModelsApi = (allowedToFetchAllModels = false) => {
 };
 
 // adds an error notification for each API error
-const addErrorNotifications = (apiMethodName, errors, dispatch) => {
+const addErrorNotifications = (
+  apiMethodName: string, 
+  errors: GraphQLError[], 
+  dispatch: Dispatch
+): void => {
   errors.forEach((element, index) => {
     const errorMessage = `${apiMethodName}: ${element.message}`;
     const notificationId = `${apiMethodName}Error${index}`;

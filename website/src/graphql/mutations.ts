@@ -169,3 +169,37 @@ export const carSetTaillightColor = `mutation CarSetTaillightColor($resourceIds:
     success
   }
 }`;
+
+export const updateOverlayInfo = `mutation UpdateOverlayInfo(
+  $eventId: ID!
+  $eventName: String
+  $trackId: ID
+  $username: String
+  $countryCode: String
+  $userId: String
+  $timeLeftInMs: Float
+  $currentLapTimeInMs: Float
+  $raceStatus: RaceStatusEnum!
+) {
+  updateOverlayInfo(
+    eventId: $eventId
+    eventName: $eventName
+    trackId: $trackId
+    username: $username
+    countryCode: $countryCode
+    userId: $userId
+    timeLeftInMs: $timeLeftInMs
+    currentLapTimeInMs: $currentLapTimeInMs
+    raceStatus: $raceStatus
+  ) {
+    eventId
+    eventName
+    trackId
+    username
+    countryCode
+    userId
+    timeLeftInMs
+    currentLapTimeInMs
+    raceStatus
+  }
+}`;

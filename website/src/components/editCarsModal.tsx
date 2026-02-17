@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelectedEventContext } from '../store/contexts/storeProvider';
@@ -7,6 +6,7 @@ import {
   Box,
   Button,
   ButtonDropdown,
+  ButtonDropdownProps,
   Container,
   Header,
   Modal,
@@ -14,11 +14,36 @@ import {
 } from '@cloudscape-design/components';
 import { useCarCmdApi } from '../hooks/useCarsApi';
 import { useStore } from '../store/store';
+import { Car, Fleet } from '../types/domain';
 
-/* eslint import/no-anonymous-default-export: [2, {"allowArrowFunction": true}] */
-export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
+// Type definitions
+interface EditCarsModalProps {
+  disabled: boolean;
+  setRefresh: (refresh: boolean) => void;
+  selectedItems: Car[];
+  online: boolean;
+  variant?: 'normal' | 'primary' | 'link' | 'icon';
+}
+
+interface DropdownItem {
+  id: string;
+  text: string;
+}
+
+interface SelectedFleet {
+  fleetName: string;
+  fleetId?: string;
+}
+
+const EditCarsModal: React.FC<EditCarsModalProps> = ({
+  disabled,
+  setRefresh,
+  selectedItems,
+  online,
+  variant,
+}) => {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState<boolean>(false);
   const {
     carFetchLogs,
     carRestartService,
@@ -32,50 +57,49 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
   const [deleteModelsModalVisible, setDeleteModelsModalVisible] = useState(false);
   const [deleteCarsModalVisible, setDeleteCarsModalVisible] = useState(false);
 
-  const [dropDownFleets, setDropDownFleets] = useState([{ id: 'none', text: 'none' }]);
-  const [dropDownSelectedItem, setDropDownSelectedItem] = useState({
+  const [dropDownFleets, setDropDownFleets] = useState<DropdownItem[]>([
+    { id: 'none', text: 'none' },
+  ]);
+  const [dropDownSelectedItem, setDropDownSelectedItem] = useState<SelectedFleet>({
     fleetName: t('fleets.edit-cars.select-fleet'),
   });
 
-  const [dropDownColors, setDropDownColors] = useState([{ id: 'blue', text: 'blue' }]);
-  const [dropDownSelectedColor, setDropDownSelectedColor] = useState({
+  const [dropDownColors, setDropDownColors] = useState<DropdownItem[]>([
+    { id: 'blue', text: 'blue' },
+  ]);
+  const [dropDownSelectedColor, setDropDownSelectedColor] = useState<DropdownItem>({
     id: t('fleets.edit-cars.select-color'),
     text: t('fleets.edit-cars.select-color'),
   });
 
   const [state] = useStore();
-  const fleets = state.fleets.fleets;
+  const fleets: Fleet[] = state.fleets?.fleets || [];
   const selectedEvent = useSelectedEventContext();
 
   // convert fleets data to dropdown format
   useEffect(() => {
     if (fleets.length > 0) {
       setDropDownFleets(
-        fleets.map((thisFleet) => {
-          return {
-            id: thisFleet.fleetId,
-            text: thisFleet.fleetName,
-          };
-        })
+        fleets.map((thisFleet) => ({
+          id: thisFleet.fleetId,
+          text: thisFleet.fleetName,
+        }))
       );
     }
-    return () => {
-      // Unmounting
-    };
   }, [fleets]);
 
-  function modalOpen() {
+  function modalOpen(): void {
     setVisible(true);
     fetchColors();
   }
 
-  function modalClose() {
+  function modalClose(): void {
     setVisible(false);
   }
 
   // delete models and logs from Cars, including ROS logs and restart
-  async function triggerDeleteAllModels() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
+  async function triggerDeleteAllModels(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
     carDeleteAllModels(instanceIds, true);
 
     setVisible(false);
@@ -83,38 +107,41 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
   }
 
   // fetch logs from Cars
-  async function triggerCarFetchLogs() {
-    carFetchLogs(selectedItems, selectedEvent);
+  async function triggerCarFetchLogs(): Promise<void> {
+    carFetchLogs(selectedItems, selectedEvent as any);
 
     setVisible(false);
     setRefresh(true);
   }
 
   // Update Cars
-  async function triggerCarsUpdateFleet() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
-    carsUpdateFleet(instanceIds, dropDownSelectedItem.fleetName, dropDownSelectedItem.fleetId);
+  async function triggerCarsUpdateFleet(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
+    carsUpdateFleet(
+      instanceIds,
+      dropDownSelectedItem.fleetName,
+      dropDownSelectedItem.fleetId || ''
+    );
 
     setVisible(false);
     setRefresh(true);
     setDropDownSelectedItem({ fleetName: t('fleets.edit-cars.select-fleet') });
   }
 
-  async function fetchColors() {
-    const colors = JSON.parse(await getAvailableTaillightColors());
+  async function fetchColors(): Promise<void> {
+    const colorsString = await getAvailableTaillightColors();
+    const colors: string[] = JSON.parse(colorsString);
     setDropDownColors(
-      colors.map((thisColor) => {
-        return {
-          id: thisColor,
-          text: thisColor,
-        };
-      })
+      colors.map((thisColor) => ({
+        id: thisColor,
+        text: thisColor,
+      }))
     );
   }
 
   // Update Tail Light Colors on Cars
-  async function triggerCarColorUpdates() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
+  async function triggerCarColorUpdates(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
     carsUpdateTaillightColor(instanceIds, dropDownSelectedColor.id);
 
     setVisible(false);
@@ -122,24 +149,24 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
   }
 
   // Restart DeepRacer Service
-  async function triggerCarRestartService() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
+  async function triggerCarRestartService(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
     carRestartService(instanceIds);
 
     setVisible(false);
     setRefresh(true);
   }
 
-  async function triggerCarEmergencyStop() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
+  async function triggerCarEmergencyStop(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
     carEmergencyStop(instanceIds);
 
     setVisible(false);
     setRefresh(true);
   }
 
-  async function triggerDeleteCars() {
-    const instanceIds = selectedItems.map((i) => i.InstanceId);
+  async function triggerDeleteCars(): Promise<void> {
+    const instanceIds = selectedItems.map((i) => i.InstanceId).filter(Boolean);
     carsDelete(instanceIds);
 
     setVisible(false);
@@ -166,7 +193,7 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
         footer={
           <Box float="right">
             <SpaceBetween direction="horizontal" size="xs">
-              <Button variant="secondary" onClick={() => modalClose()}>
+              <Button variant={"secondary" as any} onClick={() => modalClose()}>
                 {t('button.cancel')}
               </Button>
             </SpaceBetween>
@@ -175,13 +202,15 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
         header={t('fleets.edit-cars.edit-cars')}
       >
         <SpaceBetween direction="vertical" size="m">
-          <Container header={<Header variant="h4">{t('fleets.header')}</Header>}>
+          <Container header={<Header variant={"h4" as any}>{t('fleets.header')}</Header>}>
             <SpaceBetween direction="horizontal" size="xs">
               <ButtonDropdown
-                items={dropDownFleets}
+                items={dropDownFleets as ButtonDropdownProps.Items}
                 onItemClick={({ detail }) => {
                   const index = fleets.map((e) => e.fleetId).indexOf(detail.id);
-                  setDropDownSelectedItem(fleets[index]);
+                  if (index >= 0) {
+                    setDropDownSelectedItem(fleets[index]);
+                  }
                 }}
               >
                 {dropDownSelectedItem.fleetName}
@@ -197,7 +226,7 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
             </SpaceBetween>
           </Container>
 
-          <Container header={<Header variant="h4">{t('fleets.edit-cars.logs-and-models')}</Header>}>
+          <Container header={<Header variant={"h4" as any}>{t('fleets.edit-cars.logs-and-models')}</Header>}>
             <SpaceBetween direction="horizontal" size="xs">
               <Button
                 disabled={!online}
@@ -219,7 +248,7 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
             </SpaceBetween>
           </Container>
 
-          <Container header={<Header variant="h4">{t('fleets.edit-cars.title')}</Header>}>
+          <Container header={<Header variant={"h4" as any}>{t('fleets.edit-cars.title')}</Header>}>
             <SpaceBetween direction="horizontal" size="xs">
               <Button
                 disabled={!online || selectedItems.length > 1}
@@ -241,10 +270,12 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
               </Button>
 
               <ButtonDropdown
-                items={dropDownColors}
+                items={dropDownColors as ButtonDropdownProps.Items}
                 onItemClick={({ detail }) => {
                   const index = dropDownColors.map((e) => e.id).indexOf(detail.id);
-                  setDropDownSelectedColor(dropDownColors[index]);
+                  if (index >= 0) {
+                    setDropDownSelectedColor(dropDownColors[index]);
+                  }
                 }}
               >
                 {dropDownSelectedColor.id}
@@ -261,7 +292,7 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
             </SpaceBetween>
           </Container>
 
-          <Container header={<Header variant="h4">{t('fleets.edit-cars.delete')}</Header>}>
+          <Container header={<Header variant={"h4" as any}>{t('fleets.edit-cars.delete')}</Header>}>
             <SpaceBetween direction="horizontal" size="xs">
               <Button
                 disabled={online || selectedItems.length === 0}
@@ -314,10 +345,8 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
         }
         header={t('fleets.edit-cars.clean-cars-header')}
       >
-        {t('fleets.edit-cars.clean-cars-message')}: <br></br>{' '}
-        {selectedItems.map((selectedItems) => {
-          return selectedItems.ComputerName + ' ';
-        })}
+        {t('fleets.edit-cars.clean-cars-message')}: <br />
+        {selectedItems.map((item) => item.ComputerName).join(' ')}
       </Modal>
 
       {/* delete cars */}
@@ -350,11 +379,11 @@ export default ({ disabled, setRefresh, selectedItems, online, variant }) => {
         }
         header={t('fleets.edit-cars.delete-cars-header')}
       >
-        {t('fleets.edit-cars.delete-cars-message')}: <br></br>{' '}
-        {selectedItems.map((selectedItems) => {
-          return selectedItems.ComputerName + ' ';
-        })}
+        {t('fleets.edit-cars.delete-cars-message')}: <br />
+        {selectedItems.map((item) => item.ComputerName).join(' ')}
       </Modal>
     </>
   );
 };
+
+export default EditCarsModal;

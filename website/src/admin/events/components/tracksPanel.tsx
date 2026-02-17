@@ -1,14 +1,21 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Box, Button, SpaceBetween, Tabs } from '@cloudscape-design/components';
+import { Box, Button, SpaceBetween, Tabs, TabsProps } from '@cloudscape-design/components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LeaderBoardConfigPanel } from './leaderboardConfigPanel';
+import { Track } from '../../../types/domain';
 
-export const TracksPanel = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }) => {
+interface TracksPanelProps {
+  tracks: Track[];
+  onChange: (value: { tracks: Track[] }) => void;
+  onFormIsValid: () => void;
+  onFormIsInvalid: () => void;
+}
+
+export const TracksPanel: React.FC<TracksPanelProps> = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }) => {
   const { t } = useTranslation();
-  const [activeTabId, setActiveTabId] = useState('1');
-  const [lastPressedTabId, setLastPressedTabId] = useState('1');
-  const [tabsContent, setTabsContent] = useState([]);
+  const [activeTabId, setActiveTabId] = useState<string>('1');
+  const [lastPressedTabId, setLastPressedTabId] = useState<string>('1');
+  const [tabsContent, setTabsContent] = useState<TabsProps.Tab[]>([]);
 
   // Make sure the right tab is active
   useEffect(() => {
@@ -24,7 +31,7 @@ export const TracksPanel = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }
   }, [tracks, lastPressedTabId]);
 
   const UpdateConfig = useCallback(
-    (attr) => {
+    (attr: Partial<Track>) => {
       const updated_tracks = structuredClone(tracks);
 
       const indexToUpdate = updated_tracks.findIndex((track) => track.trackId === attr.trackId);
@@ -37,7 +44,7 @@ export const TracksPanel = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }
     [tracks, onChange]
   );
 
-  const addTrackHandler = useCallback(() => {
+  const addTrackHandler = useCallback((): void => {
     const newTrack = structuredClone(tracks.slice(-1)[0]); // copy last element in tracks list
     let updatedTracks = [...tracks];
 
@@ -61,7 +68,7 @@ export const TracksPanel = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }
   }, [tracks, onChange]);
 
   const deleteTrackHandler = useCallback(
-    (index) => {
+    (index: number): void => {
       let updatedTracks = tracks.filter((track, trackConfigIndex) => trackConfigIndex !== index);
       updatedTracks = recalculateTrackIds(updatedTracks);
 
@@ -75,10 +82,10 @@ export const TracksPanel = ({ tracks, onChange, onFormIsValid, onFormIsInvalid }
     [tracks, onChange]
   );
 
-  const recalculateTrackIds = (tracks) => {
+  const recalculateTrackIds = (tracks: Track[]): Track[] => {
     return tracks.map((track, index) => {
       if (track.trackId !== 'combined') {
-        return { ...track, trackId: index + 1 };
+        return { ...track, trackId: (index + 1).toString() };
       } else return track;
     });
   };

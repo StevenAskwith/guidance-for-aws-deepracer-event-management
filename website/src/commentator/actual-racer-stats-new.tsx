@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React from 'react';
 
 import Container from '@cloudscape-design/components/container';
@@ -15,20 +14,35 @@ import { RaceTypeEnum } from '../admin/events/support-functions/raceConfig';
 import { convertMsToString } from '../support-functions/time';
 import { getFacestAvgFromOverlayInfo } from './support-functions';
 
+interface ValueWithLabelProps {
+  label: string;
+  children: React.ReactNode;
+  color?: string;
+}
+
 // color values: text-status-info, text-label
-const ValueWithLabel = ({ label, children, color = 'text-label' }) => (
+const ValueWithLabel: React.FC<ValueWithLabelProps> = ({ label, children, color = 'text-label' }) => (
   <div>
     <Box variant="h3">{label}</Box>
-    <Box color={color} variant="h2">
+    <Box color={color as any} variant="h2">
       {children}
     </Box>
   </div>
 );
 
-const FastestAvgWindow = ({ averageLapInformation }) => {
+interface AverageLapInformation {
+  startLapId?: number;
+  endLapId?: number;
+}
+
+interface FastestAvgWindowProps {
+  averageLapInformation?: AverageLapInformation;
+}
+
+const FastestAvgWindow: React.FC<FastestAvgWindowProps> = ({ averageLapInformation }) => {
   var label = '-';
 
-  if (Number(averageLapInformation?.startLapId) >= 0) {
+  if (averageLapInformation && Number(averageLapInformation.startLapId) >= 0) {
     label = `${Number(averageLapInformation.startLapId) + 1} - ${
       Number(averageLapInformation.endLapId) + 1
     }`;
@@ -37,27 +51,38 @@ const FastestAvgWindow = ({ averageLapInformation }) => {
   return <>{label}</>;
 };
 
-const NewPositionLabel = ({ newPosition, actualPosition }) => {
-  var label = newPosition <= 0 ? '-' : newPosition;
+interface NewPositionLabelProps {
+  newPosition: number;
+  actualPosition: number;
+}
+
+const NewPositionLabel: React.FC<NewPositionLabelProps> = ({ newPosition, actualPosition }) => {
+  var label: string | number = newPosition <= 0 ? '-' : newPosition;
   if (actualPosition > -1 && newPosition < actualPosition)
     label = `${newPosition} (-${actualPosition - newPosition})`;
   return <>{label}</>;
 };
 
-const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
+interface ActualRacerStatsNewProps {
+  leaderboard: any[];
+  overlayInfo: any;
+  raceFormat: string;
+}
+
+const ActualRacerStatsNew: React.FC<ActualRacerStatsNewProps> = ({ leaderboard, overlayInfo, raceFormat }) => {
   const { t } = useTranslation();
   //const { actualRacer, leaderboard = [] } = props;
 
-  const [timerIsRunning, SetTimerIsRunning] = useState(false);
-  const [timeLeftInMs, SetTimeLeftInMs] = useState(0);
-  const [fastestRaceLap, SetFastestRaceLap] = useState({});
-  const [fastestRaceAvg, SetFastestRaceAvg] = useState({});
-  const [gapToLeader, SetGapToLeader] = useState('-');
-  const [fastestEventLapTime, SetFastestEventLapTime] = useState();
-  const [fastestEventAvgLap, SetFastestEventAvgLap] = useState();
-  const [actualPosition, SetActualPosition] = useState();
-  const [newPosition, SetNewPosition] = useState();
-  const [selectedRacer, SetSelectedRacer] = useState('');
+  const [timerIsRunning, SetTimerIsRunning] = useState<boolean>(false);
+  const [timeLeftInMs, SetTimeLeftInMs] = useState<number>(0);
+  const [fastestRaceLap, SetFastestRaceLap] = useState<any>({});
+  const [fastestRaceAvg, SetFastestRaceAvg] = useState<any>({});
+  const [gapToLeader, SetGapToLeader] = useState<string>('-');
+  const [fastestEventLapTime, SetFastestEventLapTime] = useState<number | undefined>();
+  const [fastestEventAvgLap, SetFastestEventAvgLap] = useState<any>();
+  const [actualPosition, SetActualPosition] = useState<number | undefined>();
+  const [newPosition, SetNewPosition] = useState<number | undefined>();
+  const [selectedRacer, SetSelectedRacer] = useState<string>('');
 
   const calculateGapToLeaderValue = () => {
     var leaderTime = 0;
@@ -80,7 +105,7 @@ const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
     SetGapToLeader(label);
   };
 
-  const manageTimer = (overlayInfo) => {
+  const manageTimer = (overlayInfo: any) => {
     SetTimeLeftInMs(overlayInfo.timeLeftInMs ? overlayInfo.timeLeftInMs : 0);
     if (overlayInfo.raceStatus === 'RACE_IN_PROGRESS') {
       SetTimerIsRunning(true);
@@ -89,7 +114,7 @@ const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
     }
   };
 
-  const calculatePositions = (username, fastestRaceLap, fastestRaceAvg) => {
+  const calculatePositions = (username?: string, fastestRaceLap?: any, fastestRaceAvg?: any) => {
     if (leaderboard?.length > 0 && username) {
       // actual position
       const actualPosition = leaderboard.findIndex((entry) => entry.username === username);
@@ -123,14 +148,14 @@ const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
     }
   };
 
-  const updateUI = (overlayInfo) => {
-    var lapsSortedByTime = [];
+  const updateUI = (overlayInfo: any) => {
+    var lapsSortedByTime: any[] = [];
 
-    var fastestRaceLap = {};
+    var fastestRaceLap: any = {};
     if (overlayInfo.laps) {
       lapsSortedByTime = overlayInfo.laps
-        .filter((lap) => lap.isValid)
-        .sort((a, b) => {
+        .filter((lap: any) => lap.isValid)
+        .sort((a: any, b: any) => {
           return a.time > b.time ? 1 : b.time > a.time ? -1 : 0;
         });
       fastestRaceLap = lapsSortedByTime[0];
@@ -166,7 +191,7 @@ const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
 
       SetFastestEventLapTime(fastest.fastestLapTime);
       SetFastestEventAvgLap(fastest.fastestAverageLap);
-      calculatePositions();
+      calculatePositions(undefined, undefined, undefined);
     }
   }, [leaderboard, raceFormat]);
 
@@ -219,8 +244,8 @@ const ActualRacerStatsNew = ({ leaderboard, overlayInfo, raceFormat }) => {
             </ValueWithLabel>
             <ValueWithLabel label={t('commentator.race.newPosition')} color="text-status-info">
               <NewPositionLabel
-                newPosition={newPosition}
-                actualPosition={actualPosition}
+                newPosition={newPosition || 0}
+                actualPosition={actualPosition || 0}
               ></NewPositionLabel>
             </ValueWithLabel>
           </Grid>

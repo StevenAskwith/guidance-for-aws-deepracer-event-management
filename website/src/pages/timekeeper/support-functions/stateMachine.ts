@@ -1,8 +1,20 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
 import { assign, createMachine, raise } from 'xstate';
 
-export const stateMachine = createMachine({
+interface TimekeeperContext {
+  raceTimeIsExpired: boolean;
+  dnf: boolean;
+}
+
+type TimekeeperEvent =
+  | { type: 'TOGGLE' }
+  | { type: 'END' }
+  | { type: 'CAPTURE_LAP' }
+  | { type: 'CAPTURE_AUT_LAP' }
+  | { type: 'EXPIRE' }
+  | { type: 'DID_NOT_FINISH' }
+  | { type: 'RESUME' };
+
+export const stateMachine = createMachine<TimekeeperContext, TimekeeperEvent>({
   id: 'timekeeper',
   predictableActionArguments: true,
   preserveActionOrder: true,

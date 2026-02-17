@@ -1,12 +1,11 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
+import { GlobalState } from './storeTypes';
 
-const configureStore = () => {
+const configureStore = (): void => {
   const actions = {
-    SIDE_NAV_IS_OPEN: (curState, isOpen) => {
+    SIDE_NAV_IS_OPEN: (curState: GlobalState, isOpen: boolean): Partial<GlobalState> => {
       console.debug('SIDE_NAV_IS_OPEN DISPATCH FUNCTION', isOpen);
-      const updatedSideNav = { ...curState.sideNav };
-      updatedSideNav.isOpen = isOpen;
+      const updatedSideNav = { ...curState.sideNav, isOpen };
       return { sideNav: updatedSideNav };
     },
   };

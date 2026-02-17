@@ -26,7 +26,8 @@ export const event = {
   },
   tracks: [
     {
-      trackId: 1,
+      trackId: '1',
+      trackName: '',
       leaderBoardTitle: undefined,
       leaderBoardFooter: 'Follow the race #AWSDeepRacer',
       fleetId: undefined,

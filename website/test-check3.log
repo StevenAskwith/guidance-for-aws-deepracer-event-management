@@ -1,0 +1,14 @@
+
+> drem@0.1.0 test
+> react-scripts test --passWithNoTests --watchAll=false
+
+PASS src/admin/race-admin/support-functions/metricCalculations.test.ts
+PASS src/components/devices-table/deviceTableConfig.test.ts
+PASS src/admin/race-admin/support-functions/raceTableConfig.test.ts
+PASS src/support-functions/time.test.ts
+
+Test Suites: 4 passed, 4 total
+Tests:       40 passed, 40 total
+Snapshots:   0 total
+Time:        1.662 s
+Ran all test suites.

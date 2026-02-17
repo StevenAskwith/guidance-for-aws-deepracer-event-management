@@ -1,51 +1,61 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
+import { merge } from '../support-functions/merge';
+import { GlobalState } from './storeTypes';
 
-const configureStore = () => {
+interface Asset {
+  assetId: string;
+  [key: string]: any; // Allow other asset properties
+}
+
+const configureStore = (): void => {
   const actions = {
-    ADD_ASSETS: (curState, assets) => {
+    ADD_ASSETS: (curState: GlobalState, assets: Asset[]): Partial<GlobalState> => {
       console.info('ADD_ASSETS DISPATCH FUNCTION', assets);
-      const updatedAssets = { ...curState.assets };
+      const currentAssets = curState.assets || { assets: [], isLoading: true };
+      const updatedAssets = { ...currentAssets };
       assets.forEach((asset) => {
-        const assetIndex = curState.assets.assets.findIndex((e) => e.assetId === asset.assetId);
+        const assetIndex = currentAssets.assets.findIndex((e: any) => e.assetId === asset.assetId);
         if (assetIndex === -1) {
-          updatedAssets.assets.push(asset);
+          updatedAssets.assets.push(asset as any);
         } else {
-          const mergedAsset = mergeDeep(updatedAssets.assets[assetIndex], asset);
+          const mergedAsset = merge(updatedAssets.assets[assetIndex], asset);
           console.info('MERGED ASSET', mergedAsset);
           updatedAssets.assets[assetIndex] = mergedAsset;
         }
       });
-      return { assets: updatedAssets, isLoading: false };
+      return { assets: updatedAssets };
     },
-    UPDATE_ASSET: (curState, assetToUpdate) => {
+    UPDATE_ASSET: (curState: GlobalState, assetToUpdate: Asset): Partial<GlobalState> => {
       console.info('UPDATE_ASSET DISPATCH FUNCTION', assetToUpdate);
-      const updatedAssets = { ...curState.assets };
-      const assetIndex = curState.assets.assets.findIndex(
-        (e) => e.assetId === assetToUpdate.assetId
+      const currentAssets = curState.assets || { assets: [], isLoading: true };
+      const updatedAssets = { ...currentAssets };
+      const assetIndex = currentAssets.assets.findIndex(
+        (e: any) => e.assetId === assetToUpdate.assetId
       );
       if (assetIndex === -1) {
-        updatedAssets.assets.push(assetToUpdate);
+        updatedAssets.assets.push(assetToUpdate as any);
       } else {
-        const mergedAsset = mergeDeep(updatedAssets.assets[assetIndex], assetToUpdate);
+        const mergedAsset = merge(updatedAssets.assets[assetIndex], assetToUpdate);
         console.info('MERGED ASSET', mergedAsset);
         updatedAssets.assets[assetIndex] = mergedAsset;
       }
-      return { assets: updatedAssets, isLoading: false };
+      return { assets: updatedAssets };
     },
-    DELETE_ASSET: (curState, assetsToDelete) => {
+    DELETE_ASSET: (curState: GlobalState, assetsToDelete: Asset[]): Partial<GlobalState> => {
       console.debug('DELETE_ASSET DISPATCH FUNCTION', assetsToDelete);
-      const updatedAssets = { ...curState.assets };
-      updatedAssets.assets = updatedAssets.assets.filter((asset) => {
+      const currentAssets = curState.assets || { assets: [], isLoading: true };
+      const updatedAssets = { ...currentAssets };
+      updatedAssets.assets = updatedAssets.assets.filter((asset: any) => {
         return !assetsToDelete.find((assetToDelete) => {
           return assetToDelete.assetId === asset.assetId;
         });
       });
-      return { assets: updatedAssets, isLoading: false };
+      return { assets: updatedAssets };
     },
-    ASSETS_IS_LOADING: (curState, isLoading) => {
+    ASSETS_IS_LOADING: (curState: GlobalState, isLoading: boolean): Partial<GlobalState> => {
       console.debug('ASSETS_IS_LOADING DISPATCH FUNCTION', isLoading);
-      const updatedAssets = { ...curState.assets };
+      const currentAssets = curState.assets || { assets: [], isLoading: true };
+      const updatedAssets = { ...currentAssets };
       updatedAssets.isLoading = isLoading;
       return { assets: updatedAssets };
     },
@@ -55,20 +65,3 @@ const configureStore = () => {
 };
 
 export default configureStore;
-
-// deep merge two objects
-const mergeDeep = (target, source) => {
-  if (typeof source === 'object') {
-    for (const key in source) {
-      if (source.hasOwnProperty(key)) {
-        const value = source[key];
-        if (typeof value === 'object') {
-          target[key] = mergeDeep(target[key], value);
-        } else {
-          target[key] = value;
-        }
-      }
-    }
-  }
-  return target;
-};

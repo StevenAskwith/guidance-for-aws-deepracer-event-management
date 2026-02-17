@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, ColumnLayout, SpaceBetween } from '@cloudscape-design/components';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,19 +14,46 @@ import {
 } from '../support-functions/raceConfig';
 import { TrackTable } from './trackTable';
 
-export const EventDetailsPanelContent = ({ event }) => {
+interface RaceConfig {
+  rankingMethod: string;
+  trackType: string;
+  raceTimeInMin: number;
+  numberOfResetsPerLap: string;
+}
+
+interface Track {
+  trackId: string;
+  trackName: string;
+}
+
+interface Event {
+  eventId: string;
+  typeOfEvent: string;
+  createdBy?: string;
+  eventDate: string;
+  countryCode: string;
+  raceConfig: RaceConfig;
+  sponsor?: string;
+  tracks: Track[];
+}
+
+interface EventDetailsPanelContentProps {
+  event: Event;
+}
+
+export const EventDetailsPanelContent: React.FC<EventDetailsPanelContentProps> = ({ event }) => {
   const { t } = useTranslation();
 
-  const [, , getUserNameFromId] = useUsers();
+  const [, , getUserNameFromId] = useUsers() as any; // TODO: Type useUsers hook properly
 
   console.debug('=== EVENT ===');
   console.debug(event.raceConfig.rankingMethod);
-  let raceFormat = 'fastest';
+  let raceFormat: string = 'fastest';
   if (event.raceConfig.rankingMethod === RaceTypeEnum.BEST_AVERAGE_LAP_TIME_X_LAP) {
     raceFormat = 'average';
   }
 
-  const attributeField = (header, value) => {
+  const attributeField = (header: string, value: React.ReactNode): JSX.Element => {
     return (
       <SpaceBetween size="xxxs">
         <Box fontWeight="bold">{header}</Box>
@@ -35,7 +61,6 @@ export const EventDetailsPanelContent = ({ event }) => {
       </SpaceBetween>
     );
   };
-  // JSX
 
   return (
     <>
@@ -60,7 +85,7 @@ export const EventDetailsPanelContent = ({ event }) => {
         {attributeField(
           t('events.landing-page-link'),
           <EventLinksButtons
-            href={`${awsconfig.Urls.leaderboardWebsite}/landing-page/${event.eventId.toString()}/`}
+            href={`${(awsconfig as any).Urls?.leaderboardWebsite}/landing-page/${event.eventId.toString()}/`}
             linkTextPrimary={t('events.link-same-tab')}
             linkTextExternal={t('events.link-new-tab')}
           />

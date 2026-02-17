@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, Form, SpaceBetween } from '@cloudscape-design/components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +10,12 @@ import { RaceConfigPanel } from '../components/raceConfigPanel';
 import { TracksPanel } from '../components/tracksPanel';
 import { event } from '../support-functions/eventDomain';
 
-export const CreateEvent = () => {
+export const CreateEvent: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [send, loading, errorMessage, data] = useMutation();
-  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState(false);
+  const [send, loading, errorMessage, data] = useMutation() as any; // TODO: Type useMutation hook properly
+  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState<boolean>(false);
   const [eventConfig, setEventConfig] = useState(event);
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export const CreateEvent = () => {
     }
   }, [loading, data, errorMessage, navigate]);
 
-  const UpdateConfigHandler = (attr) => {
+  const UpdateConfigHandler = (attr: any) => {
     console.debug(attr);
     setEventConfig((prevState) => {
       const merged = { ...prevState, ...attr };
@@ -34,7 +33,7 @@ export const CreateEvent = () => {
     });
   };
 
-  const onCreateEventHandler = async () => {
+  const onCreateEventHandler = async (): Promise<void> => {
     send('addEvent', eventConfig);
   };
 
@@ -54,7 +53,7 @@ export const CreateEvent = () => {
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('admin.breadcrumb'), href: '/admin/home' },
         { text: t('events.breadcrumb'), href: '/admin/events' },
-        { text: t('events.create-event') },
+        { text: t('events.create-event'), href: '' },
       ]}
     >
       <form onSubmit={(event) => event.preventDefault()}>

@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,31 +27,45 @@ import {
 import { PageLayout } from '../components/pageLayout';
 import { useStore } from '../store/store';
 
-const AdminCarActivation = (props) => {
+interface Fleet {
+  fleetId: string;
+  fleetName: string;
+}
+
+interface DropDownItem {
+  id: string;
+  text: string;
+}
+
+interface AdminCarActivationProps {
+  // No props currently used
+}
+
+const AdminCarActivation: React.FC<AdminCarActivationProps> = (props) => {
   const { t } = useTranslation(['translation', 'help-admin-car-activation']);
 
-  const [hostname, setHostname] = useState('');
-  const [password, setPassword] = useState('');
-  const [ssid, setSsid] = useState('');
-  const [wifiPass, setWifiPass] = useState('');
-  const [wifiActivation, setWifiActivation] = useState('');
-  const [installCustomConsole, setInstallCustomConsole] = useState(false);
-  const [ssmCommand, setSsmCommand] = useState('');
-  const [updateCommand, setUpdateCommand] = useState('');
-  const [buttonDisabled, setButtonDisabled] = useState(true);
-  const [loading, setLoading] = useState('');
-  const [hostnameErrorMessage, setHostnameErrorMessage] = useState('');
-  const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
+  const [hostname, setHostname] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [ssid, setSsid] = useState<string>('');
+  const [wifiPass, setWifiPass] = useState<string>('');
+  const [wifiActivation, setWifiActivation] = useState<string>('');
+  const [installCustomConsole, setInstallCustomConsole] = useState<boolean>(false);
+  const [ssmCommand, setSsmCommand] = useState<string>('');
+  const [updateCommand, setUpdateCommand] = useState<string>('');
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
+  const [loading, setLoading] = useState<string>('');
+  const [hostnameErrorMessage, setHostnameErrorMessage] = useState<string>('');
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState<string>('');
 
-  const [dropDownFleets, setDropDownFleets] = useState([{ id: 'none', text: 'none' }]);
-  const [dropDownSelectedItem, setDropDownSelectedItem] = useState({
+  const [dropDownFleets, setDropDownFleets] = useState<DropDownItem[]>([{ id: 'none', text: 'none' }]);
+  const [dropDownSelectedItem, setDropDownSelectedItem] = useState<Fleet | { fleetName: string }>({
     fleetName: t('fleets.edit-cars.select-fleet'),
   });
 
   const [state] = useStore();
-  const fleets = state.fleets.fleets;
+  const fleets = state.fleets?.fleets || [];
 
-  const [dremUrl] = useState(
+  const [dremUrl] = useState<string>(
     window.location.protocol +
       '//' +
       window.location.hostname +
@@ -105,12 +118,12 @@ const AdminCarActivation = (props) => {
   }, [t, password, hostname, dropDownSelectedItem]);
 
   async function getActivation() {
-    const apiResponse = await API.graphql({
+    const apiResponse: any = await API.graphql({
       query: mutations.deviceActivation,
       variables: {
         hostname: hostname,
         deviceType: 'deepracer',
-        fleetId: dropDownSelectedItem.fleetId,
+        fleetId: 'fleetId' in dropDownSelectedItem ? dropDownSelectedItem.fleetId : '',
         fleetName: dropDownSelectedItem.fleetName,
         deviceUiPassword: password,
       },
@@ -147,7 +160,7 @@ const AdminCarActivation = (props) => {
   }
 
   const breadcrumbs = Breadcrumbs();
-  breadcrumbs.push({ text: t('AdminActivation.car-activation.breadcrumb') });
+  breadcrumbs.push({ text: t('AdminActivation.car-activation.breadcrumb'), href: '#' });
 
   return (
     <PageLayout
@@ -179,7 +192,7 @@ const AdminCarActivation = (props) => {
             </SpaceBetween>
           }
         >
-          <Container textAlign="center">
+          <Container>
             <SpaceBetween direction="vertical" size="l">
               <FormField label={t('AdminActivation.car-activation.fleet')}>
                 <ButtonDropdown

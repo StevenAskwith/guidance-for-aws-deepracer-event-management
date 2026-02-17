@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, ProgressBar } from '@cloudscape-design/components';
 import { Auth, Storage } from 'aws-amplify';
 import { useEffect, useRef, useState } from 'react';
@@ -8,12 +7,23 @@ import { useStore } from '../../../store/store';
 
 import awsconfig from '../../../config.json';
 
-export function ModelUpload() {
+// TODO: Update config.json type definition to include Storage.uploadBucket
+interface AwsConfigWithStorage {
+  Storage?: {
+    uploadBucket?: string;
+  };
+}
+
+/**
+ * ModelUpload component for uploading model files to S3
+ * Handles file selection, validation, and upload with progress tracking
+ */
+export function ModelUpload(): JSX.Element {
   const { t } = useTranslation();
-  const [sub, setSub] = useState();
-  const [username, setUsername] = useState();
-  const [uploadFiles, setUploadFiles] = useState([]);
-  const fileInputRef = useRef(null);
+  const [sub, setSub] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [, dispatch] = useStore();
 
   useEffect(() => {
@@ -31,18 +41,18 @@ export function ModelUpload() {
     };
   }, []);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadFiles(e.target.files);
   };
 
   useEffect(() => {
-    const saveModel = async (file) => {
+    const saveModel = async (file: File) => {
       const s3path = `${sub}/${username}/models/${file.name}`;
       //const s3path = `${sub}/${file.name}`;
 
       if (file.name.match(/^[a-zA-Z0-9-_]+\.tar\.gz$/)) {
         Storage.put(s3path, file, {
-          bucket: awsconfig.Storage.uploadBucket,
+          bucket: (awsconfig as any as AwsConfigWithStorage).Storage?.uploadBucket,
           contentType: file.type,
           level: 'private',
           tagging: `lifecycle=true`,
@@ -117,8 +127,10 @@ export function ModelUpload() {
       }
     };
 
-    for (let index = 0; index < uploadFiles.length; index++) {
-      saveModel(uploadFiles[index]);
+    for (let index = 0; index < (uploadFiles?.length || 0); index++) {
+      if (uploadFiles) {
+        saveModel(uploadFiles[index]);
+      }
     }
 
     return () => {
@@ -131,8 +143,8 @@ export function ModelUpload() {
       <Button
         iconName="upload"
         onClick={() => {
-          setUploadFiles([]);
-          fileInputRef.current.click();
+          setUploadFiles(null);
+          fileInputRef.current?.click();
         }}
       >
         {t('upload.chose-file')}

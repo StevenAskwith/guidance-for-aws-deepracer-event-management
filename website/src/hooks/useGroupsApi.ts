@@ -1,24 +1,35 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import * as queries from '../graphql/queries';
 
-export const useGroupsApi = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [groups, setGroups] = useState([]);
-  const [errorMessage, setErrorMessage] = useState('');
+interface Group {
+  groupName: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const useGroupsApi = (): [Group[], boolean, string] => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // initial data load
   useEffect(() => {
-    async function getGroups() {
+    async function getGroups(): Promise<void> {
       setIsLoading(true);
-      const responseGetGroups = await API.graphql({
-        query: queries.listGroups,
-      });
-      const groups = responseGetGroups.data.listGroups;
-      console.debug(groups);
-      setGroups(groups);
-      setIsLoading(false);
+      try {
+        const responseGetGroups: any = await API.graphql({
+          query: queries.listGroups,
+        });
+        const groups: Group[] = responseGetGroups.data.listGroups;
+        console.debug(groups);
+        setGroups(groups);
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsLoading(false);
+      }
     }
     getGroups();
 

@@ -1,16 +1,33 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Header } from '@cloudscape-design/components';
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import useInterval from '../../../hooks/useInterval';
+import { useInterval } from '../../../hooks/useInterval';
 
 const interval = 100;
 
-const RaceTimer = forwardRef((props, ref) => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [prevTime, setPrevTime] = useState(null);
-  const [timeInMilliseconds, setTimeInMilliseconds] = useState(0);
-  const [isExpired, SetIsExpired] = useState(false);
-  const [time, setTime] = useState({
+interface Time {
+  minutes: string | number;
+  seconds: string | number;
+  milliseconds: string | number;
+}
+
+export interface RaceTimerHandle {
+  start: () => void;
+  pause: () => void;
+  reset: (startingTime?: number) => void;
+  getCurrentTimeInMs: () => number;
+  getIsRunning: () => boolean;
+}
+
+interface RaceTimerProps {
+  onExpire: () => void;
+}
+
+const RaceTimer = forwardRef<RaceTimerHandle, RaceTimerProps>((props, ref) => {
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [prevTime, setPrevTime] = useState<number | null>(null);
+  const [timeInMilliseconds, setTimeInMilliseconds] = useState<number>(0);
+  const [isExpired, SetIsExpired] = useState<boolean>(false);
+  const [time, setTime] = useState<Time>({
     minutes: 0,
     seconds: 0,
     milliseconds: 0,
@@ -23,7 +40,7 @@ const RaceTimer = forwardRef((props, ref) => {
     if (isExpired) {
       onExpire();
     }
-  }, [isExpired]);
+  }, [isExpired, onExpire]);
 
   useImperativeHandle(ref, () => ({
     start() {
@@ -34,7 +51,7 @@ const RaceTimer = forwardRef((props, ref) => {
     pause() {
       setIsRunning(false);
     },
-    reset(startingTime = 0) {
+    reset(startingTime: number = 0) {
       // console.debug('Reset race Timer =' + JSON.stringify(startingTime));
       setPrevTime(null);
       setTime(toTime(startingTime));
@@ -50,10 +67,10 @@ const RaceTimer = forwardRef((props, ref) => {
     },
   }));
 
-  const toTime = (time) => {
-    let milliseconds = parseInt(time % 1000, 10);
-    let seconds = Math.floor((time / 1000) % 60);
-    let minutes = Math.floor(time / (1000 * 60));
+  const toTime = (time: number): Time => {
+    let milliseconds: string | number = parseInt(String(time % 1000), 10);
+    let seconds: string | number = Math.floor((time / 1000) % 60);
+    let minutes: string | number = Math.floor(time / (1000 * 60));
 
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
@@ -97,5 +114,7 @@ const RaceTimer = forwardRef((props, ref) => {
     </Header>
   );
 });
+
+RaceTimer.displayName = 'RaceTimer';
 
 export default RaceTimer;

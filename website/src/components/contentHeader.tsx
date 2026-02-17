@@ -1,14 +1,30 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { BreadcrumbGroup, Header } from '@cloudscape-design/components';
+import { BreadcrumbGroup, BreadcrumbGroupProps, Header } from '@cloudscape-design/components';
 import React from 'react';
 
-export function ContentHeader(props) {
+/**
+ * Props interface for the ContentHeader component
+ */
+interface ContentHeaderProps {
+  /** Header text to display */
+  header: React.ReactNode;
+  /** Optional description text below the header */
+  description?: React.ReactNode;
+  /** Breadcrumb items for navigation */
+  breadcrumbs: BreadcrumbGroupProps.Item[];
+}
+
+/**
+ * ContentHeader component that displays a page header with breadcrumb navigation
+ * @param props - Component props
+ * @returns Rendered content header with breadcrumbs
+ */
+export function ContentHeader({ header, description, breadcrumbs }: ContentHeaderProps): JSX.Element {
   return (
     <>
-      <BreadcrumbGroup items={props.breadcrumbs} ariaLabel="Breadcrumbs" />
+      <BreadcrumbGroup items={breadcrumbs} ariaLabel="Breadcrumbs" />
 
-      <Header variant="h1" description={props.description}>
-        {props.header}
+      <Header variant="h1" description={description}>
+        {header}
       </Header>
     </>
   );

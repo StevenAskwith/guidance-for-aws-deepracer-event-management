@@ -1,7 +1,8 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { API, graphqlOperation } from 'aws-amplify';
-import React, { useEffect, useState } from 'react';
+import { GraphQLResult } from '@aws-amplify/api-graphql';
+import React, { useEffect, useState, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TableProps } from '@cloudscape-design/components';
 import * as mutations from '../../../graphql/mutations';
 import { formatAwsDateTime } from '../../../support-functions/time';
 
@@ -12,20 +13,81 @@ import {
   Table
 } from '@cloudscape-design/components';
 
-
 import { onUploadsToCarCreated, onUploadsToCarUpdated } from '../../../graphql/subscriptions';
 
-export function UploadModelToCar(props) {
+// Type definitions
+interface Car {
+  InstanceId: string;
+  ComputerName: string;
+  fleetId: string;
+  fleetName: string;
+  IpAddress: string;
+}
+
+interface Event {
+  eventId: string;
+  eventName: string;
+}
+
+interface ModelToUpload {
+  fileMetaData: {
+    key: string;
+  };
+  username: string;
+}
+
+interface UploadJob {
+  jobId?: string;
+  modelKey: string;
+  carName?: string;
+  status?: string;
+  statusIndicator?: ReactNode;
+  startTime?: string;
+  uploadStartTime?: string;
+  endTime?: string;
+  duration?: number;
+}
+
+interface StartUploadToCarResponse {
+  startUploadToCar: {
+    jobId: string;
+  };
+}
+
+interface UploadToCarEventData {
+  jobId: string;
+  modelKey: string;
+  carName?: string;
+  status: string;
+  startTime?: string;
+  uploadStartTime?: string;
+  endTime?: string;
+}
+
+interface SubscriptionEvent<T> {
+  value: {
+    data: T;
+  };
+}
+
+type GraphQLSubscription = {
+  unsubscribe: () => void;
+};
+
+interface UploadModelToCarProps {
+  cars: Car[];
+  event: Event;
+  modelsToUpload: ModelToUpload[];
+}
+
+export function UploadModelToCar({ cars, event, modelsToUpload }: UploadModelToCarProps): JSX.Element {
   const { t } = useTranslation();
-  const cars = props.cars;
-  const event = props.event;
-  const modelsToUpload = props.modelsToUpload;
-  const [jobIds, setJobIds] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [progress, setProgress] = useState(0);
+  const [jobIds, setJobIds] = useState<string[]>([]);
+  const [jobs, setJobs] = useState<UploadJob[]>([]);
+  const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
-    var currentProgress = 0;
+    let currentProgress = 0;
     if (jobs.length > 0) {
       const jobsSuccess = jobs.filter((job) => job.status === 'Success');
       currentProgress = (jobsSuccess.length / jobs.length) * 100;
@@ -34,10 +96,12 @@ export function UploadModelToCar(props) {
   }, [jobs, event]);
 
   useEffect(() => {
-    const getData = async () => {
-      var thisJobIds = [];
-      await cars.forEach(async (car) => {
-        var variables = {
+    const getData = async (): Promise<void> => {
+      const thisJobIds: string[] = [];
+      
+      // Process cars sequentially to avoid race conditions with state updates
+      for (const car of cars) {
+        const variables = {
           carInstanceId: car.InstanceId,
           carName: car.ComputerName,
           carFleetId: car.fleetId,
@@ -55,67 +119,80 @@ export function UploadModelToCar(props) {
         console.debug('event', event);
         console.debug('variables', variables);
 
-        var response = await API.graphql({
+        const response = (await API.graphql({
           query: mutations.startUploadToCar,
           variables: variables,
-        });
-        console.debug('startUploadToCar', response.data.startUploadToCar.jobId);
-        thisJobIds.push(response.data.startUploadToCar.jobId);
-        setJobIds(thisJobIds);
-      }, []);
+        })) as GraphQLResult<StartUploadToCarResponse>;
+        
+        if (response.data?.startUploadToCar?.jobId) {
+          console.debug('startUploadToCar', response.data.startUploadToCar.jobId);
+          thisJobIds.push(response.data.startUploadToCar.jobId);
+        }
+      }
+      
+      setJobIds(thisJobIds);
     };
     getData();
   }, [cars, event, modelsToUpload]);
 
   useEffect(() => {
-    var subscriptions = [];
+    const subscriptions: GraphQLSubscription[] = [];
+    
     jobIds.forEach((jobId) => {
       const filter = {
         jobId: jobId,
       };
-      const subscription = API.graphql(graphqlOperation(onUploadsToCarCreated, filter)).subscribe(
-        {
-          next: (event) => {
-            console.debug(
-              'onUploadsToCarCreated event received',
-              event.value.data.onUploadsToCarCreated
-            );
-            event.value.data.onUploadsToCarCreated.status = 'Created';
-            event.value.data.onUploadsToCarCreated.statusIndicator = (
+      const subscription = (API.graphql(
+        graphqlOperation(onUploadsToCarCreated, filter)
+      ) as any).subscribe({
+        next: (event: SubscriptionEvent<{ onUploadsToCarCreated: UploadToCarEventData }>) => {
+          console.debug(
+            'onUploadsToCarCreated event received',
+            event.value.data.onUploadsToCarCreated
+          );
+          const newJob: UploadJob = {
+            ...event.value.data.onUploadsToCarCreated,
+            status: 'Created',
+            statusIndicator: (
               <StatusIndicator type="info">{t('carmodelupload.status.created')}</StatusIndicator>
-            );
-            setJobs(jobs.concat(event.value.data.onUploadsToCarCreated));
-          },
-        }
-      );
+            ),
+          };
+          setJobs((prevJobs) => prevJobs.concat(newJob));
+        },
+      });
       subscriptions.push(subscription);
-    }, subscriptions);
+    });
 
     return () => {
       subscriptions.forEach((subscription) => {
         if (subscription) subscription.unsubscribe();
       });
     };
-  }, [t, jobs, jobIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, jobIds]);
 
   // monitor for updated jobs matching our JobIds
   useEffect(() => {
-    var subscriptions = [];
+    const subscriptions: GraphQLSubscription[] = [];
+    
     jobIds.forEach((jobId) => {
       const filter = {
         jobId: jobId,
       };
-      const subscription = API.graphql(graphqlOperation(onUploadsToCarUpdated, filter)).subscribe(
-        {
-          next: (event) => {
-            var updatedData = event.value.data.onUploadsToCarUpdated;
-            console.debug('onUploadsToCarUpdated event received', updatedData);
-            let newJobs = [...jobs];
-            var currentData = newJobs.find((value) => value.modelKey === updatedData.modelKey);
+      const subscription = (API.graphql(
+        graphqlOperation(onUploadsToCarUpdated, filter)
+      ) as any).subscribe({
+        next: (event: SubscriptionEvent<{ onUploadsToCarUpdated: UploadToCarEventData }>) => {
+          const updatedData = event.value.data.onUploadsToCarUpdated;
+          console.debug('onUploadsToCarUpdated event received', updatedData);
+          
+          setJobs((prevJobs) => {
+            const newJobs = [...prevJobs];
+            let currentData = newJobs.find((value) => value.modelKey === updatedData.modelKey);
+            
             if (currentData === undefined) {
-              currentData = {};
+              currentData = { modelKey: updatedData.modelKey };
               newJobs.push(currentData);
-              currentData.modelKey = updatedData.modelKey;
             }
 
             if (updatedData.status === 'Created') {
@@ -148,13 +225,15 @@ export function UploadModelToCar(props) {
               );
               // enrich upload duration
               console.log(currentData);
-              const uploadStartDateTime = Date.parse(currentData.uploadStartTime);
-              console.log(uploadStartDateTime);
-              const endDateTime = Date.parse(updatedData.endTime);
-              console.log(endDateTime);
-              const duration = (endDateTime - uploadStartDateTime) / 1000;
-              currentData.duration = duration;
-              console.log(duration);
+              if (currentData.uploadStartTime && updatedData.endTime) {
+                const uploadStartDateTime = Date.parse(currentData.uploadStartTime);
+                console.log(uploadStartDateTime);
+                const endDateTime = Date.parse(updatedData.endTime);
+                console.log(endDateTime);
+                const duration = (endDateTime - uploadStartDateTime) / 1000;
+                currentData.duration = duration;
+                console.log(duration);
+              }
             } else if (updatedData.status === 'Failed') {
               currentData.status = updatedData.status;
               currentData.statusIndicator = (
@@ -162,29 +241,32 @@ export function UploadModelToCar(props) {
               );
             } else {
               currentData.status = updatedData.status;
-              currentData.statusIndicator = updatedData.status;
+              currentData.statusIndicator = <>{updatedData.status}</>;
             }
+            
             if (updatedData.uploadStartTime) {
               currentData.uploadStartTime = updatedData.uploadStartTime;
             }
             if (updatedData.endTime) {
               currentData.endTime = updatedData.endTime;
             }
-            setJobs(newJobs);
-          },
-        }
-      );
+            
+            return newJobs;
+          });
+        },
+      });
       subscriptions.push(subscription);
-    }, subscriptions);
+    });
 
     return () => {
       subscriptions.forEach((subscription) => {
         if (subscription) subscription.unsubscribe();
       });
     };
-  }, [t, jobs, jobIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, jobIds]);
 
-  const columnDefinitionsModern = [
+  const columnDefinitionsModern: TableProps.ColumnDefinition<UploadJob>[] = [
     {
       id: 'Status',
       header: t('carmodelupload.status'),
@@ -259,5 +341,5 @@ export function UploadModelToCar(props) {
       />
     </div>
   );
-};
+}
 

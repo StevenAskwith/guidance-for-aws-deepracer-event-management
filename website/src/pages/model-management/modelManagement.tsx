@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, SpaceBetween } from '@cloudscape-design/components';
 import { Auth } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
@@ -19,8 +18,22 @@ import { useStore } from '../../store/store';
 import { CarModelUploadModal } from './components/carModelUploadModal';
 import { DeleteModelModal } from './components/deleteModelModal';
 import { ModelUpload } from './components/modelUpload';
+import { Model } from '../../types/domain';
 
-export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels = true }) => {
+interface Breadcrumb {
+  text: string;
+  href?: string;
+}
+
+interface ModelManagementProps {
+  isOperatorView?: boolean;
+  onlyDisplayOwnModels?: boolean;
+}
+
+export const ModelManagement: React.FC<ModelManagementProps> = ({ 
+  isOperatorView = false, 
+  onlyDisplayOwnModels = true 
+}) => {
   const { t } = useTranslation([
     'translation',
     'help-model-management',
@@ -28,16 +41,25 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
   ]);
   const [columnConfiguration, setColumnConfiguration] = useState(ColumnConfigurationOperator());
   const [filteringProperties, setFilteringProperties] = useState(FilteringPropertiesOperator());
-  const [selectedModels, setSelectedModels] = useState([]);
-  const [breadcrumbs, setBreadcrumbs] = useState([]);
+  const [selectedModels, setSelectedModels] = useState<any[]>([]); // TODO: Update Model interface to include sub, status properties
+  const [breadcrumbs, setBreadcrumbs] = useState<any[]>([]); // TODO: Define proper Breadcrumb type matching PageLayout expectations
   const [state] = useStore();
   const [, dispatch] = useStore();
-  const models = state.models.models;
-  const isLoading = state.models.isLoading;
+  const models = state.models?.models || [];
+  const isLoading = state.models?.isLoading || false;
+  const [currentUserSub, setCurrentUserSub] = useState<string>('')
+
+  useEffect(() => {
+    Auth.currentAuthenticatedUser().then((user) => {
+      setCurrentUserSub(user?.attributes?.sub || '');
+    }).catch(() => {
+      setCurrentUserSub('');
+    });
+  }, []);
 
   // based on onlyDisplayOwnModels select if only the users own models should be displayed or all available models
   const modelsToDisplay = onlyDisplayOwnModels
-    ? models.filter((model) => model.sub === Auth.user.attributes.sub)
+    ? models.filter((model: any) => model.sub === currentUserSub)
     : models;
 
   const operatorHelpPanel = (
@@ -73,7 +95,7 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
       });
       dispatch('HELP_PANEL_IS_OPEN', false);
     } else {
-      setColumnConfiguration(ColumnConfigurationRacer());
+      setColumnConfiguration(ColumnConfigurationRacer() as any);
       setFilteringProperties(FilteringPropertiesRacer());
       setBreadcrumbs([{ text: t('home.breadcrumb'), href: '/' }, { text: t('models.breadcrumb') }]);
       dispatch('UPDATE_HELP_PANEL', {
@@ -82,7 +104,7 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
       });
       dispatch('HELP_PANEL_IS_OPEN', false);
     }
-  }, [isOperatorView]);
+  }, [isOperatorView, t, dispatch, operatorHelpPanel, helpPanel]);
 
   const removeModelHandler = () => {
     setSelectedModels([]);
@@ -97,7 +119,7 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
       <Button disabled={selectedModels.length === 0} onClick={clearSelectedModelsHandler}>
         {t('button.clear-selected')}
       </Button>
-      <CarModelUploadModal modelsToUpload={selectedModels} uploadDisabled={selectedModels === 0} />
+      <CarModelUploadModal modelsToUpload={selectedModels} />
     </SpaceBetween>
   );
 
@@ -113,6 +135,16 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
     </SpaceBetween>
   );
 
+  const TableHeaderAny = TableHeader as any;
+  const tableHeader: React.ReactNode = (
+    <TableHeaderAny
+      nrSelectedItems={selectedModels.length}
+      nrTotalItems={modelsToDisplay.length}
+      header={t('models.header')}
+      actions={isOperatorView ? operatorActionButtons : actionButtons}
+    />
+  );
+
   return (
     <PageLayout
       helpPanelHidden={false}
@@ -121,27 +153,20 @@ export const ModelManagement = ({ isOperatorView = false, onlyDisplayOwnModels =
       description={isOperatorView ? t('models.operator.description') : t('models.description')}
       breadcrumbs={breadcrumbs}
     >
-      <PageTable
+      <PageTable<any>
         selectedItems={selectedModels}
         setSelectedItems={setSelectedModels}
         tableItems={modelsToDisplay}
         selectionType="multi"
-        columnConfiguration={columnConfiguration}
+        columnConfiguration={columnConfiguration as any}
         trackBy="modelId"
-        sortingColumn="uploadedDateTime"
-        header={
-          <TableHeader
-            nrSelectedItems={selectedModels.length}
-            nrTotalItems={modelsToDisplay.length}
-            header={t('models.header')}
-            actions={isOperatorView ? operatorActionButtons : actionButtons}
-          />
-        }
+        sortingColumn={{ sortingField: 'uploadedDateTime' } as any}
+        header={tableHeader}
         itemsIsLoading={isLoading}
-        isItemDisabled={(item) => !['AVAILABLE', 'OPTIMIZED'].includes(item.status)}
+        isItemDisabled={(item: any) => !['AVAILABLE', 'OPTIMIZED'].includes(item.status)}
         loadingText={t('models.loading-models')}
         localStorageKey="models-table-preferences"
-        filteringProperties={filteringProperties}
+        filteringProperties={filteringProperties as any}
         filteringI18nStringsName="models"
       />
     </PageLayout>

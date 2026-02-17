@@ -1,8 +1,7 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import React, { useEffect, useState } from 'react';
 import { BarChart, Box, Container, Header, SpaceBetween, StatusIndicator } from '@cloudscape-design/components';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import { API, graphqlOperation } from 'aws-amplify';
-import React, { useEffect, useState } from 'react';
 import { SimpleHelpPanelLayout } from '../components/help-panels/simple-help-panel';
 import { TableHeader } from '../components/tableConfig';
 import * as queries from '../graphql/queries';
@@ -26,26 +25,56 @@ import {
   FilteringProperties,
 } from './uploadToCarStatusTableConfig';
 
-const UploadToCarStatus = () => {
-  const { t } = useTranslation(['translation', 'help-admin-cars']);
-  const [allItems, setItems] = useState([]);
-  const [horizontalBarData, setHorizontalBarData] = useState([]);
-  const [barData, setBarData] = useState([]);
-  const [xDomain, setXDomain] = useState([]);
-  const [maxDuration, setMaxDuration] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const selectedEvent = useSelectedEventContext();
-  const [eventSelectModalVisible, setEventSelectModalVisible] = useState(false);
+// Type definitions
+type UploadStatus = 'Created' | 'Started' | 'InProgress' | 'Success' | 'Failed';
 
-  // Show event selector modal if no event has been selected, timekeeper must have an event selected to work
+interface UploadToCarItem {
+  status: UploadStatus;
+  statusIndicator?: React.ReactNode;
+  uploadStartTime?: string;
+  endTime?: string;
+  duration?: number;
+  carName?: string;
+  jobId?: string;
+  modelKey?: string;
+  [key: string]: any; // Allow additional properties from GraphQL
+}
+
+interface BarChartDataPoint {
+  x: string | Date;
+  y: number;
+}
+
+interface BarChartSeries {
+  title: string;
+  type: string;
+  data: BarChartDataPoint[];
+  color?: string;
+}
+
+interface StatusCount {
+  [key: string]: number;
+}
+
+const UploadToCarStatus: React.FC = () => {
+  const { t } = useTranslation(['translation', 'help-admin-cars']);
+  const [allItems, setItems] = useState<UploadToCarItem[]>([]);
+  const [horizontalBarData, setHorizontalBarData] = useState<BarChartSeries[]>([]);
+  const [barData, setBarData] = useState<BarChartDataPoint[]>([]);
+  const [xDomain, setXDomain] = useState<Date[]>([]);
+  const [maxDuration, setMaxDuration] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedItems, setSelectedItems] = useState<UploadToCarItem[]>([]);
+  const selectedEvent = useSelectedEventContext();
+  const [eventSelectModalVisible, setEventSelectModalVisible] = useState<boolean>(false);
+
   useEffect(() => {
-    if (selectedEvent.eventId == null) {
+    if (selectedEvent?.eventId == null) {
       setEventSelectModalVisible(true);
     }
   }, [selectedEvent]);
 
-  function enrichStatus(data) {
+  function enrichStatus(data: UploadToCarItem[]): UploadToCarItem[] {
     data.forEach(element => {
       // enrich status
       if (element.status === 'Created') {
@@ -74,46 +103,46 @@ const UploadToCarStatus = () => {
         );
 
         // enrich upload duration
-        const uploadStartDateTime = Date.parse(element.uploadStartTime);
-        const endDateTime = Date.parse(element.endTime);
-        const duration = (endDateTime - uploadStartDateTime) / 1000;
-        element.duration = duration;
-
+        if (element.uploadStartTime && element.endTime) {
+          const uploadStartDateTime = Date.parse(element.uploadStartTime);
+          const endDateTime = Date.parse(element.endTime);
+          const duration = (endDateTime - uploadStartDateTime) / 1000;
+          element.duration = duration;
+        }
       } else if (element.status === 'Failed') {
         element.statusIndicator = (
           <StatusIndicator type="error">{i18next.t('carmodelupload.status.error')}</StatusIndicator>
         );
       } else {
-        
         element.statusIndicator = element.status;
       }
     });
-    return data
+    return data;
   }
 
-  function getColorForStatus(status) {
-    var color = colorChartsStatusNeutral
+  function getColorForStatus(status: string): string {
+    let color = colorChartsStatusNeutral;
     if (status === 'Created') {
-      color = colorChartsStatusInfo
+      color = colorChartsStatusInfo;
     } else if (status === 'Started') {
-      color = colorChartsStatusNeutral
+      color = colorChartsStatusNeutral;
     } else if (status === 'InProgress') {
-      color = colorChartsStatusLow
+      color = colorChartsStatusLow;
     } else if (status === 'Success') {
-      color = colorChartsStatusPositive
+      color = colorChartsStatusPositive;
     } else if (status === 'Failed') {
-      color = colorChartsStatusCritical
+      color = colorChartsStatusCritical;
     }
-    return color
+    return color;
   }
 
   useEffect(() => {
     async function listUploadsToCar() {
       setItems([]);
-      var response = await API.graphql({
+      const response: any = await API.graphql({
         query: queries.listUploadsToCar,
         variables: {
-          eventId: selectedEvent.eventId,
+          eventId: selectedEvent?.eventId,
         },
       });
       const enrichedData = enrichStatus(response.data.listUploadsToCar);
@@ -121,7 +150,7 @@ const UploadToCarStatus = () => {
       setIsLoading(false);
     }
 
-    if(typeof selectedEvent.eventId !== "undefined") {
+    if (typeof selectedEvent?.eventId !== "undefined") {
       listUploadsToCar();
     }
     return () => {
@@ -131,129 +160,117 @@ const UploadToCarStatus = () => {
 
   // horizontal bar chart
   useEffect(() => {
-    var newHorizontalBarData = [];
+    const newHorizontalBarData: BarChartSeries[] = [];
 
     // Status
-    let statusesRaw = allItems.map(a => a.status);
-    let statuses = statusesRaw.reduce(function (value, value2) {
-      return (
-          value[value2] ? ++value[value2] :(value[value2] = 1),
-          value
-      );
+    const statusesRaw = allItems.map(a => a.status);
+    const statuses = statusesRaw.reduce((acc: StatusCount, status) => {
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
     }, {});
+    
     for (const [key, value] of Object.entries(statuses)) {
-      const data = {
+      const data: BarChartSeries = {
         title: key,
         type: "bar",
         data: [
-          { x: "Status", y: value },
+          { x: "Status", y: value as number },
         ],
         color: getColorForStatus(key),
-      }
+      };
       newHorizontalBarData.push(data);
     }
 
     // carName
-    let carNamesRaw = allItems.map(a => a.carName);
-    let carNames = carNamesRaw.reduce(function (value, value2) {
-      return (
-          value[value2] ? ++value[value2] :(value[value2] = 1),
-          value
-      );
+    const carNamesRaw = allItems.map(a => a.carName).filter((name): name is string => !!name);
+    const carNames = carNamesRaw.reduce((acc: StatusCount, name) => {
+      acc[name] = (acc[name] || 0) + 1;
+      return acc;
     }, {});
+    
     for (const [key, value] of Object.entries(carNames)) {
-      const data = {
+      const data: BarChartSeries = {
         title: key,
         type: "bar",
         data: [
-          { x: "Car", y: value },
+          { x: "Car", y: value as number },
         ],
-        //color: getColorForStatus(key),
-      }
+      };
       newHorizontalBarData.push(data);
     }
 
     // jobId
-    let jobIdsRaw = allItems.map(a => a.jobId);
-    let jobIds = jobIdsRaw.reduce(function (value, value2) {
-      return (
-          value[value2] ? ++value[value2] :(value[value2] = 1),
-          value
-      );
+    const jobIdsRaw = allItems.map(a => a.jobId).filter((id): id is string => !!id);
+    const jobIds = jobIdsRaw.reduce((acc: StatusCount, id) => {
+      acc[id] = (acc[id] || 0) + 1;
+      return acc;
     }, {});
+    
     for (const [key, value] of Object.entries(jobIds)) {
-      const data = {
+      const data: BarChartSeries = {
         title: key,
         type: "bar",
         data: [
-          { x: "Job", y: value },
+          { x: "Job", y: value as number },
         ],
-        //color: getColorForStatus(key),
-      }
+      };
       newHorizontalBarData.push(data);
     }
 
     setHorizontalBarData(newHorizontalBarData);
-  },[allItems]);
+  }, [allItems]);
 
   // bar chart
   useEffect(() => {
-    var newBarData = [];
-    var newXDomain = [];
+    const newBarData: BarChartDataPoint[] = [];
+    const newXDomain: Date[] = [];
+    
     allItems.forEach(element => {
-      if(typeof element.duration !== "undefined") {
+      if (typeof element.duration !== "undefined" && element.uploadStartTime) {
         const dateTime = new Date(element.uploadStartTime);
-        const data = { x: dateTime, y: element.duration }
+        const data: BarChartDataPoint = { x: dateTime, y: element.duration };
         newBarData.push(data);
         newXDomain.push(dateTime);
       }
     });
 
-    newBarData.sort(function(a, b) {
-      // Convert the date strings to Date objects
-      let dateA = new Date(a.x);
-      let dateB = new Date(b.x);
-    
-      // Subtract the dates to get a value that is either negative, positive, or zero
-      return dateA - dateB;
+    newBarData.sort((a, b) => {
+      const dateA = new Date(a.x);
+      const dateB = new Date(b.x);
+      return dateA.getTime() - dateB.getTime();
     });
 
-    newXDomain.sort(function(a, b) {
-      // Convert the date strings to Date objects
-      let dateA = new Date(a);
-      let dateB = new Date(b);
-    
-      // Subtract the dates to get a value that is either negative, positive, or zero
-      return dateA - dateB;
+    newXDomain.sort((a, b) => {
+      return a.getTime() - b.getTime();
     });
+    
     setBarData(newBarData);
     setXDomain(newXDomain);
 
-    if (allItems.length > 0){
-      const max = allItems.reduce(function(prev, current) {
-        return (prev && prev.duration > current.duration) ? prev : current
-      }) 
-      var newMaxDuration = Math.ceil(max.duration)+3;
+    if (allItems.length > 0) {
+      const max = allItems.reduce((prev, current) => {
+        return (prev && prev.duration && current.duration && prev.duration > current.duration) ? prev : current;
+      });
+      const newMaxDuration = Math.ceil(max.duration || 0) + 3;
       setMaxDuration(newMaxDuration);
     }
-
-  },[allItems]);
+  }, [allItems]);
 
   useEffect(() => {
     const filter = {
-      eventId: selectedEvent.eventId,
+      eventId: selectedEvent?.eventId,
     };
-    const subscription = API.graphql(graphqlOperation(onUploadsToCarCreated, filter)).subscribe(
+    const subscription = (API.graphql(graphqlOperation(onUploadsToCarCreated, filter)) as any).subscribe(
       {
-        next: (event) => {
+        next: (event: any) => {
           console.debug(
             'onUploadsToCarCreated event received',
             event.value.data.onUploadsToCarCreated
           );
           event.value.data.onUploadsToCarCreated.status = 'Created';
-          var newItems = allItems.concat(event.value.data.onUploadsToCarCreated);
-          newItems = enrichStatus(newItems);
-          setItems(newItems);
+          const newItems = allItems.concat(event.value.data.onUploadsToCarCreated);
+          const enrichedItems = enrichStatus(newItems);
+          setItems(enrichedItems);
         },
       }
     );
@@ -266,19 +283,19 @@ const UploadToCarStatus = () => {
   // monitor for updated jobs matching our JobIds
   useEffect(() => {
     const filter = {
-      eventId: selectedEvent.eventId,
+      eventId: selectedEvent?.eventId,
     };
-    const subscription = API.graphql(graphqlOperation(onUploadsToCarUpdated, filter)).subscribe(
+    const subscription = (API.graphql(graphqlOperation(onUploadsToCarUpdated, filter)) as any).subscribe(
       {
-        next: (event) => {
-          var updatedData = event.value.data.onUploadsToCarUpdated;
+        next: (event: any) => {
+          const updatedData = event.value.data.onUploadsToCarUpdated;
           console.debug('onUploadsToCarUpdated event received', updatedData);
-          let newItems = [...allItems];
-          var currentData = newItems.find((value) => (value.modelKey === updatedData.modelKey && value.jobId === updatedData.jobId));
+          const newItems = [...allItems];
+          let currentData = newItems.find((value) => (value.modelKey === updatedData.modelKey && value.jobId === updatedData.jobId));
           
           // handle missed events
           if (currentData === undefined) {
-            currentData = {};
+            currentData = {} as UploadToCarItem;
             newItems.push(currentData);
             currentData.modelKey = updatedData.modelKey;
           }
@@ -291,8 +308,8 @@ const UploadToCarStatus = () => {
             currentData.endTime = updatedData.endTime;
           }
 
-          newItems = enrichStatus(newItems);
-          setItems(newItems);
+          const enrichedItems = enrichStatus(newItems);
+          setItems(enrichedItems);
         },
       }
     );
@@ -302,24 +319,22 @@ const UploadToCarStatus = () => {
     };
   }, [selectedEvent, t, allItems]);
 
+  const columnConfiguration = ColumnConfiguration() as any;
+  const filteringProperties = FilteringProperties() as any;
 
-
-  const columnConfiguration = ColumnConfiguration();
-  const filteringProperties = FilteringProperties();
-
-  const HeaderActionButtons = () => {
+  const HeaderActionButtons: React.FC = () => {
     return (
       <SpaceBetween direction="horizontal" size="xs">
       </SpaceBetween>
     );
   };
 
-  const breadcrumbs = [
+  const breadcrumbs: Array<{ text: string; href?: string }> = [
     { text: t('home.breadcrumb'), href: '/' },
     { text: t('operator.breadcrumb'), href: '/admin/home' },
     { text: t('models.breadcrumb'), href: '/admin/home' },
     { text: t('upload-to-car-status.breadcrumb') }
-  ]
+  ];
 
   return (
     <div>
@@ -340,14 +355,14 @@ const UploadToCarStatus = () => {
         }
         header={t('upload-to-car-status.header')}
         description={t('upload-to-car-status.description')}
-        breadcrumbs={breadcrumbs}
+        breadcrumbs={breadcrumbs as any}
       >
         <SpaceBetween direction="vertical" size="l">
           <ColumnLayout columns={2}>
-            <Container textAlign="center" fitHeight={true}>
-              <Header variant="h2">{t('upload-to-car-status.horizontal-bar.header')}</Header>
+            <Container {...{ textAlign: "center", fitHeight: true } as any}>
+              <Header variant={"h2" as any}>{t('upload-to-car-status.horizontal-bar.header')}</Header>
               <BarChart
-                series={horizontalBarData}
+                series={horizontalBarData as any}
                 xDomain={["Status", "Car", "Job"]}
                 yDomain={[0, allItems.length]}
                 ariaLabel="Stacked, horizontal bar chart"
@@ -368,26 +383,26 @@ const UploadToCarStatus = () => {
               />
             </Container>
 
-            <Container textAlign="center" fitHeight={true}>
-              <Header variant="h2">{t('upload-to-car-status.upload-time.header')}</Header>
+            <Container {...{ textAlign: "center", fitHeight: true } as any}>
+              <Header variant={"h2" as any}>{t('upload-to-car-status.upload-time.header')}</Header>
               <BarChart
                 series={[
                   {
                     title: t('upload-to-car-status.upload-time.y-title'),
                     type: "bar",
-                    data: barData
+                    data: barData as any
                   },
                 ]}
-                xDomain={xDomain}
+                xDomain={xDomain as any}
                 yDomain={[0, maxDuration]}
                 i18nStrings={{
-                  xTickFormatter: e =>
+                  xTickFormatter: (e: Date) =>
                     e.toLocaleDateString("en-GB", {
                         month: "short",
                         day: "numeric",
                         hour: "numeric",
                         minute: "numeric",
-                        hour12: !1
+                        hour12: false
                       })
                       .split(",")
                       .join("\n")
@@ -414,7 +429,6 @@ const UploadToCarStatus = () => {
             selectedItems={selectedItems}
             setSelectedItems={setSelectedItems}
             tableItems={allItems}
-            //selectionType="multi"
             columnConfiguration={columnConfiguration}
             header={
               <TableHeader

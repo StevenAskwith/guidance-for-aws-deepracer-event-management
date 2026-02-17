@@ -1,6 +1,5 @@
-// @ts-nocheck - Type checking disabled for test file during incremental migration
 import { calculateMetrics } from './metricCalculations';
-import { Race } from '../../../types';
+import { Race } from '../../../types/domain';
 
 describe('Race Manager', () => {
   describe('Metric Calculation', () => {
@@ -27,8 +26,8 @@ describe('Race Manager', () => {
 
     describe('Total number of races', () => {
       test('for one race', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' }];
-        const raceMetrics = calculateMetrics(singleRace);
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' }];
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -39,10 +38,10 @@ describe('Race Manager', () => {
 
       test('for two races', () => {
         const twoRaces = [
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '222' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '222' },
         ];
-        const raceMetrics = calculateMetrics(twoRaces);
+        const raceMetrics = calculateMetrics(twoRaces as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -54,8 +53,8 @@ describe('Race Manager', () => {
 
     describe('Number of unique racers', () => {
       test('for one racer', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' }];
-        const raceMetrics = calculateMetrics(singleRace);
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' }];
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -66,11 +65,11 @@ describe('Race Manager', () => {
 
       test('for multiple races by the same racer', () => {
         const twoRaces = [
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '222' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '222' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
         ];
-        const raceMetrics = calculateMetrics(twoRaces);
+        const raceMetrics = calculateMetrics(twoRaces as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -83,11 +82,11 @@ describe('Race Manager', () => {
     describe('User with most races', () => {
       test('user with two races - three races in total', () => {
         const races = [
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '222' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '222' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -100,10 +99,10 @@ describe('Race Manager', () => {
     describe('Avg races per user', () => {
       test('two races - different users', () => {
         const races = [
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '222' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '222' },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -114,11 +113,11 @@ describe('Race Manager', () => {
 
       test('three races - two with the same user', () => {
         const races = [
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '222' },
-          { laps: [{ time: 1000, resets: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '222' },
+          { laps: [{ lapTime: 1000, resetCount: 10, isValid: true }], userId: '111' },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -131,9 +130,9 @@ describe('Race Manager', () => {
     describe('Total number of resets', () => {
       test('for one race with one lap', () => {
         const totalResets = 10;
-        const singleRace = [{ laps: [{ time: 1000, resets: totalResets, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: totalResets, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -149,12 +148,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: resetsLapOne, isValid: true },
-              { time: 1000, resets: resetsLapTwo, isValid: true },
+              { lapTime: 1000, resetCount: resetsLapOne, isValid: true },
+              { lapTime: 1000, resetCount: resetsLapTwo, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -173,18 +172,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: resetsRaceOneLapOne, isValid: true },
-              { time: 1000, resets: resetsRaceOneLapTwo, isValid: true },
+              { lapTime: 1000, resetCount: resetsRaceOneLapOne, isValid: true },
+              { lapTime: 1000, resetCount: resetsRaceOneLapTwo, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 1000, resets: resetsRaceTwoLapOne, isValid: true },
-              { time: 1000, resets: resetsRaceTwoLapTwo, isValid: true },
+              { lapTime: 1000, resetCount: resetsRaceTwoLapOne, isValid: true },
+              { lapTime: 1000, resetCount: resetsRaceTwoLapTwo, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -196,9 +195,9 @@ describe('Race Manager', () => {
 
     describe('Total number of laps', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -211,12 +210,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -229,18 +228,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
         expect(raceMetrics).toEqual(
           expect.objectContaining({
             totalLaps: 4,
@@ -251,9 +250,9 @@ describe('Race Manager', () => {
 
     describe('Avg resets per lap', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -266,12 +265,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 20, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 20, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -284,12 +283,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 11, isValid: true },
-              { time: 1000, resets: 22, isValid: true },
+              { lapTime: 1000, resetCount: 11, isValid: true },
+              { lapTime: 1000, resetCount: 22, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -302,18 +301,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 20, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 20, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 1000, resets: 30, isValid: true },
-              { time: 1000, resets: 40, isValid: true },
+              { lapTime: 1000, resetCount: 30, isValid: true },
+              { lapTime: 1000, resetCount: 40, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -325,9 +324,9 @@ describe('Race Manager', () => {
 
     describe('Avg Laps Per Race', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
         expect(raceMetrics).toEqual(
           expect.objectContaining({
             avgLapsPerRace: '1.0',
@@ -339,12 +338,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -357,18 +356,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -381,15 +380,15 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
           {
-            laps: [{ time: 1000, resets: 10, isValid: true }],
+            laps: [{ lapTime: 1000, resetCount: 10, isValid: true }],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -401,9 +400,9 @@ describe('Race Manager', () => {
 
     describe('Avg Laptime', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -416,12 +415,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 3000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 3000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -434,18 +433,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 5000, resets: 10, isValid: true },
-              { time: 3000, resets: 10, isValid: true },
+              { lapTime: 5000, resetCount: 10, isValid: true },
+              { lapTime: 3000, resetCount: 10, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 3000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 3000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -457,9 +456,9 @@ describe('Race Manager', () => {
 
     describe('Fastest Laptime', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 1000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 1000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -472,12 +471,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 600, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 600, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -490,12 +489,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 600, resets: 10, isValid: false },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 600, resetCount: 10, isValid: false },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -508,18 +507,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 2000, resets: 10, isValid: true },
-              { time: 3000, resets: 10, isValid: true },
+              { lapTime: 2000, resetCount: 10, isValid: true },
+              { lapTime: 3000, resetCount: 10, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 4000, resets: 10, isValid: true },
-              { time: 900, resets: 10, isValid: true },
+              { lapTime: 4000, resetCount: 10, isValid: true },
+              { lapTime: 900, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -531,9 +530,9 @@ describe('Race Manager', () => {
 
     describe('Slowest Laptime', () => {
       test('for one race with one lap', () => {
-        const singleRace = [{ laps: [{ time: 7000, resets: 10, isValid: true }] }];
+        const singleRace = [{ laps: [{ lapTime: 7000, resetCount: 10, isValid: true }] }];
 
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
         expect(raceMetrics).toEqual(
           expect.objectContaining({
             slowestLap: 7000,
@@ -545,12 +544,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 5000, resets: 10, isValid: true },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 5000, resetCount: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -563,12 +562,12 @@ describe('Race Manager', () => {
         const singleRace = [
           {
             laps: [
-              { time: 5000, resets: 10, isValid: false },
-              { time: 1000, resets: 10, isValid: true },
+              { lapTime: 5000, resetCount: 10, isValid: false },
+              { lapTime: 1000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(singleRace);
+        const raceMetrics = calculateMetrics(singleRace as any);
 
         expect(raceMetrics).toEqual(
           expect.objectContaining({
@@ -581,18 +580,18 @@ describe('Race Manager', () => {
         const races = [
           {
             laps: [
-              { time: 1000, resets: 10, isValid: true },
-              { time: 5000, resets: 10, isValid: true },
+              { lapTime: 1000, resetCount: 10, isValid: true },
+              { lapTime: 5000, resetCount: 10, isValid: true },
             ],
           },
           {
             laps: [
-              { time: 6000, resets: 10, isValid: true },
-              { time: 3000, resets: 10, isValid: true },
+              { lapTime: 6000, resetCount: 10, isValid: true },
+              { lapTime: 3000, resetCount: 10, isValid: true },
             ],
           },
         ];
-        const raceMetrics = calculateMetrics(races);
+        const raceMetrics = calculateMetrics(races as any);
         expect(raceMetrics).toEqual(
           expect.objectContaining({
             slowestLap: 6000,

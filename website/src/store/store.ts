@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
+import { GlobalState } from './storeTypes';
 
-// Store types - using any for flexibility during incremental migration
-// TODO: Replace with strongly-typed discriminated union of action types
+// Store types - using typed state with flexible action handlers during migration
+// TODO: Fully migrate to discriminated union of action types
 type ActionIdentifier = string;
-type ActionHandler = (state: any, payload: any) => any;
+type ActionHandler = (state: GlobalState, payload: any) => Partial<GlobalState>;
 type Actions = Record<ActionIdentifier, ActionHandler>;
-type Listener = (state: any) => void;
-type DispatchFunction = (actionIdentifier: ActionIdentifier, payload?: any) => void;
+type Listener = (state: GlobalState) => void;
 
-let globalState: any = {};
+export type Dispatch = (actionIdentifier: ActionIdentifier, payload?: any) => void;
+type DispatchFunction = Dispatch;
+
+let globalState: GlobalState = {};
 let listeners: Listener[] = [];
 let actions: Actions = {};
 
@@ -20,7 +23,7 @@ let actions: Actions = {};
  * @example
  * const [state, dispatch] = useStore();
  */
-export const useStore = (): [any, DispatchFunction] => {
+export const useStore = (): [GlobalState, DispatchFunction] => {
   const [, setState] = useState(globalState);
 
   const dispatch: DispatchFunction = useCallback((actionIdentifier, payload) => {
@@ -43,7 +46,7 @@ export const useStore = (): [any, DispatchFunction] => {
   return [globalState, dispatch];
 };
 
-export const initStore = (userActions: Actions, initialState?: any): void => {
+export const initStore = (userActions: Actions, initialState?: Partial<GlobalState>): void => {
   if (initialState) {
     globalState = { ...globalState, ...initialState };
   }

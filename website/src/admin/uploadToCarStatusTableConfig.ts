@@ -1,11 +1,55 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-//import i18next from '../i18n';
 import { useTranslation } from 'react-i18next';
 import { formatAwsDateTime } from '../support-functions/time';
 
-export const ColumnConfiguration = () => {
+interface UploadToCarStatusItem {
+  statusIndicator?: string;
+  modelKey: string;
+  carName?: string;
+  startTime?: string;
+  uploadStartTime?: string;
+  endTime?: string;
+  duration?: string;
+  jobId?: string;
+  Status?: string;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+  editable?: boolean;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: UploadToCarStatusItem) => string;
+  sortingField: string;
+  width: number;
+  minWidth: number;
+}
+
+interface ColumnConfigurationReturn {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+  defaultSortingColumn: ColumnDefinition;
+  defaultSortingIsDescending: boolean;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const ColumnConfiguration = (): ColumnConfigurationReturn => {
   const { t } = useTranslation();
-  var returnObject = {
+  const returnObject: ColumnConfigurationReturn = {
     defaultVisibleColumns: [
       'Status',
       'modelKey',
@@ -123,15 +167,16 @@ export const ColumnConfiguration = () => {
         minWidth: 220,
       },
     ],
+    defaultSortingColumn: {} as ColumnDefinition, // Will be set below
+    defaultSortingIsDescending: true,
   };
 
   returnObject.defaultSortingColumn = returnObject.columnDefinitions[3];
-  returnObject.defaultSortingIsDescending = true;
 
   return returnObject;
 };
 
-export const FilteringProperties = () => {
+export const FilteringProperties = (): FilteringProperty[] => {
   const { t } = useTranslation();
   return [
     // {

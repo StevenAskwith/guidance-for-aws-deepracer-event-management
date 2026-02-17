@@ -1,10 +1,26 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import React from 'react';
+import { TableProps } from '@cloudscape-design/components';
+import { PropertyFilterProps } from '@cloudscape-design/components';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { ModelUploadStatus } from './modelUploadStatus';
 
-export const ColumnConfigurationRacer = () => {
-  var returnObject = {
+interface TableConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: Array<{
+    label: string;
+    options: Array<{
+      id: string;
+      label: string;
+    }>;
+  }>;
+  columnDefinitions: TableProps.ColumnDefinition<any>[];
+  defaultSortingColumn?: TableProps.ColumnDefinition<any>;
+  defaultSortingIsDescending?: boolean;
+}
+
+export const ColumnConfigurationRacer = (): TableConfiguration => {
+  const returnObject: TableConfiguration = {
     defaultVisibleColumns: ['modelname', 'status', 'uploadedDateTime'],
     visibleContentOptions: [
       {
@@ -61,8 +77,8 @@ export const ColumnConfigurationRacer = () => {
         sortingField: 'uploadedDateTime',
         width: 240,
         minWidth: 150,
-        sortingComparator: (a, b) =>
-          new Date(a.fileMetaData.uploadedDateTime) - new Date(b.fileMetaData.uploadedDateTime),
+        sortingComparator: (a: any, b: any) =>
+          new Date(a.fileMetaData.uploadedDateTime).getTime() - new Date(b.fileMetaData.uploadedDateTime).getTime(),
       },
       {
         id: 'sensor',
@@ -70,7 +86,7 @@ export const ColumnConfigurationRacer = () => {
         cell: (item) => item.modelMetaData.sensor.join(',') || '-',
         width: 200,
         minWidth: 150,
-        sortingComparator: (a, b) =>
+        sortingComparator: (a: any, b: any) =>
           a.modelMetaData.sensor.join(',').localeCompare(b.modelMetaData.sensor.join(',')),
       },
       {
@@ -79,7 +95,7 @@ export const ColumnConfigurationRacer = () => {
         cell: (item) => item.modelMetaData.actionSpaceType || '-',
         width: 200,
         minWidth: 150,
-        sortingComparator: (a, b) =>
+        sortingComparator: (a: any, b: any) =>
           a.modelMetaData.actionSpaceType.localeCompare(b.modelMetaData.actionSpaceType),
       },
       {
@@ -88,7 +104,7 @@ export const ColumnConfigurationRacer = () => {
         cell: (item) => item.modelMetaData.trainingAlgorithm || '-',
         width: 200,
         minWidth: 150,
-        sortingComparator: (a, b) =>
+        sortingComparator: (a: any, b: any) =>
           a.modelMetaData.trainingAlgorithm.localeCompare(b.modelMetaData.trainingAlgorithm),
       },
     ],
@@ -100,7 +116,7 @@ export const ColumnConfigurationRacer = () => {
 };
 
 // Default FilterProps unless other is required for a given role
-export const FilteringPropertiesRacer = () => {
+export const FilteringPropertiesRacer = (): Array<{ key: string; propertyLabel: string; operators: string[] }> => {
   return [
     {
       key: 'modelname',

@@ -1,6 +1,6 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { SpaceBetween } from '@cloudscape-design/components';
 import { API, graphqlOperation } from 'aws-amplify';
+import { GraphQLResult } from '@aws-amplify/api-graphql';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RaceTypeEnum } from '../admin/events/support-functions/raceConfig';
@@ -10,31 +10,68 @@ import { PageLayout } from '../components/pageLayout';
 import { getLeaderboard, getRaces } from '../graphql/queries';
 import { onAddedRace, onNewLeaderboardEntry, onNewOverlayInfo } from '../graphql/subscriptions';
 import { useSelectedEventContext, useSelectedTrackContext } from '../store/contexts/storeProvider';
+import { LeaderboardEntry, Race, OverlayInfo } from '../types/domain';
 import { ActualRacerStatsNew } from './actual-racer-stats-new';
 import { RaceLapInformation } from './race-lap-information';
 
-const CommentatorStats = () => {
+// Extended LeaderboardEntry with fastestAverageLap
+interface LeaderboardEntryWithAverage extends LeaderboardEntry {
+  fastestAverageLap?: {
+    avgTime: number;
+  };
+}
+
+// GraphQL response types
+interface GetLeaderboardResponse {
+  getLeaderboard: {
+    entries: LeaderboardEntryWithAverage[];
+    trackId: string;
+    eventId: string;
+  };
+}
+
+interface GetRacesResponse {
+  getRaces: Race[];
+}
+
+// Subscription event types
+interface SubscriptionEvent<T> {
+  provider: any;
+  value: {
+    data: T;
+  };
+}
+
+// GraphQL Subscription type
+type GraphQLSubscription = {
+  unsubscribe: () => void;
+};
+
+const CommentatorStats: React.FC = () => {
   const { t } = useTranslation(['translation', 'help-race-stats']);
 
   const selectedEvent = useSelectedEventContext();
   const selectedTrack = useSelectedTrackContext();
 
-  const [addedRaceSubscription, SetAddedRaceSubscription] = useState();
-  const [newOverlayInfoSubscription, setNewOverlayInfoSubscription] = useState();
-  const [newLeaderboardEntrySubscription, setNewLeaderboardEntrySubscription] = useState();
+  const [addedRaceSubscription, SetAddedRaceSubscription] = useState<GraphQLSubscription | undefined>();
+  const [newOverlayInfoSubscription, setNewOverlayInfoSubscription] = useState<GraphQLSubscription | undefined>();
+  const [newLeaderboardEntrySubscription, setNewLeaderboardEntrySubscription] = useState<GraphQLSubscription | undefined>();
 
-  const [eventSelectModalVisible, setEventSelectModalVisible] = useState(false);
-  const [leaderboard, setLeaderboard] = useState({});
-  const [overlayInfo, setOverlayInfo] = useState({});
-  const [races, setRaces] = useState([]);
+  const [eventSelectModalVisible, setEventSelectModalVisible] = useState<boolean>(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntryWithAverage[]>([]);
+  const [overlayInfo, setOverlayInfo] = useState<OverlayInfo | null>(null);
+  const [races, setRaces] = useState<Race[]>([]);
 
   /**
    * Get the leaderboard entry based on the provided username
-   * @param  {string} username entry to remove
-   * @param  {Array[Object]} allEntries all leaderbaord entries
-   * @return {[Number,Object]} entry index & leaderboard entry
+   * @param username - Username to find
+   * @param allEntries - All leaderboard entries
+   * @returns Tuple of [entry index, leaderboard entry] or [undefined, undefined]
    */
-  const findEntryByUsername = (username, allEntries) => {
+  const findEntryByUsername = (
+    username: string,
+    allEntries: LeaderboardEntryWithAverage[]
+  ): [number, LeaderboardEntryWithAverage] | [undefined, undefined] => {
     const index = allEntries.findIndex((entry) => entry.username === username);
     if (index !== -1) {
       const entry = allEntries[index];
@@ -43,19 +80,21 @@ const CommentatorStats = () => {
     return [undefined, undefined];
   };
 
-  const fastestSortFunction = (a, b) => a.fastestLapTime - b.fastestLapTime;
-  const fastestAverageSortFunction = (a, b) => {
+  const fastestSortFunction = (a: LeaderboardEntryWithAverage, b: LeaderboardEntryWithAverage): number =>
+    a.fastestLapTime - b.fastestLapTime;
+
+  const fastestAverageSortFunction = (a: LeaderboardEntryWithAverage, b: LeaderboardEntryWithAverage): number => {
     if (!a.fastestAverageLap && !b.fastestAverageLap) return 0;
     if (!a.fastestAverageLap) return 1;
     if (!b.fastestAverageLap) return -1;
     return a.fastestAverageLap.avgTime - b.fastestAverageLap.avgTime;
   };
+
   /**
    * Update leaderboard with a new entry
-   * @param  {Object} newEntry Leaderboard entry to be added
-   * @return {}
+   * @param newLeaderboardEntry - Leaderboard entry to be added or updated
    */
-  const updateLeaderboardEntries = (newLeaderboardEntry) => {
+  const updateLeaderboardEntries = (newLeaderboardEntry: LeaderboardEntryWithAverage): void => {
     setLeaderboard((prevState) => {
       console.debug(newLeaderboardEntry);
       console.debug(prevState);
@@ -66,7 +105,7 @@ const CommentatorStats = () => {
       const [oldEntryIndex, oldEntry] = findEntryByUsername(usernameToUpdate, prevState);
       console.debug(oldEntryIndex);
       console.debug(oldEntry);
-      if (oldEntryIndex >= 0) {
+      if (oldEntryIndex !== undefined && oldEntryIndex >= 0) {
         newState[oldEntryIndex] = newLeaderboardEntry;
       } else {
         newState = prevState.concat(newLeaderboardEntry);
@@ -74,7 +113,7 @@ const CommentatorStats = () => {
 
       // sort list according to fastestLapTime, ascending order
       const sortedLeaderboard = newState.sort(
-        selectedEvent.raceConfig.rankingMethod === RaceTypeEnum.BEST_LAP_TIME
+        selectedEvent?.raceConfig?.rankingMethod === RaceTypeEnum.BEST_LAP_TIME
           ? fastestSortFunction
           : fastestAverageSortFunction
       );
@@ -83,18 +122,20 @@ const CommentatorStats = () => {
     });
   };
 
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = async (): Promise<void> => {
+    if (!selectedEvent?.eventId || !selectedTrack?.trackId) return;
+
     const eventId = selectedEvent.eventId;
 
-    const response = await API.graphql(
+    const response = (await API.graphql(
       graphqlOperation(getLeaderboard, { eventId: eventId, trackId: selectedTrack.trackId })
-    );
+    )) as GraphQLResult<GetLeaderboardResponse>;
 
-    var sortedLeaderboard = [];
+    let sortedLeaderboard: LeaderboardEntryWithAverage[] = [];
 
-    if (response.data.getLeaderboard.entries && response.data.getLeaderboard.entries.length > 0) {
+    if (response.data?.getLeaderboard.entries && response.data.getLeaderboard.entries.length > 0) {
       sortedLeaderboard = response.data.getLeaderboard.entries.sort(
-        selectedEvent.raceConfig.rankingMethod === RaceTypeEnum.BEST_LAP_TIME
+        selectedEvent?.raceConfig?.rankingMethod === RaceTypeEnum.BEST_LAP_TIME
           ? fastestSortFunction
           : fastestAverageSortFunction
       );
@@ -103,8 +144,8 @@ const CommentatorStats = () => {
     setLeaderboard(sortedLeaderboard);
   };
 
-  const groupBy = (iterable, groupByFn) => {
-    const resultMap = new Map();
+  const groupBy = <T,>(iterable: T[], groupByFn: (item: T) => string): Map<string, T[]> => {
+    const resultMap = new Map<string, T[]>();
 
     iterable.forEach((item) => {
       const key = groupByFn(item);
@@ -119,22 +160,27 @@ const CommentatorStats = () => {
     return resultMap;
   };
 
-  const loadAllRaces = async () => {
+  const loadAllRaces = async (): Promise<void> => {
+    if (!selectedEvent?.eventId) return;
+
     const eventId = selectedEvent.eventId;
-    const response = await API.graphql(graphqlOperation(getRaces, { eventId: eventId }));
-    const tmp = groupBy(response.data.getRaces, ({ userId }) => userId);
+    const response = (await API.graphql(
+      graphqlOperation(getRaces, { eventId: eventId })
+    )) as GraphQLResult<GetRacesResponse>;
+
+    const tmp = groupBy(response.data?.getRaces || [], ({ userId }) => userId);
     console.log('Mapped Races: ', tmp);
-    setRaces(response.data.getRaces);
+    setRaces(response.data?.getRaces || []);
   };
 
   // Show event selector modal if no event has been selected, timekeeper must have an event selected to work
   useEffect(() => {
-    if (selectedEvent.eventId == null) {
+    if (selectedEvent?.eventId == null) {
       setEventSelectModalVisible(true);
     }
   }, [selectedEvent]);
 
-  const unsubscribe = () => {
+  const unsubscribe = (): void => {
     if (addedRaceSubscription) {
       addedRaceSubscription.unsubscribe();
     }
@@ -147,66 +193,69 @@ const CommentatorStats = () => {
   };
 
   useEffect(() => {
-    if (selectedEvent || selectedTrack) {
-      loadLeaderboard();
-      loadAllRaces();
+    if (!selectedEvent?.eventId || !selectedTrack?.trackId) return;
 
-      unsubscribe();
+    loadLeaderboard();
+    loadAllRaces();
 
-      const eventId = selectedEvent.eventId;
-      SetAddedRaceSubscription(
-        API.graphql(
-          graphqlOperation(onAddedRace, {
-            eventId: eventId,
-            trackId: selectedTrack.trackId,
-          })
-        ).subscribe({
-          next: (event) => {
-            // update Races
-            // setRaces((state) => state.concat(event.value.data.onAddedRace));
-            // Leaderboard can be calculated from Races
-            // loadLeaderboard();
-          },
-          error: (error) => console.warn(error),
+    unsubscribe();
+
+    const eventId = selectedEvent.eventId;
+    const trackId = selectedTrack.trackId;
+
+    SetAddedRaceSubscription(
+      (API.graphql(
+        graphqlOperation(onAddedRace, {
+          eventId: eventId,
+          trackId: trackId,
         })
-      );
+      ) as any).subscribe({
+        next: (event: SubscriptionEvent<{ onAddedRace: Race }>) => {
+          // update Races
+          // setRaces((state) => state.concat(event.value.data.onAddedRace));
+          // Leaderboard can be calculated from Races
+          // loadLeaderboard();
+        },
+        error: (error: Error) => console.warn(error),
+      })
+    );
 
-      setNewOverlayInfoSubscription(
-        API.graphql(
-          graphqlOperation(onNewOverlayInfo, {
-            eventId: eventId,
-            trackId: selectedTrack.trackId,
-          })
-        ).subscribe({
-          next: (event) => {
-            const eventData = event.value.data.onNewOverlayInfo;
-            //if (eventData.raceStatus === 'READY_TO_START') loadLeaderboard();
-
-            setOverlayInfo(eventData);
-          },
-          error: (error) => console.warn(error),
+    setNewOverlayInfoSubscription(
+      (API.graphql(
+        graphqlOperation(onNewOverlayInfo, {
+          eventId: eventId,
+          trackId: trackId,
         })
-      );
+      ) as any).subscribe({
+        next: (event: SubscriptionEvent<{ onNewOverlayInfo: OverlayInfo }>) => {
+          const eventData = event.value.data.onNewOverlayInfo;
+          //if (eventData.raceStatus === 'READY_TO_START') loadLeaderboard();
 
-      setNewLeaderboardEntrySubscription(
-        API.graphql(
-          graphqlOperation(onNewLeaderboardEntry, {
-            eventId: eventId,
-            trackId: selectedTrack.trackId,
-          })
-        ).subscribe({
-          next: ({ provider, value }) => {
-            console.debug('onNewLeaderboardEntry');
-            const newEntry = value.data.onNewLeaderboardEntry;
-            console.debug(newEntry);
-            updateLeaderboardEntries(newEntry);
-          },
-          error: (error) => console.warn(error),
+          setOverlayInfo(eventData);
+        },
+        error: (error: Error) => console.warn(error),
+      })
+    );
+
+    setNewLeaderboardEntrySubscription(
+      (API.graphql(
+        graphqlOperation(onNewLeaderboardEntry, {
+          eventId: eventId,
+          trackId: trackId,
         })
-      );
+      ) as any).subscribe({
+        next: ({ provider, value }: SubscriptionEvent<{ onNewLeaderboardEntry: LeaderboardEntryWithAverage }>) => {
+          console.debug('onNewLeaderboardEntry');
+          const newEntry = value.data.onNewLeaderboardEntry;
+          console.debug(newEntry);
+          updateLeaderboardEntries(newEntry);
+        },
+        error: (error: Error) => console.warn(error),
+      })
+    );
 
-      return unsubscribe;
-    }
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEvent, selectedTrack]);
 
   return (
@@ -224,7 +273,7 @@ const CommentatorStats = () => {
         description={t('commentator.race.stats')}
         breadcrumbs={[
           { text: t('home.breadcrumb'), href: '/' },
-          { text: t('commentator.breadcrumb') },
+          { text: t('commentator.breadcrumb'), href: '#' },
           { text: t('commentator.race.breadcrumb'), href: '/' },
         ]}
       >
@@ -236,14 +285,14 @@ const CommentatorStats = () => {
 
         <SpaceBetween size="l">
           <ActualRacerStatsNew
-            leaderboard={leaderboard}
-            overlayInfo={overlayInfo}
-            raceFormat={selectedEvent.raceConfig.rankingMethod}
+            leaderboard={leaderboard as any}
+            overlayInfo={overlayInfo as any}
+            raceFormat={selectedEvent?.raceConfig?.rankingMethod || RaceTypeEnum.BEST_LAP_TIME}
           ></ActualRacerStatsNew>
           <RaceLapInformation
-            overlayInformation={overlayInfo}
-            selectedEvent={selectedEvent}
-            sortedLeaderboard={leaderboard}
+            overlayInformation={overlayInfo as any}
+            selectedEvent={selectedEvent as any}
+            sortedLeaderboard={leaderboard as any}
           ></RaceLapInformation>
         </SpaceBetween>
       </PageLayout>

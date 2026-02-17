@@ -1,11 +1,53 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
+import { Box, Button, ButtonProps, Modal, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useQuery from '../../../hooks/useQuery';
 import { useStore } from '../../../store/store';
 
-export const DownloadAssetModal = ({ disabled, selectedAssets, onDownload, variant }) => {
+/**
+ * Asset metadata structure
+ */
+interface AssetMetadata {
+  filename: string;
+  key: string;
+}
+
+/**
+ * Asset structure with download information
+ */
+interface Asset {
+  assetId: string;
+  sub: string;
+  assetMetaData: AssetMetadata;
+}
+
+/**
+ * Download link response structure
+ */
+interface DownloadLinkResponse {
+  downloadLink: string;
+}
+
+/**
+ * Props for DownloadAssetModal component
+ */
+interface DownloadAssetModalProps {
+  /** Whether the download button is disabled */
+  disabled?: boolean;
+  /** List of selected assets to download */
+  selectedAssets: Asset[];
+  /** Callback function triggered after successful download */
+  onDownload: () => void;
+  /** Button variant style */
+  variant?: ButtonProps.Variant;
+}
+
+export const DownloadAssetModal = ({
+  disabled,
+  selectedAssets,
+  onDownload,
+  variant,
+}: DownloadAssetModalProps): JSX.Element => {
   const { t } = useTranslation();
   const [, dispatch] = useStore();
 
@@ -17,9 +59,14 @@ export const DownloadAssetModal = ({ disabled, selectedAssets, onDownload, varia
     return { assetId: asset.assetId, sub: asset.sub };
   });
 
-  const [data, loading] = useQuery(triggerCall ? 'getCarLogsAssetsDownloadLinks' : null, {
-    assetSubPairs: assetSubPairs,
-  });
+  // Note: Using type assertion because this query name isn't defined in the queries file
+  // This will fail at runtime if the query doesn't exist
+  const [data, loading] = useQuery<DownloadLinkResponse[]>(
+    (triggerCall ? 'getCarLogsAssetsDownloadLinks' : null) as any,
+    {
+      assetSubPairs: assetSubPairs,
+    }
+  );
 
   useEffect(() => {
     if (visible) {
@@ -29,7 +76,7 @@ export const DownloadAssetModal = ({ disabled, selectedAssets, onDownload, varia
 
   useEffect(() => {
     if (!loading && triggerDownload && data) {
-      const downloadFile = (index, url, filename) => {
+      const downloadFile = (index: number, url: string, filename: string) => {
         fetch(url)
           .then((response) => {
             if (!response.ok) {
@@ -147,7 +194,20 @@ export const DownloadAssetModal = ({ disabled, selectedAssets, onDownload, varia
   );
 };
 
-const ItemsList = ({ items }) => {
+/**
+ * Props for ItemsList component
+ */
+interface ItemsListProps {
+  /** Array of assets to display */
+  items: Asset[];
+}
+
+/**
+ * ItemsList component that renders a list of asset filenames
+ * @param props - Component props
+ * @returns Unordered list of asset filenames
+ */
+const ItemsList = ({ items }: ItemsListProps): JSX.Element => {
   return (
     <ul>
       {items.map((item) => (

@@ -1,7 +1,11 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import { BreadcrumbGroupProps } from '@cloudscape-design/components';
 import i18next from '../../../i18n';
 
-export const Breadcrumbs = () => {
+/**
+ * Returns breadcrumb navigation items for timekeeper pages
+ * @returns Array of breadcrumb items
+ */
+export const Breadcrumbs = (): BreadcrumbGroupProps.Item[] => {
   return [
     { text: i18next.t('home.breadcrumb'), href: '/' },
     { text: i18next.t('operator.breadcrumb'), href: '/admin/home' },

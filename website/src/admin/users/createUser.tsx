@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
     Button,
     Checkbox,
@@ -23,19 +22,24 @@ import awsconfig from '../../config.json';
 import { useStore } from '../../store/store';
 
 const notificationId = 'create_user';
-export function CreateUser() {
+
+/**
+ * CreateUser component for creating new users with email and username
+ * Includes validation for username and email format
+ */
+export function CreateUser(): JSX.Element {
   const { t } = useTranslation(['translation', 'help-admin-create-user']);
 
-  const [username, setUsername] = useState('');
-  const [usernameErrorText, setUsernameErrorText] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailErrorText, setEmailErrorText] = useState('');
-  const [tncChecked, setTncChecked] = useState(false);
-  const [buttonDisabled, setButtonDisabled] = useState(false);
-  const [countryCode, setCountryCode] = useState('');
+  const [username, setUsername] = useState<string>('');
+  const [usernameErrorText, setUsernameErrorText] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [emailErrorText, setEmailErrorText] = useState<string>('');
+  const [tncChecked, setTncChecked] = useState<boolean>(false);
+  const [buttonDisabled, setButtonDisabled] = useState<boolean>(false);
+  const [countryCode, setCountryCode] = useState<string>('');
   const [, dispatch] = useStore();
 
-  async function createUserNow() {
+  async function createUserNow(): Promise<void> {
     setButtonDisabled(true);
     dispatch('ADD_NOTIFICATION', {
       type: 'success',
@@ -46,9 +50,9 @@ export function CreateUser() {
       onDismiss: () => {
         dispatch('DISMISS_NOTIFICATION', notificationId);
       },
-    });
+    } as any);
     try {
-      const apiResponse = await API.graphql({
+      const apiResponse: any = await API.graphql({
         query: mutations.createUser,
         variables: {
           email: email,
@@ -68,13 +72,13 @@ export function CreateUser() {
         onDismiss: () => {
           dispatch('DISMISS_NOTIFICATION', notificationId);
         },
-      });
+      } as any);
 
       setUsername('');
       setEmail('');
       setCountryCode('');
       setTncChecked(false);
-    } catch (response) {
+    } catch (response: any) {
       const errorMessage = response.errors[0].message;
 
       dispatch('ADD_NOTIFICATION', {
@@ -85,7 +89,7 @@ export function CreateUser() {
         onDismiss: () => {
           dispatch('DISMISS_NOTIFICATION', notificationId);
         },
-      });
+      } as any);
     } finally {
       setButtonDisabled(false);
     }
@@ -133,7 +137,7 @@ export function CreateUser() {
       breadcrumbs={[
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('topnav.registration'), href: '/registration' },
-        { text: t('users.breadcrumb') },
+        { text: t('users.breadcrumb'), href: '#' },
       ]}
     >
       <SpaceBetween direction="vertical" size="l">
@@ -152,7 +156,7 @@ export function CreateUser() {
             </SpaceBetween>
           }
         >
-          <Container textAlign="center">
+          <Container {...({ textAlign: "center" } as any)}>
             <SpaceBetween direction="vertical" size="l">
               <FormField label={t('users.racer-name')} errorText={usernameErrorText}>
                 <Input
@@ -189,7 +193,7 @@ export function CreateUser() {
                   checked={tncChecked}
                 >
                   <Link
-                    href={awsconfig.Urls.termsAndConditionsUrl + '/terms-and-conditions.html'}
+                    href={(awsconfig as any).Urls?.termsAndConditionsUrl + '/terms-and-conditions.html' || '#'}
                     target="_blank"
                   >
                     {t('users.terms-and-conditions')}

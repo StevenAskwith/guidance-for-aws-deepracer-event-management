@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,19 +12,24 @@ import { TableHeader } from '../../components/tableConfig';
 import useMutation from '../../hooks/useMutation';
 import { useUsers } from '../../hooks/useUsers';
 import { useStore } from '../../store/store';
+import { Event } from '../../types/domain';
 import { EventDetailsPanelContent } from './components/eventDetailsPanelContent';
 import { ColumnConfiguration, FilteringProperties } from './support-functions/eventsTableConfig';
 
-const AdminEvents = () => {
+/**
+ * AdminEvents component for managing events in the admin interface
+ * Provides CRUD operations for events with table view and split panel details
+ */
+const AdminEvents = (): JSX.Element => {
   const { t } = useTranslation(['translation', 'help-admin-events']);
-  const [SelectedEventsInTable, setSelectedEventsInTable] = useState([]);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [SelectedEventsInTable, setSelectedEventsInTable] = useState<Event[]>([]);
+  const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [send] = useMutation();
 
   const [state, dispatch] = useStore();
-  const fleets = state.fleets.fleets;
-  const events = state.events.events;
-  const eventIsLoading = state.events.isLoading;
+  const fleets = state.fleets?.fleets || [];
+  const events = state.events?.events || [];
+  const eventIsLoading = state.events?.isLoading || false;
   const [, , getUserNameFromId] = useUsers();
 
   const navigate = useNavigate();
@@ -40,17 +44,17 @@ const AdminEvents = () => {
   };
 
   // Delete Event
-  async function deleteEvents() {
+  async function deleteEvents(): Promise<void> {
     const eventIdsToDelete = SelectedEventsInTable.map((event) => event.eventId);
-    send('deleteEvents', { eventIds: eventIdsToDelete });
+    send('deleteEvents' as any, { eventIds: eventIdsToDelete });
     setSelectedEventsInTable([]);
   }
 
   // Table config
-  const columnConfiguration = ColumnConfiguration(getUserNameFromId, fleets);
+  const columnConfiguration = ColumnConfiguration(getUserNameFromId as any, fleets);
   const filteringProperties = FilteringProperties();
 
-  const selectPanelContent = useCallback((selectedItems) => {
+  const selectPanelContent = useCallback((selectedItems: Event[]) => {
     if (selectedItems.length === 0) {
       return (
         <DrSplitPanel header={`0 ${t('events.split-panel-header')}`}>
@@ -59,12 +63,12 @@ const AdminEvents = () => {
       );
     } else if (selectedItems.length === 1) {
       return (
-        <DrSplitPanel header={selectedItems[0].eventName} noSelectedItems={selectedItems.length}>
-          <EventDetailsPanelContent event={selectedItems[0]} />
+        <DrSplitPanel header={selectedItems[0].eventName}>
+          <EventDetailsPanelContent event={selectedItems[0] as any} />
         </DrSplitPanel>
       );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     console.debug('show split panel');
@@ -78,7 +82,7 @@ const AdminEvents = () => {
     };
   }, [SelectedEventsInTable, selectPanelContent]);
 
-  const HeaderActionButtons = () => {
+  const HeaderActionButtons = (): JSX.Element => {
     const disableEditButton =
       SelectedEventsInTable.length === 0 || SelectedEventsInTable.length > 1;
     const disableDeleteButton = SelectedEventsInTable.length === 0;
@@ -114,7 +118,7 @@ const AdminEvents = () => {
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('operator.breadcrumb'), href: '/admin/home' },
         { text: t('event-management.breadcrumb'), href: '/admin/home' },
-        { text: t('events.breadcrumb') },
+        { text: t('events.breadcrumb'), href: '#' },
       ]}
     >
       <PageTable
@@ -128,14 +132,14 @@ const AdminEvents = () => {
             nrSelectedItems={SelectedEventsInTable.length}
             nrTotalItems={events.length}
             header={t('events.events-table')}
-            actions={<HeaderActionButtons />}
+            actions={<HeaderActionButtons /> as any}
           />
         }
         itemsIsLoading={eventIsLoading}
         loadingText={t('events.loading')}
         localStorageKey={'events-table-preferences'}
         trackBy={'eventId'}
-        filteringProperties={filteringProperties}
+        filteringProperties={filteringProperties as any}
         filteringI18nStringsName={'events'}
       />
 

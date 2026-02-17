@@ -1,13 +1,17 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper typed actions and state
 import { initStore } from './store';
+import { GlobalState, RacesState } from './storeTypes';
+import { Race } from '../types/domain';
 
-const configureStore = () => {
+const configureStore = (): void => {
   const actions = {
-    NEW_RACES: (curState, racesToAdd) => {
-      var updatedRaces = { ...curState.races };
-      updatedRaces.races = [];
+    NEW_RACES: (curState: GlobalState, racesToAdd: Race[]): Partial<GlobalState> => {
+      const updatedRaces: RacesState = { 
+        ...(curState.races || { races: [], isLoading: false }),
+        races: []
+      };
+      
       racesToAdd.forEach((raceToAdd) => {
-        const raceIndex = curState.races.races.findIndex((r) => r.raceId === raceToAdd.raceId);
+        const raceIndex = updatedRaces.races.findIndex((r) => r.raceId === raceToAdd.raceId);
         if (raceIndex === -1) {
           updatedRaces.races.push(raceToAdd);
         } else {
@@ -16,10 +20,15 @@ const configureStore = () => {
       });
       return { races: updatedRaces };
     },
-    ADD_RACES: (curState, racesToAdd) => {
-      const updatedRaces = { ...curState.races };
+    ADD_RACES: (curState: GlobalState, racesToAdd: Race[]): Partial<GlobalState> => {
+      const currentRaces = curState.races?.races || [];
+      const updatedRaces: RacesState = { 
+        ...(curState.races || { races: [], isLoading: false }),
+        races: [...currentRaces]
+      };
+      
       racesToAdd.forEach((raceToAdd) => {
-        const raceIndex = curState.races.races.findIndex((r) => r.raceId === raceToAdd.raceId);
+        const raceIndex = updatedRaces.races.findIndex((r) => r.raceId === raceToAdd.raceId);
         if (raceIndex === -1) {
           updatedRaces.races.push(raceToAdd);
         } else {
@@ -28,10 +37,14 @@ const configureStore = () => {
       });
       return { races: updatedRaces };
     },
-    UPDATE_RACE: (curState, race) => {
+    UPDATE_RACE: (curState: GlobalState, race: Race): Partial<GlobalState> => {
       console.debug('UPDATE_RACE DISPATCH FUNCTION');
-      const updatedRaces = { ...curState.races };
-      const raceIndex = curState.races.races.findIndex((r) => r.raceId === race.raceId);
+      const currentRaces = curState.races?.races || [];
+      const updatedRaces: RacesState = { 
+        ...(curState.races || { races: [], isLoading: false }),
+        races: [...currentRaces]
+      };
+      const raceIndex = updatedRaces.races.findIndex((r) => r.raceId === race.raceId);
       if (raceIndex === -1) {
         updatedRaces.races.push(race);
       } else {
@@ -39,20 +52,21 @@ const configureStore = () => {
       }
       return { races: updatedRaces };
     },
-    DELETE_RACES: (curState, raceIdsToDelete) => {
+    DELETE_RACES: (curState: GlobalState, raceIdsToDelete: string[]): Partial<GlobalState> => {
       console.debug('DELETE_RACE DISPATCH FUNCTION', raceIdsToDelete);
-      const updatedRaces = { ...curState.races };
-      updatedRaces.races = updatedRaces.races.filter((race) => {
-        return !raceIdsToDelete.find((raceIdToDelete) => {
-          return raceIdToDelete === race.raceId;
-        });
-      });
+      const currentRaces = curState.races?.races || [];
+      const updatedRaces: RacesState = {
+        ...(curState.races || { races: [], isLoading: false }),
+        races: currentRaces.filter((race) => !raceIdsToDelete.includes(race.raceId))
+      };
       return { races: updatedRaces };
     },
-    RACES_IS_LOADING: (curState, isLoading) => {
+    RACES_IS_LOADING: (curState: GlobalState, isLoading: boolean): Partial<GlobalState> => {
       console.debug('RACES_IS_LOADING DISPATCH FUNCTION', isLoading);
-      const updatedRaces = { ...curState.races };
-      updatedRaces.isLoading = isLoading;
+      const updatedRaces: RacesState = { 
+        ...(curState.races || { races: [], isLoading: false }),
+        isLoading
+      };
       return { races: updatedRaces };
     },
   };

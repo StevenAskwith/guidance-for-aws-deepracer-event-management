@@ -1,13 +1,38 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { Auth } from 'aws-amplify';
 import { useEffect, useState } from 'react';
+
+interface ApiPermissions {
+  fleets: boolean;
+  events: boolean;
+  users: boolean;
+  races: boolean;
+  cars: boolean;
+  allModels: boolean;
+}
+
+interface SideNavPermissions {
+  registration: boolean;
+  commentator: boolean;
+  operator: boolean;
+  admin: boolean;
+}
+
+interface TopNavPermissions {
+  eventSelection: boolean;
+}
+
+export interface Permissions {
+  api: ApiPermissions;
+  sideNavItems: SideNavPermissions;
+  topNavItems: TopNavPermissions;
+}
 
 /**
  * custom hook to get the permissions of the current user
  * @returns {Object} user permissions
  */
-export const usePermissions = () => {
-  const [permissions, setPermissions] = useState(getPermissions([]));
+export const usePermissions = (): Permissions => {
+  const [permissions, setPermissions] = useState<Permissions>(getPermissions([]));
 
   useEffect(() => {
     // Config Groups
@@ -26,10 +51,9 @@ export const usePermissions = () => {
   return permissions;
 };
 
-const getPermissions = (groups) => {
-  const defaultPermissions = {
+const getPermissions = (groups: string[]): Permissions => {
+  const defaultPermissions: Permissions = {
     api: {
-      // API:s used in globally shared contexts, used to control if they shall be invoked to fetch items or not
       fleets: false,
       events: false,
       users: false,
@@ -48,7 +72,7 @@ const getPermissions = (groups) => {
     },
   };
 
-  let permissions = defaultPermissions;
+  let permissions: Permissions = defaultPermissions;
 
   // set topNavItems permissions
   if (groups.includes('admin') || groups.includes('operator') || groups.includes('commentator')) {

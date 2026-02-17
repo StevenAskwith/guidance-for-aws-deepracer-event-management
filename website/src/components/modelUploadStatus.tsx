@@ -1,8 +1,25 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { StatusIndicator } from '@cloudscape-design/components';
 import { useTranslation } from 'react-i18next';
 
-export const ModelUploadStatus = ({ status }) => {
+/**
+ * Valid model upload status values
+ */
+type ModelUploadStatusType = 'UPLOADED' | 'AVAILABLE' | 'QUARANTINED' | 'NOT_VALID' | 'OPTIMIZED';
+
+/**
+ * Props interface for ModelUploadStatus component
+ */
+interface ModelUploadStatusProps {
+  /** Current upload status of the model */
+  status: ModelUploadStatusType | string;
+}
+
+/**
+ * ModelUploadStatus component that displays a status indicator for model uploads
+ * @param props - Component props
+ * @returns Rendered status indicator
+ */
+export const ModelUploadStatus = ({ status }: ModelUploadStatusProps): JSX.Element | string => {
   const { t } = useTranslation();
 
   if (status === 'UPLOADED')
@@ -14,6 +31,6 @@ export const ModelUploadStatus = ({ status }) => {
   else if (status === 'NOT_VALID')
     return <StatusIndicator type="error">{t('model.upload.status.not-valid')}</StatusIndicator>;
   else if (status === 'OPTIMIZED')
-    return <StatusIndicator type="success">{t('model.upload.status.optimized')}</StatusIndicator>;    
+    return <StatusIndicator type="success">{t('model.upload.status.optimized')}</StatusIndicator>;
   else return '-';
 };

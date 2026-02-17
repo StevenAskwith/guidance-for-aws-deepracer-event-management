@@ -1,23 +1,55 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
-import { Header, Table } from '@cloudscape-design/components';
+import { Header, Table, TableProps } from '@cloudscape-design/components';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Track } from '../../../types/domain';
 import { EventLinksButtons } from '../../../components/eventLinksButtons';
 import awsconfig from '../../../config.json';
 
-export const TrackTable = ({ eventId, tracks, raceFormat }) => {
+/**
+ * Extended config type to include Urls (merged at runtime)
+ */
+interface Config {
+  Urls: {
+    leaderboardWebsite: string;
+    streamingOverlayWebsite: string;
+    [key: string]: string;
+  };
+  [key: string]: any;
+}
+
+const config = awsconfig as unknown as Config;
+
+/**
+ * Extended track item with link components for table display
+ */
+interface TrackTableItem extends Track {
+  leaderboardLinks: React.ReactNode;
+  streamingOverlayLinks: React.ReactNode;
+  streamingOverlayChromaLinks: React.ReactNode;
+}
+
+/**
+ * Props for TrackTable component
+ */
+interface TrackTableProps {
+  eventId: string;
+  tracks: Track[];
+  raceFormat: string;
+}
+
+export const TrackTable: React.FC<TrackTableProps> = ({ eventId, tracks, raceFormat }) => {
   const { t } = useTranslation();
-  const [tableItems, setTableItems] = React.useState([]);
+  const [tableItems, setTableItems] = React.useState<TrackTableItem[]>([]);
 
   useEffect(() => {
     setTableItems(
-      tracks.map((track, index) => {
+      tracks.map((track) => {
         return {
           ...track,
           leaderboardLinks: (
             <EventLinksButtons
               href={`${
-                awsconfig.Urls.leaderboardWebsite
+                config.Urls.leaderboardWebsite
               }/leaderboard/${eventId.toString()}/?qr=header&scroll=true&track=${track.trackId.toString()}&format=${raceFormat}`}
               linkTextPrimary={t('events.link-same-tab')}
               linkTextExternal={t('events.link-new-tab')}
@@ -26,7 +58,7 @@ export const TrackTable = ({ eventId, tracks, raceFormat }) => {
           streamingOverlayLinks: (
             <EventLinksButtons
               href={`${
-                awsconfig.Urls.streamingOverlayWebsite
+                config.Urls.streamingOverlayWebsite
               }/${eventId.toString()}?trackId=${track.trackId.toString()}&format=${raceFormat}`}
               linkTextPrimary={t('events.link-same-tab')}
               linkTextExternal={t('events.link-new-tab')}
@@ -35,7 +67,7 @@ export const TrackTable = ({ eventId, tracks, raceFormat }) => {
           streamingOverlayChromaLinks: (
             <EventLinksButtons
               href={`${
-                awsconfig.Urls.streamingOverlayWebsite
+                config.Urls.streamingOverlayWebsite
               }/${eventId.toString()}?trackId=${track.trackId.toString()}&chroma=1&format=${raceFormat}`}
               linkTextPrimary={t('events.link-same-tab')}
               linkTextExternal={t('events.link-new-tab')}
@@ -46,7 +78,7 @@ export const TrackTable = ({ eventId, tracks, raceFormat }) => {
     );
   }, [tracks, eventId, t, raceFormat]);
 
-  const columnsConfig = [
+  const columnsConfig: TableProps.ColumnDefinition<TrackTableItem>[] = [
     {
       id: 'trackId',
       header: t('events.track-type'),
@@ -85,7 +117,9 @@ export const TrackTable = ({ eventId, tracks, raceFormat }) => {
       cell: (item) => item.streamingOverlayChromaLinks || '-',
     },
   ];
+
   console.info(tableItems);
+  
   return (
     <Table
       header={<Header variant="h3">Leaderboards</Header>}

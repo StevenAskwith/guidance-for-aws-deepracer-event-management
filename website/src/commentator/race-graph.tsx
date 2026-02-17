@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import BarChart from '@cloudscape-design/components/bar-chart';
 import Box from '@cloudscape-design/components/box';
 import {
@@ -13,27 +12,44 @@ import { useTranslation } from 'react-i18next';
 import { RaceTypeEnum } from '../admin/events/support-functions/raceConfig';
 import { convertMsToString } from '../support-functions/time';
 
+interface RaceGraphProps {
+  laps: any[];
+  fastestEventLapTime?: number;
+  fastestEventAvgLap?: { avgTime: number; [key: string]: any };
+  raceFormat?: string;
+  fastestRaceAvgLap?: { avgTime: number; [key: string]: any };
+}
+
+interface GraphDataPoint {
+  x: string | number;
+  y: number;
+}
+
+/**
+ * RaceGraph component displays lap times as a bar chart
+ * Shows fastest laps and average windows with color-coded performance indicators
+ */
 const RaceGraph = ({
   laps,
   fastestEventLapTime,
   fastestEventAvgLap,
   raceFormat,
   fastestRaceAvgLap,
-}) => {
+}: RaceGraphProps): JSX.Element => {
   const { t } = useTranslation(['translation', 'help-race-stats']);
 
-  const [yDomain, setYDomain] = useState([0, 15000]);
-  const [xDomain, SetXDomain] = useState([]);
-  const [redLaps, setRedLaps] = useState([]);
-  const [yellowLaps, setYellowLaps] = useState([]);
-  const [greenLaps, setGreenLaps] = useState([]);
-  const [purpleLaps, setPurpleLaps] = useState([]);
-  const [threshold, setThreshold] = useState(0);
-  const [thresholdLabel, setThresholdLabel] = useState(t('commentator.race.graph.fastestLap'));
-  const [fastestLabel, setFastestLabel] = useState(t('commentator.race.graph.fastestRaceLap'));
-  const [fastestOfEventLabel, setFastestOfEventLabel] = useState(t('commentator.race.graph.fastestOfEventRaceLap'));
+  const [yDomain, setYDomain] = useState<[number, number]>([0, 15000]);
+  const [xDomain, SetXDomain] = useState<string[]>([]);
+  const [redLaps, setRedLaps] = useState<GraphDataPoint[]>([]);
+  const [yellowLaps, setYellowLaps] = useState<GraphDataPoint[]>([]);
+  const [greenLaps, setGreenLaps] = useState<GraphDataPoint[]>([]);
+  const [purpleLaps, setPurpleLaps] = useState<GraphDataPoint[]>([]);
+  const [threshold, setThreshold] = useState<number>(0);
+  const [thresholdLabel, setThresholdLabel] = useState<string>(t('commentator.race.graph.fastestLap'));
+  const [fastestLabel, setFastestLabel] = useState<string>(t('commentator.race.graph.fastestRaceLap'));
+  const [fastestOfEventLabel, setFastestOfEventLabel] = useState<string>(t('commentator.race.graph.fastestOfEventRaceLap'));
 
-  const prepareGraphForAvgFormat = (slowestTime, fastestTime, allLaps) => {
+  const prepareGraphForAvgFormat = (slowestTime: number, fastestTime: number, allLaps: any[]): void => {
     setFastestLabel(t('commentator.race.graph.fastestAvgWindow'));
     setFastestOfEventLabel(t('commentator.race.graph.fastestOfEventAvgWindow'));
     setThresholdLabel(t('commentator.race.graph.fastestAvgLap'));
@@ -60,7 +76,7 @@ const RaceGraph = ({
       console.log("fastestRaceAvgLap:", fastestRaceAvgLap?.avgTime);
 
       //  Decide if the fastest avgLap is Green (Fastest of Race) or Purple (Fastest of Event)
-      if (fastestRaceAvgLap?.avgTime < fastestEventAvgLap?.avgTime) {
+      if (fastestRaceAvgLap?.avgTime && fastestEventAvgLap?.avgTime && fastestRaceAvgLap.avgTime < fastestEventAvgLap.avgTime) {
         setGreenLaps([]);
         setPurpleLaps(avgWindowLaps);
       } else {
@@ -68,17 +84,17 @@ const RaceGraph = ({
         setPurpleLaps([]);
       }
       
-      setYellowLaps(lapsCopy.filter((lap) => lap.isValid));
-      setRedLaps(lapsCopy.filter((lap) => !lap.isValid));
+      setYellowLaps(lapsCopy.filter((lap: any) => lap.isValid));
+      setRedLaps(lapsCopy.filter((lap: any) => !lap.isValid));
     } else {
-      setYellowLaps(lapsCopy.filter((lap) => lap.isValid));
-      setRedLaps(lapsCopy.filter((lap) => !lap.isValid));
+      setYellowLaps(lapsCopy.filter((lap: any) => lap.isValid));
+      setRedLaps(lapsCopy.filter((lap: any) => !lap.isValid));
       setGreenLaps([]);
       setPurpleLaps([]);
     }
   };
 
-  const prepareGraph = (fastestTime, slowestTime, allLaps) => {
+  const prepareGraph = (fastestTime: number, slowestTime: number, allLaps: any[]): void => {
     setFastestLabel(t('commentator.race.graph.fastestRaceLap'));
     setFastestOfEventLabel(t('commentator.race.graph.fastestOfEventRaceLap'));
     if (fastestEventLapTime) {
@@ -91,26 +107,26 @@ const RaceGraph = ({
       setYDomain([fastestTime - 500, slowestTime + 500]);
     }
 
-    allLaps.sort((a, b) => a.time - b.time);
+    allLaps.sort((a: any, b: any) => a.time - b.time);
 
     console.log(allLaps);
-    const fastest = allLaps.findIndex((lap) => lap.isValid);
+    const fastest = allLaps.findIndex((lap: any) => lap.isValid);
     console.log("fastest:", allLaps[fastest].time);
     console.log("fastestEventLapTime:", fastestEventLapTime);
 
-    setYellowLaps(allLaps.filter((lap, index) => lap.isValid && index !== fastest));
-    setRedLaps(allLaps.filter((lap) => !lap.isValid));
+    setYellowLaps(allLaps.filter((lap: any, index: number) => lap.isValid && index !== fastest));
+    setRedLaps(allLaps.filter((lap: any) => !lap.isValid));
 
     //  Decide if the fastest lap is Green (Fastest of Race) or Purple (Fastest of Event)
-    if (allLaps[fastest].time < fastestEventLapTime) {
+    if (fastestEventLapTime && allLaps[fastest].time < fastestEventLapTime) {
       console.log("purple:", allLaps[fastest].time);
-      setPurpleLaps(allLaps.filter((lap, index) => lap.isValid && index === fastest));
+      setPurpleLaps(allLaps.filter((lap: any, index: number) => lap.isValid && index === fastest));
       setGreenLaps([]);
     }
     else {
       console.log("Green:", allLaps[fastest].time);
       setPurpleLaps([]);
-      setGreenLaps(allLaps.filter((lap, index) => lap.isValid && index === fastest));
+      setGreenLaps(allLaps.filter((lap: any, index: number) => lap.isValid && index === fastest));
     }    
   };
 
@@ -119,7 +135,7 @@ const RaceGraph = ({
       var fastestTime = laps[0].time;
       var slowestTime = laps[0].time;
 
-      const allLaps = laps.map((lap) => {
+      const allLaps = laps.map((lap: any) => {
         if (lap.time < fastestTime) {
           fastestTime = lap.time;
         }
@@ -132,7 +148,7 @@ const RaceGraph = ({
         };
       });
 
-      const xDomain = allLaps.map((lap) => lap.x);
+      const xDomain = allLaps.map((lap: any) => lap.x);
 
       SetXDomain(xDomain);
 
@@ -159,36 +175,36 @@ const RaceGraph = ({
             type: 'bar',
             color: colorChartsStatusCritical,
             title: t('commentator.race.graph.invalidLaps'),
-            data: redLaps,
-            valueFormatter: (e) => convertMsToString(e, true),
+            data: redLaps as any,
+            valueFormatter: (e: any) => convertMsToString(e, true),
           },
           {
             type: 'bar',
             color: colorChartsYellow300,
             title: t('commentator.race.graph.validLaps'),
-            data: yellowLaps,
-            valueFormatter: (e) => convertMsToString(e, true),
+            data: yellowLaps as any,
+            valueFormatter: (e: any) => convertMsToString(e, true),
           },
           {
             type: 'bar',
             color: colorChartsGreen400,
             title: fastestLabel,
-            data: greenLaps,
-            valueFormatter: (e) => convertMsToString(e, true),
+            data: greenLaps as any,
+            valueFormatter: (e: any) => convertMsToString(e, true),
           },
           {
             type: 'bar',
             color: colorChartsPurple600,
             title: fastestOfEventLabel,
-            data: purpleLaps,
-            valueFormatter: (e) => convertMsToString(e, true),
+            data: purpleLaps as any,
+            valueFormatter: (e: any) => convertMsToString(e, true),
           },
           {
             title: thresholdLabel,
             type: 'threshold',
             color: colorChartsPaletteCategorical25,
             y: Number(threshold),
-            valueFormatter: (e) => convertMsToString(e, true),
+            valueFormatter: (e: any) => convertMsToString(e, true),
           },
         ]}
         yDomain={yDomain}

@@ -1,30 +1,30 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { useEffect, useRef } from 'react';
 import useMutation from './useMutation';
 
-export const RacesStatusEnum = {
-  NO_RACER_SELECTED: 'NO_RACER_SELECTED',
-  READY_TO_START: 'READY_TO_START',
-  RACE_IN_PROGRESS: 'RACE_IN_PROGRESS',
-  RACE_PAUSED: 'RACE_PAUSED',
-  RACE_FINSIHED: 'RACE_FINSIHED',
-};
+export enum RacesStatusEnum {
+  NO_RACER_SELECTED = 'NO_RACER_SELECTED',
+  READY_TO_START = 'READY_TO_START',
+  RACE_IN_PROGRESS = 'RACE_IN_PROGRESS',
+  RACE_PAUSED = 'RACE_PAUSED',
+  RACE_FINSIHED = 'RACE_FINSIHED',
+}
 
-export const OverlayInfo = {
-  eventId: undefined,
-  username: undefined,
-  userId: undefined,
-  timeLeftInMs: undefined,
-  currentLapTimeInMs: undefined,
-  raceStatusEnum: undefined,
-};
+export interface OverlayInfo {
+  eventId?: string;
+  trackId?: string;
+  username?: string;
+  userId?: string;
+  timeLeftInMs?: number;
+  currentLapTimeInMs?: number;
+  raceStatus?: RacesStatusEnum;
+}
 
-export const usePublishOverlay = () => {
+export const usePublishOverlay = (): [(callback: () => OverlayInfo, interval?: number) => void, () => void] => {
   const [SendMutation] = useMutation();
-  let intervalTimerId = useRef();
-  let lastMessage = useRef();
+  const intervalTimerId = useRef<NodeJS.Timeout | undefined>();
+  const lastMessage = useRef<OverlayInfo>({});
 
-  const startPublish = (callback, interval = 5000) => {
+  const startPublish = (callback: () => OverlayInfo, interval: number = 5000): void => {
     if (intervalTimerId.current) stopPublish();
 
     const message = callback();
@@ -38,11 +38,12 @@ export const usePublishOverlay = () => {
     }, interval);
   };
 
-  const Publish = (message) => {
+  const Publish = (message: OverlayInfo): void => {
     lastMessage.current = message;
     SendMutation('updateOverlayInfo', message);
   };
-  const stopPublish = () => {
+
+  const stopPublish = (): void => {
     if (intervalTimerId) {
       clearInterval(intervalTimerId.current);
       intervalTimerId.current = undefined;

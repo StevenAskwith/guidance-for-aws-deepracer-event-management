@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, SpaceBetween, Toggle } from '@cloudscape-design/components';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,32 @@ import {
 } from '../../../components/tableModelsConfigOperator';
 import { useStore } from '../../../store/store';
 
-export const ModelSelector = ({
+interface QueryToken {
+  propertyKey?: string;
+  value?: string;
+  operator?: string;
+}
+
+interface Query {
+  tokens: QueryToken[];
+  operation: 'and' | 'or';
+}
+
+interface Model {
+  modelId: string;
+  status: string;
+  uploadedDateTime: string;
+}
+
+interface ModelSelectorProps {
+  query?: Query;
+  selectedModels: Model[];
+  setSelectedModels: (models: Model[]) => void;
+  clearModelsOnCarToggle: boolean;
+  setClearModelsOnCarToggle: (value: boolean) => void;
+}
+
+export const ModelSelector: React.FC<ModelSelectorProps> = ({
   query = { tokens: [], operation: 'and' },
   selectedModels,
   setSelectedModels,
@@ -24,9 +48,9 @@ export const ModelSelector = ({
   ]);
   const columnConfiguration = ColumnConfigurationOperator();
   const filteringProperties = FilteringPropertiesOperator();
-  const [state] = useStore();
-  const models = state.models.models;
-  const isLoading = state.models.isLoading;
+  const [state] = useStore() as any; // TODO: Type store properly
+  const models: Model[] = state.models.models;
+  const isLoading: boolean = state.models.isLoading;
 
   let tabeleHeaderContent = (
     <TableHeader
@@ -37,7 +61,7 @@ export const ModelSelector = ({
   );
 
   let tabeleFooterContent = (
-    <SpaceBetween direction='vertical'>
+    <SpaceBetween direction='vertical' size='s'>
       <Box float='right'>
         <Toggle
           onChange={({ detail }) => {
@@ -57,18 +81,18 @@ export const ModelSelector = ({
       setSelectedItems={setSelectedModels}
       tableItems={models}
       selectionType="multi"
-      columnConfiguration={columnConfiguration}
+      columnConfiguration={columnConfiguration as any}
       trackBy="modelId"
-      sortingColumn="uploadedDateTime"
+      sortingColumn={{ sortingField: 'uploadedDateTime' } as any}
       header={tabeleHeaderContent}
       footer={tabeleFooterContent}
       itemsIsLoading={isLoading}
-      isItemDisabled={(item) => !['AVAILABLE', 'OPTIMIZED'].includes(item.status)}
+      isItemDisabled={(item: Model) => !['AVAILABLE', 'OPTIMIZED'].includes(item.status)}
       loadingText={t('models.loading-models')}
       localStorageKey="models-table-preferences"
-      filteringProperties={filteringProperties}
+      filteringProperties={filteringProperties as any}
       filteringI18nStringsName="models"
-      query={query}
+      query={query as any}
     />
   );
 

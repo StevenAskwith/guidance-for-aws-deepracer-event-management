@@ -1,21 +1,33 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useMutation from '../../../hooks/useMutation';
 import { useStore } from '../../../store/store';
+import { Model } from '../../../types/domain';
 
-export const DeleteModelModal = ({ disabled, selectedModels, onDelete, variant }) => {
+interface DeleteModelModalProps {
+  disabled: boolean;
+  selectedModels: Model[];
+  onDelete: () => void;
+  variant?: 'normal' | 'primary' | 'link' | 'icon';
+}
+
+export const DeleteModelModal: React.FC<DeleteModelModalProps> = ({ 
+  disabled, 
+  selectedModels, 
+  onDelete, 
+  variant 
+}) => {
   const { t } = useTranslation();
   const [, dispatch] = useStore();
-  const [send] = useMutation();
+  const [send] = useMutation() as any; // TODO: Type useMutation hook properly
 
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState<boolean>(false);
 
-  const deleteModels = async () => {
+  const deleteModels = async (): Promise<void> => {
     setVisible(false);
     for (const i in selectedModels) {
-      const model = selectedModels[i];
+      const model = selectedModels[i] as any; // TODO: Align Model interface with actual data structure
       console.info('model', model);
       send('deleteModel', { modelId: model.modelId, sub: model.sub, modelname: model.modelname });
       onDelete();
@@ -57,11 +69,15 @@ export const DeleteModelModal = ({ disabled, selectedModels, onDelete, variant }
   );
 };
 
-const ItemsList = ({ items }) => {
+interface ItemsListProps {
+  items: Model[];
+}
+
+const ItemsList: React.FC<ItemsListProps> = ({ items }) => {
   return (
     <ul>
-      {items.map((item) => (
-        <li key={item.fileMetaData.key}>{item.fileMetaData.filename}</li>
+      {items.map((item: any) => (
+        <li key={item.fileMetaData?.key || item.modelKey}>{item.fileMetaData?.filename || item.modelName}</li>
       ))}
     </ul>
   );

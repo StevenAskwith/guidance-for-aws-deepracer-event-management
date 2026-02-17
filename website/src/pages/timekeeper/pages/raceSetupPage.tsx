@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Box,
   Button,
@@ -24,30 +23,51 @@ import { RacerSelector } from '../components/racerSelector';
 import { RacesDoneByUser } from '../components/racesDoneByUser';
 import { Breadcrumbs } from '../support-functions/supportFunctions';
 
-export const RaceSetupPage = ({ onNext }) => {
+interface RaceSetupPageProps {
+  onNext: (raceDetails: any) => void;
+}
+
+interface RaceSetupState {
+  eventId?: string;
+  trackId?: string;
+  trackName?: string;
+  userId?: string;
+  racedByProxy: boolean;
+}
+
+interface RacerValidation {
+  isInvalid: boolean;
+  isDisabled: boolean;
+}
+
+/**
+ * RaceSetupPage component for setting up a new race
+ * Handles racer selection and race configuration
+ */
+export const RaceSetupPage = ({ onNext }: RaceSetupPageProps): JSX.Element => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-setup']);
   const [SendMutation] = useMutation();
   const selectedEvent = useSelectedEventContext();
   const selectedTrack = useSelectedTrackContext();
 
-  const [eventSelectModalVisible, setEventSelectModalVisible] = useState(false);
+  const [eventSelectModalVisible, setEventSelectModalVisible] = useState<boolean>(false);
 
-  const [race, setRace] = useState({
-    eventId: selectedEvent.eventId,
-    trackId: selectedTrack.trackId,
-    trackName: selectedTrack.leaderBoardTitle,
+  const [race, setRace] = useState<RaceSetupState>({
+    eventId: selectedEvent?.eventId,
+    trackId: selectedTrack?.trackId,
+    trackName: selectedTrack?.leaderBoardTitle,
     userId: undefined,
     racedByProxy: false,
   });
 
-  const [racerValidation, setRacerValidation] = useState({
+  const [racerValidation, setRacerValidation] = useState<RacerValidation>({
     isInvalid: true,
     isDisabled: false,
   });
 
   // Show event selector modal if no event has been selected, timekeeper must have an event selected to work
   useEffect(() => {
-    if (selectedEvent.eventId == null) {
+    if (selectedEvent?.eventId == null) {
       setEventSelectModalVisible(true);
     }
   }, [selectedEvent]);
@@ -57,22 +77,22 @@ export const RaceSetupPage = ({ onNext }) => {
     setRace((preValue) => {
       return {
         ...preValue,
-        eventId: selectedEvent.eventId,
-        trackId: selectedTrack.trackId,
+        eventId: selectedEvent?.eventId,
+        trackId: selectedTrack?.trackId,
       };
     });
-  }, [selectedEvent.eventId, selectedTrack.trackId]);
+  }, [selectedEvent?.eventId, selectedTrack?.trackId]);
 
   useEffect(() => {
-    if (selectedEvent.eventId == null) return;
+    if (selectedEvent?.eventId == null) return;
 
     const message = {
       eventId: selectedEvent.eventId,
-      trackId: selectedTrack.trackId,
+      trackId: selectedTrack?.trackId || '',
       raceStatus: RacesStatusEnum.NO_RACER_SELECTED,
     };
-    SendMutation('updateOverlayInfo', message);
-  }, [selectedEvent, SendMutation, selectedTrack.trackId]);
+    SendMutation('updateOverlayInfo' as any, message);
+  }, [selectedEvent, SendMutation, selectedTrack?.trackId]);
 
   // input validation
   useEffect(() => {
@@ -92,7 +112,7 @@ export const RaceSetupPage = ({ onNext }) => {
     };
   }, [race.eventId, race.userId]);
 
-  const configUpdateHandler = (attr) => {
+  const configUpdateHandler = (attr: Partial<RaceSetupState>): void => {
     setRace((prevState) => {
       return { ...prevState, ...attr };
     });
@@ -100,18 +120,18 @@ export const RaceSetupPage = ({ onNext }) => {
 
   const actionButtons = (
     <Box float="right">
-      <SpaceBetween direction="horizontal" size="L">
+      <SpaceBetween direction="horizontal" size="l">
         <Button variant="link">{t('button.cancel')}</Button>
         <Button
           variant="primary"
           disabled={racerValidation.isInvalid}
           onClick={() => {
-            const raceDetails = {
+            const raceDetails: any = {
               race: race,
-              config: selectedEvent.raceConfig,
+              config: selectedEvent?.raceConfig,
             };
-            raceDetails.config['eventName'] = selectedEvent.eventName;
-            raceDetails.race['eventId'] = selectedEvent.eventId;
+            raceDetails.config['eventName'] = selectedEvent?.eventName;
+            raceDetails.race['eventId'] = selectedEvent?.eventId;
             raceDetails.race['laps'] = [];
             onNext(raceDetails);
           }}
@@ -147,8 +167,8 @@ export const RaceSetupPage = ({ onNext }) => {
           header={
             <Header>
               Race:{' '}
-              {`${selectedEvent.eventName} ${t('timekeeper.race-setup-page.racing-on-trackId')} ${
-                selectedTrack.leaderBoardTitle
+              {`${selectedEvent?.eventName || ''} ${t('timekeeper.race-setup-page.racing-on-trackId')} ${
+                selectedTrack?.leaderBoardTitle || ''
               } `}
             </Header>
           }
@@ -159,9 +179,9 @@ export const RaceSetupPage = ({ onNext }) => {
               race={race}
               onConfigUpdate={configUpdateHandler}
               racerValidation={racerValidation}
-              selectedEvent={selectedEvent}
+              selectedEvent={selectedEvent as any}
             />
-            <RacesDoneByUser selecedEvent={selectedEvent} selecedUserId={race.userId} />
+            <RacesDoneByUser selecedEvent={selectedEvent as any} selecedUserId={race.userId || null} />
             <FormField
               label={t('race-admin.raced-by-proxy')}
               description={t('race-admin.raced-by-proxy-description')}

@@ -1,27 +1,48 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper hook types and return type annotations
 import { API, Auth, graphqlOperation } from 'aws-amplify';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAllCarLogsAssets } from '../graphql/queries';
 import { onAddedCarLogsAsset, onDeletedCarLogsAsset } from '../graphql/subscriptions';
-import { useStore } from '../store/store';
+import { useStore, Dispatch } from '../store/store';
+import { CarLogAsset } from '../types/domain';
 
 // CONSTANTS
 const ASSETS_GET_LIMIT = 200;
 
-export const useCarLogsApi = (allowedToFetchAllAssets = false) => {
+interface SubscriptionVariables {
+  sub?: string;
+}
+
+interface GraphQLError {
+  message: string;
+}
+
+interface GetAllCarLogsAssetsResponse {
+  data: {
+    getAllCarLogsAssets: {
+      assets: CarLogAsset[];
+      nextToken: string | null;
+    };
+  };
+}
+
+interface UseCarLogsApiReturn {
+  triggerReload: () => void;
+}
+
+export const useCarLogsApi = (allowedToFetchAllAssets: boolean = false): UseCarLogsApiReturn => {
   const { t } = useTranslation();
   const [, dispatch] = useStore();
-  const [reload, setReload] = useState(false);
-  const [subscriptionVariables, setSubscriptionVariables] = useState({});
+  const [reload, setReload] = useState<boolean>(false);
+  const [subscriptionVariables, setSubscriptionVariables] = useState<SubscriptionVariables>({});
 
-  const triggerReload = () => {
+  const triggerReload = (): void => {
     setReload((prev) => !prev);
   };
 
   // adds an error notification for each API error
   const addErrorNotifications = useCallback(
-    (apiMethodName, errors, dispatch) => {
+    (apiMethodName: string, errors: GraphQLError[], dispatch: Dispatch): void => {
       errors.forEach((element, index) => {
         const errorMessage = `${apiMethodName}: ${element.message}`;
         const notificationId = `${apiMethodName}Error${index}`;
@@ -43,29 +64,33 @@ export const useCarLogsApi = (allowedToFetchAllAssets = false) => {
 
   // If a user is not allowed to fetch all assets the sub need to be provided to filter the subscription.
   useEffect(() => {
-    if (allowedToFetchAllAssets) {
-      setSubscriptionVariables({});
-    } else {
-      const sub = Auth.user.attributes.sub;
-      setSubscriptionVariables({ sub: sub });
+    async function getSubscriptionVariables(): Promise<void> {
+      if (allowedToFetchAllAssets) {
+        setSubscriptionVariables({});
+      } else {
+        const currentUser = await Auth.currentAuthenticatedUser();
+        const sub = currentUser.attributes.sub;
+        setSubscriptionVariables({ sub: sub });
+      }
     }
+    getSubscriptionVariables();
   }, [allowedToFetchAllAssets, addErrorNotifications]);
 
   // initial data load
   useEffect(() => {
-    const getAssetApiCall = async (nextToken = undefined) => {
+    const getAssetApiCall = async (nextToken: string | null = null): Promise<string | null> => {
       const response = await API.graphql(
         graphqlOperation(getAllCarLogsAssets, { limit: ASSETS_GET_LIMIT, nextToken: nextToken })
-      );
+      ) as GetAllCarLogsAssetsResponse;
       const assets = response.data.getAllCarLogsAssets.assets;
       dispatch('ADD_ASSETS', assets);
       return response.data.getAllCarLogsAssets.nextToken;
     };
 
-    const getAssets = async () => {
+    const getAssets = async (): Promise<void> => {
       dispatch('ASSETS_IS_LOADING', true);
       try {
-        let nextToken = undefined;
+        let nextToken: string | null = null;
         nextToken = await getAssetApiCall(nextToken);
 
         dispatch('ASSETS_IS_LOADING', false);
@@ -73,7 +98,7 @@ export const useCarLogsApi = (allowedToFetchAllAssets = false) => {
         while (nextToken) {
           nextToken = await getAssetApiCall(nextToken);
         }
-      } catch (error) {
+      } catch (error: any) {
         addErrorNotifications('getAllCarLogsAssets query', error.errors, dispatch);
       } finally {
         dispatch('ASSETS_IS_LOADING', false);
@@ -89,15 +114,15 @@ export const useCarLogsApi = (allowedToFetchAllAssets = false) => {
 
   // subscribe to data changes and append them to local array
   useEffect(() => {
-    const subscription = API.graphql(
+    const subscription = (API.graphql(
       graphqlOperation(onAddedCarLogsAsset, subscriptionVariables)
-    ).subscribe({
-      next: (event) => {
-        const addedAsset = event.value.data.onAddedCarLogsAsset;
+    ) as any).subscribe({
+      next: (event: any) => {
+        const addedAsset: CarLogAsset = event.value.data.onAddedCarLogsAsset;
         dispatch('UPDATE_ASSET', addedAsset);
       },
-      error: (error) => {
-        const errors = error.error.errors;
+      error: (error: any) => {
+        const errors: GraphQLError[] = error.error.errors;
         addErrorNotifications('onAddedCarLogsAsset subscription', errors, dispatch);
       },
     });
@@ -109,15 +134,15 @@ export const useCarLogsApi = (allowedToFetchAllAssets = false) => {
 
   // subscribe to delete data changes and delete them from local array
   useEffect(() => {
-    const subscription = API.graphql(
+    const subscription = (API.graphql(
       graphqlOperation(onDeletedCarLogsAsset, subscriptionVariables)
-    ).subscribe({
-      next: (event) => {
-        const deletedAsset = event.value.data.onDeletedCarLogsAsset;
+    ) as any).subscribe({
+      next: (event: any) => {
+        const deletedAsset: CarLogAsset = event.value.data.onDeletedCarLogsAsset;
         dispatch('DELETE_ASSET', [deletedAsset]);
       },
-      error: (error) => {
-        const errors = error.error.errors;
+      error: (error: any) => {
+        const errors: GraphQLError[] = error.error.errors;
         addErrorNotifications('onDeletedCarLogsAsset subscription', errors, dispatch);
       },
     });

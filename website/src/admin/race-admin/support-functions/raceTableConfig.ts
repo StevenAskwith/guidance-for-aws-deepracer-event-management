@@ -1,9 +1,25 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper types
+import { TableProps } from '@cloudscape-design/components';
 import i18next from '../../../i18n';
 import { formatAwsDateTime } from '../../../support-functions/time';
+import { Race } from '../../../types/domain';
 
-export const ColumnConfiguration = () => {
+interface VisibleContentOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentGroup {
+  label: string;
+  options: VisibleContentOption[];
+}
+
+interface TableConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentGroup[];
+  columnDefinitions: TableProps.ColumnDefinition<Race>[];
+}
+
+export const ColumnConfiguration = (): TableConfiguration => {
   return {
     defaultVisibleColumns: ['createdAt', 'username', 'trackId', 'numberOfLaps'],
     visibleContentOptions: [
@@ -78,7 +94,7 @@ export const ColumnConfiguration = () => {
       {
         id: 'numberOfLaps',
         header: i18next.t('race-admin.number-of-laps'),
-        cell: (item) => item.laps.length || '-',
+        cell: (item) => item.laps?.length || '-',
         sortingField: 'laps',
         width: 100,
       },
@@ -92,7 +108,13 @@ export const ColumnConfiguration = () => {
   };
 };
 
-export const FilteringProperties = () => {
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const FilteringProperties = (): FilteringProperty[] => {
   return [
     {
       key: 'username',
@@ -105,4 +127,15 @@ export const FilteringProperties = () => {
       operators: [':', '!:', '=', '!='],
     },
   ].sort((a, b) => a.propertyLabel.localeCompare(b.propertyLabel));
+};
+
+// Helper functions for test compatibility
+export const ColumnDefinitions = (): TableProps.ColumnDefinition<Race>[] => {
+  const config = ColumnConfiguration();
+  return config.columnDefinitions;
+};
+
+export const VisibleContentOptions = (): VisibleContentGroup[] => {
+  const config = ColumnConfiguration();
+  return config.visibleContentOptions;
 };

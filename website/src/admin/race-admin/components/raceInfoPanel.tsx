@@ -1,11 +1,26 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { ColumnLayout, Container, FormField, Header, Toggle } from '@cloudscape-design/components';
 import React from 'react';
 
 import { useUsers } from '../../../hooks/useUsers';
 import { formatAwsDateTime } from '../../../support-functions/time';
+import { Race } from '../../../types/domain';
 
-export const RaceInfoPanel = ({ race, onChange }) => {
+/**
+ * Props interface for RaceInfoPanel component
+ */
+interface RaceInfoPanelProps {
+  /** Race object to display information for */
+  race: Race;
+  /** Callback function when race properties change */
+  onChange: (changes: Partial<Race>) => void;
+}
+
+/**
+ * RaceInfoPanel component that displays general race information
+ * @param props - Component props
+ * @returns Rendered race information panel
+ */
+export const RaceInfoPanel = ({ race, onChange }: RaceInfoPanelProps): JSX.Element => {
   const [, , getUserNameFromId] = useUsers();
 
   return (
@@ -23,14 +38,14 @@ export const RaceInfoPanel = ({ race, onChange }) => {
           //description=''//{t('events.event-type-description')}
           //errorText={typeOfEventErrorMessage}
         >
-          {formatAwsDateTime(race.createdAt)}
+          {race.createdAt ? formatAwsDateTime(race.createdAt) : '-'}
         </FormField>
         <FormField
           label="Racer" //{t('events.event-type')}
           //description=''//{t('events.event-type-description')}
           //errorText={typeOfEventErrorMessage}
         >
-          {getUserNameFromId(race.userId)}
+          {typeof getUserNameFromId === 'function' ? getUserNameFromId(race.userId) : race.userId}
         </FormField>
         <FormField
           label="Raced By Proxy" //{t('events.event-type')}
@@ -38,7 +53,7 @@ export const RaceInfoPanel = ({ race, onChange }) => {
           //errorText={typeOfEventErrorMessage}
         >
           <Toggle
-            checked={race.racedByProxy}
+            checked={race.racedByProxy || false}
             onChange={(event) => onChange({ racedByProxy: event.detail.checked })}
           />
         </FormField>

@@ -1,20 +1,34 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, ColumnLayout, SpaceBetween } from '@cloudscape-design/components';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatAwsDateTime } from '../../../support-functions/time';
-import { ModelStatus } from './modelsTableConfig';
-//import { GetTypeOfEventNameFromId } from '../support-functions/eventDomain';
-// import {
-//   GetRaceResetsNameFromId,
-//   GetRankingNameFromId,
-//   GetTrackTypeNameFromId,
-// } from '../support-functions/raceConfig';
 
-export const ModelDetailsPanelContent = ({ model }) => {
+interface ModelMetaData {
+  trainingAlgorithm?: string;
+  actionSpaceType?: string;
+  sensor?: string;
+}
+
+interface FileMetaData {
+  filename: string;
+  uploadedDateTime: string;
+}
+
+interface ModelDetails {
+  fileMetaData: FileMetaData;
+  status: string;
+  modelMD5?: string;
+  modelMetaData?: ModelMetaData | null;
+}
+
+interface ModelDetailsPanelContentProps {
+  model: ModelDetails;
+}
+
+export const ModelDetailsPanelContent: React.FC<ModelDetailsPanelContentProps> = ({ model }) => {
   const { t } = useTranslation();
 
-  const attributeField = (header, value) => {
+  const attributeField = (header: string, value: React.ReactNode): JSX.Element => {
     return (
       <SpaceBetween size="xxxs">
         <Box fontWeight="bold">{header}:</Box>
@@ -23,7 +37,7 @@ export const ModelDetailsPanelContent = ({ model }) => {
     );
   };
 
-  const ModelMetaData = ({ model }) => {
+  const ModelMetaDataDisplay: React.FC<{ model: ModelDetails }> = ({ model }) => {
     console.info(model);
     if (model.modelMetaData == null) {
       return (
@@ -43,20 +57,20 @@ export const ModelDetailsPanelContent = ({ model }) => {
       );
     }
   };
-  // JSX
+
   console.info(model);
   return (
     <>
       <ColumnLayout columns={4} variant="text-grid">
         {attributeField(t('models.model-name'), model.fileMetaData.filename)}
-        {attributeField(t('models.status'), <ModelStatus status={model.status} />)}
+        {attributeField(t('models.status'), model.status)}
         {attributeField(
           t('models.upload-date'),
           formatAwsDateTime(model.fileMetaData.uploadedDateTime)
         )}
         {attributeField(t('models.md5-hash'), model.modelMD5)}
       </ColumnLayout>
-      <ModelMetaData model={model} />
+      <ModelMetaDataDisplay model={model} />
     </>
   );
 };

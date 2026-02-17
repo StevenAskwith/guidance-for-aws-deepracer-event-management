@@ -1,16 +1,38 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Box, Button, Modal, SpaceBetween } from '@cloudscape-design/components';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useMutation from '../../../hooks/useMutation';
 
-export const DeleteAssetModal = ({ disabled, selectedAssets, onDelete, variant }) => {
+interface AssetMetaData {
+  key: string;
+  filename: string;
+}
+
+interface Asset {
+  assetId: string;
+  sub: string;
+  assetMetaData: AssetMetaData;
+}
+
+interface DeleteAssetModalProps {
+  disabled: boolean;
+  selectedAssets: Asset[];
+  onDelete: () => void;
+  variant?: 'normal' | 'primary' | 'link' | 'icon';
+}
+
+export const DeleteAssetModal: React.FC<DeleteAssetModalProps> = ({ 
+  disabled, 
+  selectedAssets, 
+  onDelete, 
+  variant 
+}) => {
   const { t } = useTranslation();
-  const [send] = useMutation();
+  const [send] = useMutation() as any; // TODO: Type useMutation hook properly
 
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState<boolean>(false);
 
-  const deleteAssets = async () => {
+  const deleteAssets = async (): Promise<void> => {
     setVisible(false);
     for (const i in selectedAssets) {
       const asset = selectedAssets[i];
@@ -57,7 +79,11 @@ export const DeleteAssetModal = ({ disabled, selectedAssets, onDelete, variant }
   );
 };
 
-const ItemsList = ({ items }) => {
+interface ItemsListProps {
+  items: Asset[];
+}
+
+const ItemsList: React.FC<ItemsListProps> = ({ items }) => {
   return (
     <ul>
       {items.map((item) => (

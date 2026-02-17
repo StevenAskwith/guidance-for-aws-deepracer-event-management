@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import {
   Box,
   Button,
@@ -8,6 +7,7 @@ import {
   Select,
   SpaceBetween,
 } from '@cloudscape-design/components';
+import type { SelectProps } from '@cloudscape-design/components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GetTrackTypeNameFromId } from '../admin/events/support-functions/raceConfig';
@@ -20,47 +20,68 @@ import {
 } from '../store/contexts/storeProvider';
 import { useStore } from '../store/store';
 import { getCurrentDateTime } from '../support-functions/time';
+import { Event, Track } from '../types/domain';
 
-const sortEventsInBuckets = (events) => {
+interface EventBuckets {
+  currentEvents: Event[];
+  futureEvents: Event[];
+  pastEvents: Event[];
+  eventsWithMissingDate: Event[];
+}
+
+const sortEventsInBuckets = (events: Event[]): [Event[], Event[], Event[], Event[]] => {
   const currentDateTime = getCurrentDateTime();
   const now = currentDateTime.format('YYYY-MM-DD');
   const weekAhead = currentDateTime.add(7, 'day').format('YYYY-MM-DD');
 
-  const dateSortedEvents = events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
-  const pastEvents = [];
-  const currentEvents = [];
-  const futureEvents = [];
-  const eventsWithMissingDate = [];
+  const dateSortedEvents = events.sort((a, b) => {
+    const dateA = a.eventDate ? new Date(a.eventDate).getTime() : 0;
+    const dateB = b.eventDate ? new Date(b.eventDate).getTime() : 0;
+    return dateA - dateB;
+  });
+  const pastEvents: Event[] = [];
+  const currentEvents: Event[] = [];
+  const futureEvents: Event[] = [];
+  const eventsWithMissingDate: Event[] = [];
   for (let i = 0; i < dateSortedEvents.length; i++) {
-    if (dateSortedEvents[i].eventDate >= now && dateSortedEvents[i].eventDate < weekAhead) {
+    const eventDate = dateSortedEvents[i].eventDate;
+    if (eventDate && eventDate >= now && eventDate < weekAhead) {
       currentEvents.push(dateSortedEvents[i]);
-    } else if (dateSortedEvents[i].eventDate < now) {
+    } else if (eventDate && eventDate < now) {
       pastEvents.push(dateSortedEvents[i]);
-    } else if (dateSortedEvents[i].eventDate > now) {
+    } else if (eventDate && eventDate > now) {
       futureEvents.push(dateSortedEvents[i]);
-    } else eventsWithMissingDate.push(dateSortedEvents[i]);
+    } else {
+      eventsWithMissingDate.push(dateSortedEvents[i]);
+    }
   }
   return [currentEvents, futureEvents, pastEvents, eventsWithMissingDate];
 };
 
-export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
+interface EventSelectorModalProps {
+  visible: boolean;
+  onDismiss: () => void;
+  onOk: () => void;
+}
+
+export const EventSelectorModal: React.FC<EventSelectorModalProps> = ({ visible, onDismiss, onOk }) => {
   const { t } = useTranslation();
   const selectedEvent = useSelectedEventContext();
   const setSelectedEvent = useSelectedEventDispatch();
   const selectedTrack = useSelectedTrackContext();
   const setSelectedTrack = useSelectedTrackDispatch();
-  const [config, SetConfig] = useState({ ...selectedEvent });
-  const [eventSelectionIsNotValid, setEventSelectionIsNotValid] = useState(true);
-  const [eventSelectItems, setEventSelectItems] = useState([]);
-  const [nextSelectedTrack, setNextSelectedTrack] = useState(selectedTrack);
-  const [nextSelectedTrackInvalid, setNextSelectedTrackInvalid] = useState(true);
-  const [trackSelectItems, setTrackSelectItems] = useState([]);
+  const [config, SetConfig] = useState<Partial<Event>>({ ...selectedEvent });
+  const [eventSelectionIsNotValid, setEventSelectionIsNotValid] = useState<boolean>(true);
+  const [eventSelectItems, setEventSelectItems] = useState<SelectProps.OptionGroup[]>([]);
+  const [nextSelectedTrack, setNextSelectedTrack] = useState<Track | undefined>(selectedTrack);
+  const [nextSelectedTrackInvalid, setNextSelectedTrackInvalid] = useState<boolean>(true);
+  const [trackSelectItems, setTrackSelectItems] = useState<SelectProps.Option[]>([]);
 
   const [state] = useStore();
-  const events = state.events.events;
+  const events = state.events?.events || [];
   const [users, , getUserNameFromId] = useUsers();
 
-  const GetEventOptionFromId = (id) => {
+  const GetEventOptionFromId = (id: string | undefined): SelectProps.Option | undefined => {
     if (!id) return;
 
     const selectedEvent = events.find((event) => event.eventId === id);
@@ -71,10 +92,10 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
   };
 
   const GetEventOptions = useCallback(
-    (event) => {
+    (event: Event): SelectProps.Option => {
       const eventDate = event.eventDate;
-      const eventLead = getUserNameFromId(event.createdBy);
-      const trackType = GetTrackTypeNameFromId(event.raceConfig.trackType);
+      const eventLead = getUserNameFromId(event.createdBy || '');
+      const trackType = event.raceConfig ? GetTrackTypeNameFromId(event.raceConfig.trackType) : '';
       const trackId = 1;
       return {
         label: event.eventName,
@@ -121,14 +142,16 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
     }
   }, [config]);
 
-  const changeEventAndTrack = () => {
+  const changeEventAndTrack = (): void => {
     const event = events.find((event) => event.eventId === config.eventId);
-    setSelectedEvent(event);
-    setSelectedTrack(nextSelectedTrack);
-    onOk();
+    if (event && setSelectedEvent && nextSelectedTrack && setSelectedTrack) {
+      setSelectedEvent(event);
+      setSelectedTrack(nextSelectedTrack);
+      onOk();
+    }
   };
 
-  const configHandler = (attr) => {
+  const configHandler = (attr: Partial<Event>): void => {
     SetConfig((prevState) => {
       return { ...prevState, ...attr };
     });
@@ -136,8 +159,8 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
 
   useEffect(() => {
     const selectedEvent = events.find((event) => event.eventId === config.eventId);
-    if (selectedEvent) {
-      setNextSelectedTrackInvalid(!selectedEvent.tracks.includes(nextSelectedTrack));
+    if (selectedEvent && selectedEvent.tracks) {
+      setNextSelectedTrackInvalid(!selectedEvent.tracks.includes(nextSelectedTrack as Track));
     }
   }, [config, events, nextSelectedTrack]);
 
@@ -145,12 +168,12 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
     // set track select options
     console.debug(config);
     const selectedEvent = events.find((event) => event.eventId === config.eventId);
-    if (selectedEvent) {
+    if (selectedEvent && selectedEvent.tracks) {
       console.debug(selectedEvent);
       const options = selectedEvent.tracks
         .filter((track) => track.trackId !== 'combined') // filter out the combined leaderboard
         .map((track) => {
-          return { value: track.trackId, label: track.leaderBoardTitle };
+          return { value: track.trackId, label: track.leaderBoardTitle || track.trackId };
         });
 
       setTrackSelectItems(options);
@@ -160,12 +183,12 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
   useEffect(() => {
     // set next selected track to default track if new selected event
     const selectedEvent = events.find((event) => event.eventId === config.eventId);
-    if (selectedEvent && !selectedEvent.tracks.includes(nextSelectedTrack)) {
+    if (selectedEvent && selectedEvent.tracks && !selectedEvent.tracks.includes(nextSelectedTrack as Track)) {
       setNextSelectedTrack(selectedEvent.tracks[0]);
     }
   }, [config, events, nextSelectedTrack]);
 
-  const GetSelectedTrackOption = () => {
+  const GetSelectedTrackOption = (): SelectProps.Option | undefined => {
     if (nextSelectedTrack) {
       return {
         label: nextSelectedTrack.leaderBoardTitle || 'x',
@@ -175,9 +198,11 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
     return undefined;
   };
 
-  const trackSelectHandler = (detail) => {
+  const trackSelectHandler = (detail: { trackId: string }): void => {
     const selectedEvent = events.find((event) => event.eventId === config.eventId);
-    setNextSelectedTrack(selectedEvent.tracks.find((item) => item.trackId === detail.trackId));
+    if (selectedEvent && selectedEvent.tracks) {
+      setNextSelectedTrack(selectedEvent.tracks.find((item) => item.trackId === detail.trackId));
+    }
   };
 
   return (
@@ -203,9 +228,9 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
         <SpaceBetween size={'l'}>
           <FormField label={'Event'}>
             <Select
-              selectedOption={GetEventOptionFromId(config.eventId)}
+              selectedOption={GetEventOptionFromId(config.eventId) || null}
               onChange={(detail) => {
-                configHandler({ eventId: detail.detail.selectedOption.value });
+                configHandler({ eventId: detail.detail.selectedOption.value as string });
               }}
               options={eventSelectItems}
               selectedAriaLabel={t('timekeeper.racer-selector.selected')}
@@ -218,9 +243,9 @@ export const EventSelectorModal = ({ visible, onDismiss, onOk }) => {
           </FormField>
           <FormField label={t('event-selector-modal.select-track')}>
             <Select
-              selectedOption={GetSelectedTrackOption()}
+              selectedOption={GetSelectedTrackOption() || null}
               onChange={(detail) => {
-                trackSelectHandler({ trackId: detail.detail.selectedOption.value });
+                trackSelectHandler({ trackId: detail.detail.selectedOption.value as string });
               }}
               options={trackSelectItems}
               selectedAriaLabel={t('timekeeper.racer-selector.selected')}

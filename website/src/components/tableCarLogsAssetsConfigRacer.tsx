@@ -1,10 +1,69 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
+import { ReactNode } from 'react';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { CarLogsAssetType } from './assetType';
 
-export const ColumnConfigurationRacer = () => {
-  var returnObject = {
+interface ModelInfo {
+  modelName?: string;
+}
+
+interface MediaMetaData {
+  duration: number;
+}
+
+interface AssetMetaData {
+  uploadedDateTime: string;
+  filename?: string;
+}
+
+interface CarLogAssetItem {
+  models?: ModelInfo[];
+  modelname?: string;
+  carName?: string;
+  eventName?: string;
+  type?: string;
+  filename?: string;
+  uploadedDateTime?: string;
+  mediaMetaData?: MediaMetaData;
+  assetMetaData: AssetMetaData;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: CarLogAssetItem) => string | ReactNode;
+  sortingField?: string;
+  width?: number;
+  minWidth?: number;
+  sortingComparator?: (a: CarLogAssetItem, b: CarLogAssetItem) => number;
+}
+
+interface ColumnConfiguration {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+  defaultSortingColumn?: ColumnDefinition;
+  defaultSortingIsDescending?: boolean;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: string[];
+}
+
+export const ColumnConfigurationRacer = (): ColumnConfiguration => {
+  const returnObject: ColumnConfiguration = {
     defaultVisibleColumns: [
       'modelname',
       'carname',
@@ -66,8 +125,8 @@ export const ColumnConfigurationRacer = () => {
         sortingField: 'modelname',
         sortingComparator: (a, b) => {
           // Compare first model name in each array
-          const aName = a.models && a.models.length > 0 ? a.models[0].modelName : a.modelname || '';
-          const bName = b.models && b.models.length > 0 ? b.models[0].modelName : b.modelname || '';
+          const aName = a.models && a.models.length > 0 ? (a.models[0].modelName || '') : (a.modelname || '');
+          const bName = b.models && b.models.length > 0 ? (b.models[0].modelName || '') : (b.modelname || '');
           return aName.localeCompare(bName);
         },
         width: 200,
@@ -92,7 +151,7 @@ export const ColumnConfigurationRacer = () => {
       {
         id: 'type',
         header: i18next.t('carlogs.assets.type'),
-        cell: (item) => <CarLogsAssetType type={item.type} /> || '-',
+        cell: (item) => <CarLogsAssetType type={item.type || ''} /> || '-',
         sortingField: 'type',
         width: 200,
         minWidth: 150,
@@ -103,7 +162,7 @@ export const ColumnConfigurationRacer = () => {
         cell: (item) => item.assetMetaData.filename || '-',
         sortingField: 'filename',
         sortingComparator: (a, b) =>
-          a.assetMetaData.filename.localeCompare(b.assetMetaData.filename),
+          (a.assetMetaData.filename || '').localeCompare(b.assetMetaData.filename || ''),
         width: 240,
         minWidth: 150,
       },
@@ -113,7 +172,7 @@ export const ColumnConfigurationRacer = () => {
         cell: (item) => String(formatAwsDateTime(item.assetMetaData.uploadedDateTime)) || '-',
         sortingField: 'uploadedDateTime',
         sortingComparator: (a, b) =>
-          new Date(a.assetMetaData.uploadedDateTime) - new Date(b.assetMetaData.uploadedDateTime),
+          new Date(a.assetMetaData.uploadedDateTime).getTime() - new Date(b.assetMetaData.uploadedDateTime).getTime(),
         width: 240,
         minWidth: 150,
       },
@@ -140,7 +199,7 @@ export const ColumnConfigurationRacer = () => {
 };
 
 // Default FilterProps unless other is required for a given role
-export const FilteringPropertiesRacer = () => {
+export const FilteringPropertiesRacer = (): FilteringProperty[] => {
   return [
     {
       key: 'carName',

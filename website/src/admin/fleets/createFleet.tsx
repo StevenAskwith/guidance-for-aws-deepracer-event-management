@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Button, Form, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,49 +6,60 @@ import { PageLayout } from '../../components/pageLayout';
 import useMutation from '../../hooks/useMutation';
 import { merge } from '../../support-functions/merge';
 import { DevicesPanel } from './devicesPanel';
-import { fleet } from './fleetDomain';
+import { fleet, FleetConfig } from './fleetDomain';
 import { GeneralInfoPanel } from './generalInfoPanel';
 
-export const CreateFleet = () => {
+/**
+ * CreateFleet component for creating new fleets
+ * @returns Rendered fleet creation page
+ */
+export const CreateFleet = (): JSX.Element => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [send, loading, errorMessage, data] = useMutation();
-  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState(false);
-  const [fleetConfig, setFleetConfig] = useState(fleet);
+  const mutationResult = useMutation();
+  const send = mutationResult[0] as (method: any, payload: any) => Promise<void>;
+  const isLoading = mutationResult[1] as boolean;
+  const errorMessage = mutationResult[2] as string;
+  const data = mutationResult[3];
+
+  const [createButtonIsDisabled, setCreateButtonIsDisabled] = useState<boolean>(false);
+  const [fleetConfig, setFleetConfig] = useState<Partial<FleetConfig>>(fleet);
 
   useEffect(() => {
-    if (!loading && data && !errorMessage) {
+    if (!isLoading && data && !errorMessage) {
       navigate(-1);
     }
-  }, [loading, data, errorMessage, navigate]);
+  }, [isLoading, data, errorMessage, navigate]);
 
-  const UpdateConfigHandler = (attr) => {
-    if (Array.isArray(attr.carIds) && attr.carIds.length === 0) {
+  const UpdateConfigHandler = (attr: Partial<FleetConfig>): void => {
+    if ('carIds' in attr && Array.isArray(attr.carIds) && attr.carIds.length === 0) {
       setFleetConfig((prevState) => {
         return { ...prevState, carIds: [] };
       });
     } else if (attr) {
       setFleetConfig((prevState) => {
-        return merge({ ...prevState }, attr);
+        return merge({ ...prevState }, attr) as Partial<FleetConfig>;
       });
     }
   };
 
-  const onCreateHandler = async () => {
-    send('addFleet', fleetConfig);
-    send('carsUpdateFleet', {
-      resourceIds: fleetConfig.carIds,
-      fleetId: fleetConfig.fleetId,
-      fleetName: fleetConfig.fleetName,
-    });
+  const onCreateHandler = async (): Promise<void> => {
+    if (typeof send === 'function') {
+      send('addFleet', fleetConfig);
+      send('carsUpdateFleet', {
+        resourceIds: fleetConfig.carIds ?? [],
+        fleetId: fleetConfig.fleetId,
+        fleetName: fleetConfig.fleetName,
+      });
+    }
   };
 
-  const formIsValidHandler = () => {
+  const formIsValidHandler = (): void => {
     setCreateButtonIsDisabled(false);
   };
 
-  const formIsInvalidHandler = () => {
+  const formIsInvalidHandler = (): void => {
     setCreateButtonIsDisabled(true);
   };
 
@@ -57,24 +67,25 @@ export const CreateFleet = () => {
     <PageLayout
       header={t('fleets.create-fleet')}
       description={t('fleets.description')}
+      onLinkClick={(event: React.MouseEvent) => event.preventDefault()}
       breadcrumbs={[
         { text: t('home.breadcrumb'), href: '/' },
         { text: t('admin.breadcrumb'), href: '/admin/home' },
         { text: t('fleets.breadcrumb'), href: '/admin/fleets' },
-        { text: t('fleets.create-fleet') },
+        { text: t('fleets.create-fleet'), href: '#' },
       ]}
     >
       <form onSubmit={(event) => event.preventDefault()}>
         <Form
           actions={
             <SpaceBetween direction="horizontal" size="xs">
-              <Button variant="link" onClick={() => navigate(-1)} disabled={loading}>
+              <Button variant="link" onClick={() => navigate(-1)} disabled={isLoading}>
                 Cancel
               </Button>
               <Button
                 variant="primary"
                 onClick={onCreateHandler}
-                disabled={loading || createButtonIsDisabled}
+                disabled={isLoading || createButtonIsDisabled}
               >
                 Create Fleet
               </Button>
@@ -85,12 +96,16 @@ export const CreateFleet = () => {
         >
           <SpaceBetween size="l">
             <GeneralInfoPanel
-              {...fleetConfig}
+              fleetName={fleetConfig.fleetName || ''}
               onChange={UpdateConfigHandler}
               onFormIsValid={formIsValidHandler}
               onFormIsInvalid={formIsInvalidHandler}
             />
-            <DevicesPanel onChange={UpdateConfigHandler} {...fleetConfig} />
+            <DevicesPanel 
+              onChange={UpdateConfigHandler} 
+              fleetName={fleetConfig.fleetName || ''} 
+              fleetId={fleetConfig.fleetId || ''} 
+            />
           </SpaceBetween>
         </Form>
       </form>

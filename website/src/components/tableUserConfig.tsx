@@ -1,10 +1,69 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Checkbox, FormField } from '@cloudscape-design/components';
+import { ReactNode } from 'react';
 import i18next from '../i18n';
 import { formatAwsDateTime } from '../support-functions/time';
 import { Flag } from './flag';
 
-export const ColumnConfiguration = () => {
+interface UserItem {
+  Username?: string;
+  Roles?: string;
+  Email?: string;
+  UserStatus?: string;
+  CountryCode: string;
+  UserCreateDate?: string;
+  UserLastModifiedDate?: string;
+}
+
+interface ColumnOption {
+  id: string;
+  label: string;
+  editable?: boolean;
+  alwaysVisible?: boolean;
+}
+
+interface VisibleContentOption {
+  label: string;
+  options: ColumnOption[];
+}
+
+interface ColumnDefinition {
+  id: string;
+  header: string;
+  cell: (item: UserItem) => string | ReactNode;
+  sortingField: string;
+  width: number;
+  minWidth: number;
+}
+
+interface ColumnConfigurationReturn {
+  defaultVisibleColumns: string[];
+  visibleContentOptions: VisibleContentOption[];
+  columnDefinitions: ColumnDefinition[];
+}
+
+interface RoleOption {
+  value: string;
+  label: string;
+}
+
+interface CustomOperatorFormProps {
+  value?: string[];
+  onChange: (value: string[]) => void;
+}
+
+interface CustomOperator {
+  operator: string;
+  form: (props: CustomOperatorFormProps) => JSX.Element;
+  format: (values: string[] | undefined) => string;
+}
+
+interface FilteringProperty {
+  key: string;
+  propertyLabel: string;
+  operators: (string | CustomOperator)[];
+}
+
+export const ColumnConfiguration = (): ColumnConfigurationReturn => {
   return {
     defaultVisibleColumns: ['Username', 'Roles', 'UserStatus', 'UserCreateDate'],
     visibleContentOptions: [
@@ -87,7 +146,7 @@ export const ColumnConfiguration = () => {
         id: 'Flag',
         header: i18next.t('users.flag'),
         cell: (item) => {
-          if (item.CountryCode.length > 0) {
+          if (item.CountryCode && item.CountryCode.length > 0) {
             return <Flag size="small" countryCode={item.CountryCode}></Flag>;
           } else {
             return '-';
@@ -125,7 +184,7 @@ export const ColumnConfiguration = () => {
   };
 };
 
-export const FilteringProperties = () => {
+export const FilteringProperties = (): FilteringProperty[] => {
   return [
     {
       key: 'Username',
@@ -138,8 +197,8 @@ export const FilteringProperties = () => {
       operators: [
         {
           operator: '=',
-          form: ({ value, onChange }) => {
-            const userRoles = [
+          form: ({ value, onChange }: CustomOperatorFormProps) => {
+            const userRoles: RoleOption[] = [
               { value: 'admin', label: i18next.t('users.role.administrator') },
               { value: 'operator', label: i18next.t('users.role.operator') },
               { value: 'commentator', label: i18next.t('users.role.commentator') },
@@ -168,7 +227,7 @@ export const FilteringProperties = () => {
               </FormField>
             );
           },
-          format: (values) => (values || []).join(', '),
+          format: (values: string[] | undefined) => (values || []).join(', '),
         },
       ],
     },

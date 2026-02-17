@@ -1,8 +1,28 @@
-// @ts-nocheck - Type checking disabled for test file during incremental migration
 import i18next from '../../i18n';
+
+// Mock @cloudscape-design/components to avoid ES module issues in Jest
+jest.mock('@cloudscape-design/components', () => ({
+  Checkbox: jest.fn(),
+  FormField: jest.fn(),
+  Link: jest.fn(),
+}));
+
+jest.mock('@cloudscape-design/components/button-dropdown', () => jest.fn());
+jest.mock('@cloudscape-design/components/date-picker', () => jest.fn());
+
+// Mock aws-amplify to avoid axios ES module issues
+jest.mock('aws-amplify', () => ({
+  API: {
+    graphql: jest.fn(),
+  },
+}));
+
+// eslint-disable-next-line import/first
 import { ColumnsConfig, VisibleContentOptions } from './deviceTableConfig';
 
-i18next.t = jest.fn().mockReturnValue('');
+// Mock i18next with proper typing
+const mockT = jest.fn().mockReturnValue('') as any;
+i18next.t = mockT;
 
 describe('Devices Table', () => {
   describe('Devices table config', () => {

@@ -1,4 +1,3 @@
-// @ts-nocheck - Type checking disabled during incremental migration. TODO: Add proper props interfaces
 import { Container, FormField, Grid, Header, Toggle } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +10,26 @@ import {
 import { RacerSelector } from '../components/racerSelector';
 import { RacesDoneByUser } from '../components/racesDoneByUser';
 
-export const RaceSetupPage = (props) => {
+interface Race {
+  eventId?: string;
+  trackId: string;
+  trackName?: string;
+  userId?: string;
+  racedByProxy: boolean;
+  [key: string]: any;
+}
+
+interface RaceSetupPageProps {
+  race: Race;
+  setRace: React.Dispatch<React.SetStateAction<Race>>;
+}
+
+interface RacerValidation {
+  isInvalid: boolean;
+  isDisabled: boolean;
+}
+
+export const RaceSetupPage: React.FC<RaceSetupPageProps> = (props) => {
   const { t } = useTranslation(['translation', 'help-admin-timekeeper-race-setup']);
   const [SendMutation] = useMutation();
   const selectedEvent = useSelectedEventContext();
@@ -26,7 +44,7 @@ export const RaceSetupPage = (props) => {
   //   racedByProxy: false,
   // });
 
-  const [racerValidation, setRacerValidation] = useState({
+  const [racerValidation, setRacerValidation] = useState<RacerValidation>({
     isInvalid: true,
     isDisabled: false,
   });
@@ -40,6 +58,8 @@ export const RaceSetupPage = (props) => {
 
   useEffect(() => {
     // update race setup when track or event is changed while on page
+    if (!selectedEvent || !selectedTrack) return;
+    
     props.setRace((preValue) => {
       return {
         ...preValue,
@@ -48,10 +68,10 @@ export const RaceSetupPage = (props) => {
         trackName: selectedTrack.leaderBoardTitle,
       };
     });
-  }, [selectedEvent, selectedTrack]);
+  }, [selectedEvent, selectedTrack, props]);
 
   useEffect(() => {
-    if (selectedEvent.eventId == null) return;
+    if (!selectedEvent?.eventId || !selectedTrack) return;
 
     const message = {
       eventId: selectedEvent.eventId,
@@ -59,7 +79,7 @@ export const RaceSetupPage = (props) => {
       raceStatus: RacesStatusEnum.NO_RACER_SELECTED,
     };
     SendMutation('updateOverlayInfo', message);
-  }, [selectedEvent, SendMutation, selectedTrack.trackId]);
+  }, [selectedEvent, SendMutation, selectedTrack]);
 
   // input validation
   useEffect(() => {
@@ -79,7 +99,7 @@ export const RaceSetupPage = (props) => {
     };
   }, [props.race.eventId, props.race.userId]);
 
-  const configUpdateHandler = (attr) => {
+  const configUpdateHandler = (attr: Partial<Race>): void => {
     props.setRace((prevState) => {
       return { ...prevState, ...attr };
     });
@@ -115,8 +135,8 @@ export const RaceSetupPage = (props) => {
       header={
         <Header>
           Race:{' '}
-          {`${selectedEvent.eventName} ${t('timekeeper.race-setup-page.racing-on-trackId')} ${
-            selectedTrack.leaderBoardTitle
+          {`${selectedEvent?.eventName || ''} ${t('timekeeper.race-setup-page.racing-on-trackId')} ${
+            selectedTrack?.leaderBoardTitle || ''
           } `}
         </Header>
       }
@@ -129,7 +149,7 @@ export const RaceSetupPage = (props) => {
           racerValidation={racerValidation}
           selectedEvent={selectedEvent}
         />
-        <RacesDoneByUser selecedEvent={selectedEvent} selecedUserId={props.race.userId} />
+        <RacesDoneByUser selecedEvent={(selectedEvent as any) || null} selecedUserId={props.race.userId || null} />
         <FormField
           label={t('race-admin.raced-by-proxy')}
           description={t('race-admin.raced-by-proxy-description')}
