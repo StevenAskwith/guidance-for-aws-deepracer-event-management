@@ -18,7 +18,6 @@ import { useStore } from '../../store/store';
 import { CarModelUploadModal } from './components/carModelUploadModal';
 import { DeleteModelModal } from './components/deleteModelModal';
 import { ModelUpload } from './components/modelUpload';
-import { Model } from '../../types/domain';
 
 interface Breadcrumb {
   text: string;
@@ -104,7 +103,8 @@ export const ModelManagement: React.FC<ModelManagementProps> = ({
       });
       dispatch('HELP_PANEL_IS_OPEN', false);
     }
-  }, [isOperatorView, t, dispatch, operatorHelpPanel, helpPanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOperatorView, t, dispatch]);
 
   const removeModelHandler = () => {
     setSelectedModels([]);

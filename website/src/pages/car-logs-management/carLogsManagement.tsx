@@ -1,7 +1,7 @@
-import { SpaceBetween, Tabs, TabsProps } from '@cloudscape-design/components';
+import { GraphQLResult } from '@aws-amplify/api-graphql';
+import { SpaceBetween, Tabs } from '@cloudscape-design/components';
 import Button from '@cloudscape-design/components/button';
 import { API, Auth } from 'aws-amplify';
-import { GraphQLResult } from '@aws-amplify/api-graphql';
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
@@ -153,7 +153,8 @@ export const CarLogsManagement: React.FC<CarLogsManagementProps> = ({
       });
       dispatch('HELP_PANEL_IS_OPEN', false);
     }
-  }, [isOperatorView, dispatch, t, operatorHelpPanel, helpPanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOperatorView, dispatch, t]);
 
   const removeAssetHandler = (): void => {
     setSelectedAssets([]);

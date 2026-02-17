@@ -8,7 +8,7 @@ import {
   TopNavigationProps,
 } from '@cloudscape-design/components';
 
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Route, Routes, useLocation } from 'react-router-dom';
 
@@ -36,7 +36,7 @@ import { useEventsApi } from '../hooks/useEventsApi';
 import { useFleetsApi } from '../hooks/useFleetsApi';
 import useLink from '../hooks/useLink';
 import { useModelsApi } from '../hooks/useModelsApi';
-import { usePermissions, Permissions } from '../hooks/usePermissions';
+import { Permissions, usePermissions } from '../hooks/usePermissions';
 import { useRacesApi } from '../hooks/useRacesApi';
 import { useUsersApi } from '../hooks/useUsersApi';
 import { useWindowSize } from '../hooks/useWindowsSize';
@@ -184,7 +184,7 @@ export function TopNav({ user, signout }: TopNavProps): JSX.Element {
   useEffect(() => {
     if (windowSize.width && windowSize.width < 900) dispatch('SIDE_NAV_IS_OPEN', false);
     else if (windowSize.width && windowSize.width >= 900) dispatch('SIDE_NAV_IS_OPEN', true);
-  }, [windowSize, dispatch]);
+  }, [windowSize.width, dispatch]);
 
   const defaultSideNavItems = [
     {
@@ -330,45 +330,55 @@ export function TopNav({ user, signout }: TopNavProps): JSX.Element {
     return items;
   };
 
-  const topNavItems: TopNavigationProps.Utility[] = [
-    {
-      type: 'menu-dropdown',
-      text: user,
-      iconName: 'user-profile',
-      items: [
-        {
-          id: 'user-profile',
-          text: t('topnav.user-profile'),
-          href: '/user/profile',
-        },
-        {
-          id: 'signout',
-          text: t('topnav.sign-out'),
-        },
-      ],
-      onItemClick: ({ detail }) => {
-        if (detail.id === 'signout' && signout) {
-          signout();
-        }
+  const handleItemClick = useCallback(({ detail }: { detail: { id: string } }) => {
+    if (detail.id === 'signout' && signout) {
+      signout();
+    }
+  }, [signout]);
+
+  const handleEventSelectClick = useCallback(() => {
+    setEventSelectModalVisible(true);
+  }, []);
+
+  const topNavItems: TopNavigationProps.Utility[] = useMemo(() => {
+    const items: TopNavigationProps.Utility[] = [
+      {
+        type: 'menu-dropdown',
+        text: user,
+        iconName: 'user-profile',
+        items: [
+          {
+            id: 'user-profile',
+            text: t('topnav.user-profile'),
+            href: '/user/profile',
+          },
+          {
+            id: 'signout',
+            text: t('topnav.sign-out'),
+          },
+        ],
+        onItemClick: handleItemClick,
       },
-    },
-  ];
+    ];
 
-  if (permissions.topNavItems.eventSelection) {
-    // race track selector
-    topNavItems.unshift({
-      type: 'button',
-      text: selectedTrack ? selectedTrack.leaderBoardTitle : 'No track selected',
-      onClick: () => setEventSelectModalVisible(true),
-    });
+    if (permissions.topNavItems.eventSelection) {
+      // race track selector
+      items.unshift({
+        type: 'button',
+        text: selectedTrack ? selectedTrack.leaderBoardTitle : 'No track selected',
+        onClick: handleEventSelectClick,
+      });
 
-    // event selector
-    topNavItems.unshift({
-      type: 'button',
-      text: selectedEvent?.eventName || 'No event selected',
-      onClick: () => setEventSelectModalVisible(true),
-    });
-  }
+      // event selector
+      items.unshift({
+        type: 'button',
+        text: selectedEvent?.eventName || 'No event selected',
+        onClick: handleEventSelectClick,
+      });
+    }
+
+    return items;
+  }, [user, t, signout, selectedEvent?.eventName, selectedTrack, permissions.topNavItems.eventSelection, handleItemClick, handleEventSelectClick]);
 
   return (
     <div>

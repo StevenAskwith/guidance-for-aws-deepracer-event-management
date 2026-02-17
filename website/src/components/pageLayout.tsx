@@ -46,7 +46,7 @@ export function PageLayout({
       dispatch('RESET_HELP_PANEL');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [helpPanelHidden, helpPanelContent]);
+  }, [dispatch]);
 
   if (simplified === true) {
     return (
