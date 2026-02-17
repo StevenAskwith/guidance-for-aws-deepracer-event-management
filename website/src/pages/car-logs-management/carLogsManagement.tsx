@@ -1,6 +1,5 @@
 import { SpaceBetween, Tabs } from '@cloudscape-design/components';
 import Button from '@cloudscape-design/components/button';
-import { Auth } from 'aws-amplify';
 import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
@@ -22,6 +21,7 @@ import { TableHeader } from '../../components/tableConfig';
 import { graphqlMutate, graphqlSubscribe } from '../../graphql/graphqlHelpers';
 import * as queries from '../../graphql/queries';
 import * as subscriptions from '../../graphql/subscriptions';
+import { getCurrentAuthUser } from '../../hooks/useAuth';
 import { useCarLogsApi } from '../../hooks/useCarLogsApi';
 import { useSelectedEventContext } from '../../store/contexts/storeProvider';
 import { useStore } from '../../store/store';
@@ -80,9 +80,16 @@ export const CarLogsManagement: React.FC<CarLogsManagementProps> = ({
   const assets: CarLogAsset[] = state.assets?.assets || [];
   const { triggerReload } = useCarLogsApi();
   const selectedEvent = useSelectedEventContext();
+  const [currentUserSub, setCurrentUserSub] = useState<string>('');
+
+  useEffect(() => {
+    getCurrentAuthUser().then((authUser) => {
+      setCurrentUserSub(authUser.sub);
+    });
+  }, []);
 
   const assetsToDisplay: CarLogAsset[] = onlyDisplayOwnAssets
-    ? assets.filter((asset: any) => asset.sub === (Auth as any).user?.attributes?.sub || asset.username === (Auth as any).user?.attributes?.sub)
+    ? assets.filter((asset: any) => asset.sub === currentUserSub || asset.username === currentUserSub)
     : assets;
 
   const reloadAssets = async (): Promise<void> => {

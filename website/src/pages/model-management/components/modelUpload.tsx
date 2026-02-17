@@ -1,7 +1,8 @@
 import { Button, ProgressBar } from '@cloudscape-design/components';
-import { Auth, Storage } from 'aws-amplify';
+import { Storage } from 'aws-amplify';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getCurrentAuthUser } from '../../../hooks/useAuth';
 
 import { useStore } from '../../../store/store';
 
@@ -28,9 +29,9 @@ export function ModelUpload(): JSX.Element {
 
   useEffect(() => {
     const getData = async () => {
-      Auth.currentAuthenticatedUser().then((user: any) => {
-        setSub(user.attributes.sub);
-        setUsername(user.username);
+      getCurrentAuthUser().then((authUser) => {
+        setSub(authUser.sub);
+        setUsername(authUser.username);
       });
     };
 

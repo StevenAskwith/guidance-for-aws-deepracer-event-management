@@ -1,12 +1,12 @@
 import { Button, SpaceBetween } from '@cloudscape-design/components';
-import { Auth } from 'aws-amplify';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
 import { PageLayout } from '../../components/pageLayout';
 import { PageTable } from '../../components/pageTable';
 import { TableHeader } from '../../components/tableConfig';
 import { ColumnConfiguration, FilteringProperties } from '../../components/tableUserConfig';
+import { getCurrentAuthUser } from '../../hooks/useAuth';
 import useMutation from '../../hooks/useMutation';
 import { useStore } from '../../store/store';
 import { ChangeRoleModal } from './changeRoleModal';
@@ -23,9 +23,15 @@ export const UserManagement: React.FC = () => {
   const [changeRoleModalVisible, setChangeRoleModalVisible] = useState<boolean>(false);
   const [send] = useMutation() as any; // TODO: Type useMutation hook properly
   const [state] = useStore() as any; // TODO: Type store properly
-  const currentUser = (Auth as any).user;
+  const [currentUserSub, setCurrentUserSub] = useState<string>('');
   const users: User[] = state.users.users;
   const isLoading: boolean = state.users.isLoading;
+
+  useEffect(() => {
+    getCurrentAuthUser().then((authUser) => {
+      setCurrentUserSub(authUser.sub);
+    });
+  }, []);
 
   // Role membership management
   const changeRoleHandler = (role: any): void => {
@@ -81,7 +87,7 @@ export const UserManagement: React.FC = () => {
         tableItems={users}
         selectionType="multi"
         columnConfiguration={columnConfiguration as any}
-        isItemDisabled={(item: User) => item.sub === currentUser.attributes.sub}
+        isItemDisabled={(item: User) => item.sub === currentUserSub}
         header={
           <TableHeader
             nrSelectedItems={selectedItems.length}

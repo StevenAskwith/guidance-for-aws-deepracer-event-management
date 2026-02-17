@@ -1,5 +1,4 @@
 import { Button, SpaceBetween } from '@cloudscape-design/components';
-import { Auth } from 'aws-amplify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SimpleHelpPanelLayout } from '../../components/help-panels/simple-help-panel';
@@ -14,6 +13,7 @@ import {
   ColumnConfigurationRacer,
   FilteringPropertiesRacer,
 } from '../../components/tableModelsConfigRacer';
+import { getCurrentAuthUser } from '../../hooks/useAuth';
 import { useStore } from '../../store/store';
 import { CarModelUploadModal } from './components/carModelUploadModal';
 import { DeleteModelModal } from './components/deleteModelModal';
@@ -49,8 +49,8 @@ export const ModelManagement: React.FC<ModelManagementProps> = ({
   const [currentUserSub, setCurrentUserSub] = useState<string>('')
 
   useEffect(() => {
-    Auth.currentAuthenticatedUser().then((user) => {
-      setCurrentUserSub(user?.attributes?.sub || '');
+    getCurrentAuthUser().then((authUser) => {
+      setCurrentUserSub(authUser.sub);
     }).catch(() => {
       setCurrentUserSub('');
     });

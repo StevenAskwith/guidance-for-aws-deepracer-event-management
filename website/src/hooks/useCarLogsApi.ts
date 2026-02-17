@@ -1,4 +1,3 @@
-import { Auth } from 'aws-amplify';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { graphqlQuery, graphqlSubscribe } from '../graphql/graphqlHelpers';
@@ -6,6 +5,7 @@ import { getAllCarLogsAssets } from '../graphql/queries';
 import { onAddedCarLogsAsset, onDeletedCarLogsAsset } from '../graphql/subscriptions';
 import { Dispatch, useStore } from '../store/store';
 import { CarLogAsset } from '../types/domain';
+import { getCurrentAuthUser } from './useAuth';
 
 // CONSTANTS
 const ASSETS_GET_LIMIT = 200;
@@ -67,8 +67,8 @@ export const useCarLogsApi = (allowedToFetchAllAssets: boolean = false): UseCarL
             if (allowedToFetchAllAssets) {
                 setSubscriptionVariables({});
             } else {
-                const currentUser = await Auth.currentAuthenticatedUser();
-                const sub = currentUser.attributes.sub;
+                const authUser = await getCurrentAuthUser();
+                const sub = authUser.sub;
                 setSubscriptionVariables({ sub: sub });
             }
         }

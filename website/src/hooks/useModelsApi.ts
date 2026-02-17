@@ -1,10 +1,10 @@
-import { Auth } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { graphqlQuery, graphqlSubscribe } from '../graphql/graphqlHelpers';
 import { getAllModels } from '../graphql/queries';
 import { onAddedModel, onDeletedModel, onUpdatedModel } from '../graphql/subscriptions';
 import { Dispatch, useStore } from '../store/store';
 import { Model } from '../types/domain';
+import { getCurrentAuthUser } from './useAuth';
 
 // CONSTANTS
 const MODELS_GET_LIMIT = 200;
@@ -34,8 +34,8 @@ export const useModelsApi = (allowedToFetchAllModels: boolean = false): void => 
             if (allowedToFetchAllModels) {
                 setSubscriptionVariables({});
             } else {
-                const currentUser = await Auth.currentAuthenticatedUser();
-                const sub = currentUser.attributes.sub;
+                const authUser = await getCurrentAuthUser();
+                const sub = authUser.sub;
                 setSubscriptionVariables({ sub: sub });
             }
         }

@@ -1,5 +1,3 @@
-import { Auth } from 'aws-amplify';
-
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +9,7 @@ import Header from '@cloudscape-design/components/header';
 
 import { graphqlMutate } from '../../graphql/graphqlHelpers';
 import * as mutations from '../../graphql/mutations';
+import { authChangePassword, authSignOut, getCurrentAuthUser } from '../../hooks/useAuth';
 
 import {
   Box,
@@ -45,8 +44,10 @@ const ProfileHome: React.FC<ProfileHomeProps> = (props) => {
 
   useEffect(() => {
     const getData = async () => {
-      Auth.currentAuthenticatedUser().then((user) => setUsername(user.username));
-      Auth.currentCredentials().then((creds) => setIdentityId(creds.identityId));
+      getCurrentAuthUser().then((authUser) => {
+        setUsername(authUser.username);
+        setIdentityId(authUser.identityId);
+      });
     };
 
     getData();
@@ -58,12 +59,11 @@ const ProfileHome: React.FC<ProfileHomeProps> = (props) => {
 
   async function deleteUser() {
     try {
-      Auth.currentAuthenticatedUser()
-        .then(async (user) => {
-          const username = user.username;
-          const apiResponse = await graphqlMutate(mutations.deleteUser, { username });
+      getCurrentAuthUser()
+        .then(async (authUser) => {
+          const apiResponse = await graphqlMutate(mutations.deleteUser, { username: authUser.username });
           console.debug(apiResponse);
-          Auth.signOut();
+          await authSignOut();
         })
         .catch((err) => {
           console.debug(err);
@@ -74,10 +74,7 @@ const ProfileHome: React.FC<ProfileHomeProps> = (props) => {
   }
 
   async function updateUserPW() {
-    Auth.currentAuthenticatedUser()
-      .then((user) => {
-        return Auth.changePassword(user, current_password, new_password);
-      })
+    authChangePassword(current_password, new_password)
       .then((data) => {
         setFormErrorMessage('');
         setCurrentPassword('');
