@@ -1,8 +1,8 @@
 // https://gist.github.com/EduVencovsky/466eae6c71c7021a86c3bd5afa6bfcc4
 import { useEffect, useRef } from 'react';
 
-function useInterval(callback, delay) {
-  const savedCallback = useRef();
+function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef<(() => void) | undefined>();
 
   // Remember the latest callback.
   useEffect(() => {
@@ -12,7 +12,7 @@ function useInterval(callback, delay) {
   // Set up the interval.
   useEffect(() => {
     function tick() {
-      savedCallback.current();
+      savedCallback.current?.();
     }
     if (delay !== null) {
       const id = setInterval(tick, delay);

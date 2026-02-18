@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import './App.css';
 import awsExports from './config.json';
-Amplify.configure(awsExports);
+Amplify.configure(awsExports as any);
 
 const client = generateClient();
 
@@ -277,10 +277,10 @@ function App() {
         eventId: eventId,
         trackId: trackId,
       },
-    });
+    }) as any;
 
     // once leaderboard data has been obtained, set all leaderboard positions in SVGs.
-    apiGetLeaderboardState.then((response: any) => {
+    (apiGetLeaderboardState as Promise<any>).then((response: any) => {
       
       const leaderboardConfig = response.data.getLeaderboard.config;
       updateLeaderboard(response.data.getLeaderboard.entries);
@@ -295,11 +295,11 @@ function App() {
     });
 
     // subscribe to "onNewOverlayInfo" to receive live messages for in progress race data.
-    const overlaySubscription = client
+    const overlaySubscription = (client
       .graphql({
         query: subscriptions.onNewOverlayInfo,
         variables: { eventId: eventId, trackId: trackId },
-      })
+      }) as any)
       .subscribe({
         next: ({ data }: any) => {
           const raceInfo = data.onNewOverlayInfo;
@@ -314,11 +314,11 @@ function App() {
       });
 
     // subscribe to "onNewLeaderboardEntry" so that we can refresh the leaderboard data when a race is "submitted"
-    const leaderboardSubscription = client
+    const leaderboardSubscription = (client
       .graphql({
         query: subscriptions.onNewLeaderboardEntry,
         variables: { eventId: eventId, trackId: trackId },
-      })
+      }) as any)
       .subscribe({
         next: () => {
 
@@ -329,10 +329,10 @@ function App() {
               eventId: eventId,
               trackId: trackId,
             },
-          });
+          }) as any;
 
           // once leaderboard data is set, update the leaderboard SVG.
-          apiResponse.then((response: any) => {
+          (apiResponse as Promise<any>).then((response: any) => {
             updateLeaderboard(response.data.getLeaderboard.entries)
           });
         },
@@ -340,11 +340,11 @@ function App() {
       });
 
     // subscribe to "onDeleteLeaderboardEntry" to make sure leaderboard is updated when an entry is removed.
-    const deleteLeaderboardSubscription = client
+    const deleteLeaderboardSubscription = (client
       .graphql({
         query: subscriptions.onDeleteLeaderboardEntry,
         variables: { eventId: eventId, trackId: trackId },
-      })
+      }) as any)
       .subscribe({
         next: () => {
 
@@ -354,10 +354,10 @@ function App() {
               eventId: eventId,
               trackId: trackId,
             },
-          });
+          }) as any;
 
           // once leaderboard data is set, update the leaderboard SVG.
-          apiResponse.then((response: any) => {
+          (apiResponse as Promise<any>).then((response: any) => {
             const leaderboardData = (helpers as any).GetLeaderboardDataSorted(response.data.getLeaderboard.entries);
             (helpers as any).UpdateLeaderboard(leaderboardData);
           });

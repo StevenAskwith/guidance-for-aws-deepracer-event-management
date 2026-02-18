@@ -11,31 +11,19 @@ const LeaderboardWrapper = () => {
 
   const queryParams = new URLSearchParams(window.location.search);
 
-  let language = queryParams.get('lang');
-  if (language === null) language = 'en';
+  const language = queryParams.get('lang') ?? 'en';
+  const trackId = queryParams.get('track') ?? 'combined';
 
-  let trackId = queryParams.get('track');
-  if (trackId === null) trackId = 'combined';
+  const showQRcodeParam = queryParams.get('qr');
+  const showQRcode = showQRcodeParam !== null && showQRcodeParam !== 'false';
 
-  let showQRcode = queryParams.get('qr');
-  if (showQRcode === null || showQRcode === 'false') showQRcode = false;
+  const scrollParam = queryParams.get('scroll');
+  const scroll = scrollParam === null ? true : /true/i.test(scrollParam);
 
-  let scroll = queryParams.get('scroll');
-  if (scroll === null) {
-    scroll = true;
-  } else {
-    scroll = /true/i.test(scroll);
-  }
+  const raceFormat = queryParams.get('format') ?? 'fastest';
 
-  let raceFormat = queryParams.get('format');
-  if (raceFormat == null) raceFormat = 'fastest';
-
-  let showFlag = queryParams.get('flag');
-  if (showFlag === null) {
-    showFlag = true;
-  } else {
-    showFlag = /true/i.test(showFlag);
-  }
+  const showFlagParam = queryParams.get('flag');
+  const showFlag = showFlagParam === null ? true : /true/i.test(showFlagParam);
 
   console.debug('eventId: ' + eventId);
   console.debug('language: ' + language);

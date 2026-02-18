@@ -15,47 +15,60 @@ const racesStatusesWithFooterVisible = [
   //'RACE_FINSIHED',
 ];
 
-const RaceInfoFooter = ({ eventId, trackId, visible, raceFormat }) => {
-  const [raceInfo, SetRaceInfo] = useState({
+interface RaceInfoFooterProps {
+  eventId: string;
+  trackId: string;
+  visible: boolean;
+  raceFormat: string;
+}
+
+const RaceInfoFooter = ({ eventId, trackId, visible, raceFormat }: RaceInfoFooterProps) => {
+  const [raceInfo, SetRaceInfo] = useState<any>({
     username: '',
     timeLeftInMs: null,
     raceStatus: '',
     laps: [],
     currentLapTimeInMs: null,
+    averageLaps: [],
   });
   const [isVisible, SetIsVisible] = useState(false);
 
   const windowSize = useWindowSize();
-  const aspectRatio = windowSize.width / windowSize.height;
+  const aspectRatio = (windowSize.width ?? 0) / (windowSize.height ?? 1);
 
   useEffect(() => {
-    const subscription = client
-      .graphql({
-        query: onNewOverlayInfo,
-        variables: { eventId: eventId, trackId: trackId },
-      })
-      .subscribe({
-        next: ({ data }) => {
-          const raceInfo = data.onNewOverlayInfo;
-          if (racesStatusesWithFooterVisible.includes(raceInfo.raceStatus)) {
-            SetRaceInfo((prevstate) => {
-              return {
-                username: raceInfo.username,
-                timeLeftInMs: raceInfo.timeLeftInMs,
-                raceStatus: raceInfo.raceStatus,
-                laps: raceInfo.laps,
-                currentLapTimeInMs: raceInfo.currentLapTimeInMs,
-                averageLaps: raceInfo.averageLaps,
-              };
-            });
-            SetIsVisible(true);
-          } else {
-            SetRaceInfo();
-            SetIsVisible(false);
-          }
-        },
-        error: (error) => console.warn(error),
-      });
+    const observable = client.graphql({
+      query: onNewOverlayInfo,
+      variables: { eventId: eventId, trackId: trackId },
+    }) as any;
+
+    const subscription = observable.subscribe({
+      next: ({ data }: any) => {
+        const raceInfo = data.onNewOverlayInfo;
+        if (racesStatusesWithFooterVisible.includes(raceInfo.raceStatus)) {
+          SetRaceInfo({
+            username: raceInfo.username,
+            timeLeftInMs: raceInfo.timeLeftInMs,
+            raceStatus: raceInfo.raceStatus,
+            laps: raceInfo.laps,
+            currentLapTimeInMs: raceInfo.currentLapTimeInMs,
+            averageLaps: raceInfo.averageLaps,
+          });
+          SetIsVisible(true);
+        } else {
+          SetRaceInfo({
+            username: '',
+            timeLeftInMs: null,
+            raceStatus: '',
+            laps: [],
+            currentLapTimeInMs: null,
+            averageLaps: [],
+          });
+          SetIsVisible(false);
+        }
+      },
+      error: (error: any) => console.warn(error),
+    });
 
     return () => {
       if (subscription) {

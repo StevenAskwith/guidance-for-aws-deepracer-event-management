@@ -12,15 +12,25 @@ import styles from './leaderboard.module.css';
 
 const client = generateClient();
 
-const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, showFlag }) => {
-  const [leaderboardEntries, SetleaderboardEntries] = useState([]);
-  const [leaderboardConfig, setLeaderboardConfig] = useState({
-    headerText: '',
-    followFooterText: '',
+interface LeaderboardProps {
+  eventId: string | undefined;
+  trackId: string;
+  raceFormat: string;
+  language?: string;
+  showQrCode: boolean;
+  scrollEnabled: boolean;
+  showFlag: boolean;
+}
+
+const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, showFlag }: LeaderboardProps) => {
+  const [leaderboardEntries, SetleaderboardEntries] = useState<any[]>([]);
+  const [leaderboardConfig, setLeaderboardConfig] = useState<any>({
+    leaderBoardTitle: '',
+    leaderBoardFooter: '',
   });
-  const [subscription, SetSubscription] = useState();
-  const [onUpdateSubscription, SetOnUpdateSubscription] = useState();
-  const [onDeleteSubscription, SetOnDeleteSubscription] = useState();
+  const [subscription, SetSubscription] = useState<any>();
+  const [onUpdateSubscription, SetOnUpdateSubscription] = useState<any>();
+  const [onDeleteSubscription, SetOnDeleteSubscription] = useState<any>();
 
   const [racSummaryFooterIsVisible, SetraceSummaryFooterIsVisible] = useState(false);
   const [raceSummaryData, SetRaceSummaryData] = useState({
@@ -43,8 +53,8 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
    * @param  {Array} allEntries all leaderboard entries
    * @return {[Number,Object]} entry index & leaderboard entry
    */
-  const findEntryByUsername = (username, allEntries) => {
-    const index = allEntries.findIndex((entry) => entry.username === username);
+  const findEntryByUsername = (username: string, allEntries: any[]) => {
+    const index = allEntries.findIndex((entry: any) => entry.username === username);
     if (index !== -1) {
       const entry = allEntries[index];
       return [index, entry];
@@ -57,7 +67,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
    * @param  {Object} entry entry to remove
    * @return {}
    */
-  const removeLeaderboardEntry = (entry) => {
+  const removeLeaderboardEntry = (entry: any) => {
     SetleaderboardEntries((prevState) => {
       console.debug(entry);
       console.debug(prevState);
@@ -81,7 +91,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
    * @param {Array} allEntries    All leaderboard entries
    * @return {}
    */
-  const calcRaceSummary = useCallback((newEntry, previousPostition, allEntries) => {
+  const calcRaceSummary = useCallback((newEntry: any, previousPostition: number, allEntries: any[]) => {
     const [entryIndex] = findEntryByUsername(newEntry.username, allEntries);
     const overallRank = entryIndex + 1; // +1 due to that list index start from 0 and leaderboard on 1
     newEntry.overallRank = overallRank;
@@ -116,7 +126,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
    * @param  {Object} newLeaderboardEntry Leaderboard entry to be added
    * @return {}
    */
-  const updateLeaderboardEntries = (newLeaderboardEntry) => {
+  const updateLeaderboardEntries = (newLeaderboardEntry: any) => {
     SetleaderboardEntries((prevState) => {
       console.debug(newLeaderboardEntry);
       console.debug(prevState);
@@ -148,8 +158,8 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
       }
 
       // sort list according to fastestLapTime, ascending order
-      const fastestSortFunction = (a, b) => a.fastestLapTime - b.fastestLapTime;
-      const fastestAverageSortFunction = (a, b) => {
+      const fastestSortFunction = (a: any, b: any) => a.fastestLapTime - b.fastestLapTime;
+      const fastestAverageSortFunction = (a: any, b: any) => {
         if (!a.fastestAverageLap && !b.fastestAverageLap) return 0;
         if (!a.fastestAverageLap) return 1;
         if (!b.fastestAverageLap) return -1;
@@ -172,9 +182,9 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
         const response = await client.graphql({
           query: getLeaderboard,
           variables: { eventId: eventId, trackId: trackId },
-        });
+        }) as any;
         const leaderboard = response.data.getLeaderboard;
-        response.data.getLeaderboard.entries.forEach((entry) => updateLeaderboardEntries(entry));
+        response.data.getLeaderboard.entries.forEach((entry: any) => updateLeaderboardEntries(entry));
         setLeaderboardConfig(leaderboard.config);
       };
       getLeaderboardData();
@@ -185,13 +195,13 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
       // get all updates if trackId == 'combined'
       const subscriptionTrackId = trackId === 'combined' ? undefined : trackId;
       SetSubscription(
-        client
+        (client
           .graphql({
             query: onNewLeaderboardEntry,
             variables: { eventId: eventId, trackId: subscriptionTrackId },
-          })
+          }) as any)
           .subscribe({
-            next: ({ data }) => {
+            next: ({ data }: any) => {
               console.debug('onNewLeaderboardEntry');
               const newEntry = data.onNewLeaderboardEntry;
               console.debug(newEntry);
@@ -201,7 +211,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
                 SetraceSummaryFooterIsVisible(false);
               }, 12000);
             },
-            error: (error) => console.warn(error),
+            error: (error: any) => console.warn(error),
           })
       );
 
@@ -209,18 +219,18 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
         onUpdateSubscription.unsubscribe();
       }
       SetOnUpdateSubscription(
-        client
+        (client
           .graphql({
             query: onUpdateLeaderboardEntry,
             variables: { eventId: eventId, trackId: subscriptionTrackId },
-          })
+          }) as any)
           .subscribe({
-            next: ({ data }) => {
+            next: ({ data }: any) => {
               console.debug('onUpdateLeaderboardEntry');
               const newEntry = data.onUpdateLeaderboardEntry;
               updateLeaderboardEntries(newEntry);
             },
-            error: (error) => console.warn(error),
+            error: (error: any) => console.warn(error),
           })
       );
 
@@ -228,19 +238,19 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
         onDeleteSubscription.unsubscribe();
       }
       SetOnDeleteSubscription(
-        client
+        (client
           .graphql({
             query: onDeleteLeaderboardEntry,
             variables: { eventId: eventId, trackId: subscriptionTrackId },
-          })
+          }) as any)
           .subscribe({
-            next: ({ data }) => {
+            next: ({ data }: any) => {
               console.debug('onDeleteLeaderboardEntry');
               const entryToDelete = data.onDeleteLeaderboardEntry;
               console.debug(entryToDelete);
               removeLeaderboardEntry(entryToDelete);
             },
-            error: (error) => console.warn(error),
+            error: (error: any) => console.warn(error),
           })
       );
 
@@ -288,7 +298,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
       )}
       <RaceInfoFooter
         visible={!racSummaryFooterIsVisible}
-        eventId={eventId}
+        eventId={eventId ?? ''}
         trackId={trackId}
         raceFormat={raceFormat}
       />

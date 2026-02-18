@@ -1,4 +1,4 @@
-import { default as React, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import classnames from 'classnames';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,10 @@ const LeaderboardTable = ({ leaderboardEntries, scrollEnabled, fastest, showFlag
   const [leaderboardListItems, SetLeaderboardListItems] = useState(<div></div>);
   const entriesRef = useRef(null);
   const windowSize = useWindowSize();
-  const aspectRatio = windowSize.width / windowSize.height;
+  const aspectRatio = (windowSize.width ?? 0) / (windowSize.height ?? 1);
 
-  const ScrollTo = ({ toId, toRef, duration, children }) => {
-    return scrollTo({ id: toId, ref: toRef, duration });
+  const ScrollTo = ({ duration, toRef }: { duration: number; toRef: any }) => {
+    return scrollTo({ ref: toRef, duration });
   };
 
   // Update the leaderboard list

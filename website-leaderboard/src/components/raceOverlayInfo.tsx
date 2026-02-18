@@ -1,27 +1,58 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useInterval from '../hooks/useInterval';
 import styles from './raceInfoFooter.module.css';
 
 const displayUpdateInterval = 1000 / 30; // 30 fps
 
-const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps, currentLapTimeInMs, raceFormat }) => {
+interface TimeDisplay {
+  minutes: string;
+  seconds: string;
+  milliseconds: string;
+}
+
+interface AvgLap {
+  avgTime: number;
+  startLapId: number;
+  endLapId: number;
+  dnf: boolean;
+}
+
+interface RaceOverlayInfoProps {
+  username: any;
+  raceStatus: any;
+  timeLeftInMs: any;
+  laps: any;
+  averageLaps: any;
+  currentLapTimeInMs: any;
+  raceFormat: any;
+}
+
+const RaceOverlayInfo = ({
+  username,
+  raceStatus,
+  timeLeftInMs,
+  laps,
+  averageLaps,
+  currentLapTimeInMs,
+  raceFormat,
+}: RaceOverlayInfoProps) => {
   const { t } = useTranslation();
   // raw timing values
   const [bestLapMs, setBestLapMs] = useState(0);
   const [bestAvgMs, setBestAvgMs] = useState(0);
-  const [fastestAvgLap, setFastestAvgLap] = useState({ avgTime: 0, startLapId: 0, endLapId: 0, dnf: true });
+  const [fastestAvgLap, setFastestAvgLap] = useState<AvgLap>({ avgTime: 0, startLapId: 0, endLapId: 0, dnf: true });
   const [currentLapMs, setCurrentLapMs] = useState(0);
   const [remainingTimeMs, setRemainingTimeMs] = useState(0);
 
   // displayed timing values
-  const [bestLapDisplayTime, setBestLapDisplayTime] = useState({
+  const [bestLapDisplayTime, setBestLapDisplayTime] = useState<TimeDisplay>({
     minutes: '0',
     seconds: '0',
     milliseconds: '0',
   });
 
-  const [bestAvgDisplayTime, setBestAvgDisplayTime] = useState({
+  const [bestAvgDisplayTime, setBestAvgDisplayTime] = useState<TimeDisplay & { startLapId: number; endLapId: number; dnf: boolean }>({
     minutes: '0',
     seconds: '0',
     milliseconds: '0',
@@ -30,13 +61,13 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
     dnf: true,
   });
 
-  const [currentLapDisplayTime, setCurrentLapDisplayTime] = useState({
+  const [currentLapDisplayTime, setCurrentLapDisplayTime] = useState<TimeDisplay>({
     minutes: '0',
     seconds: '0',
     milliseconds: '0',
   });
 
-  const [remainingTimeDisplayTime, setRemainingTimeDisplayTime] = useState({
+  const [remainingTimeDisplayTime, setRemainingTimeDisplayTime] = useState<TimeDisplay>({
     minutes: '0',
     seconds: '0',
     milliseconds: '0',
@@ -44,10 +75,10 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
 
   const [lastDisplayUpdateTimestamp, setLastDisplayUpdateTimestamp] = useState(Date.now());
 
-  const getFastestValidLap = (laps) => {
+  const getFastestValidLap = (laps: any[]) => {
     // get lap with minimal lap time
     // use only valid laps
-    const validLaps = laps.filter((lap) => lap.isValid);
+    const validLaps = laps.filter((lap: any) => lap.isValid);
 
     if (validLaps.length === 0) {
       return {
@@ -55,7 +86,7 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
       };
     }
 
-    return validLaps.reduce((acc, cur) => {
+    return validLaps.reduce((acc: any, cur: any) => {
       if (acc.time < cur.time) {
         return acc;
       } else {
@@ -64,16 +95,18 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
     });
   };
 
-  const getFastestAverageLap = (averageLaps) => {
+  const getFastestAverageLap = (averageLaps: any[]): AvgLap => {
     // get average lap with minimal average lap time
     if (averageLaps.length === 0) {
       return {
         avgTime: 0,
+        startLapId: 0,
+        endLapId: 0,
         dnf: true,
       };
     }
 
-    return averageLaps.reduce((acc, cur) => {
+    return averageLaps.reduce((acc: any, cur: any) => {
       if (acc.avgTime < cur.avgTime) {
         return acc;
       } else {
@@ -82,19 +115,15 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
     });
   };
 
-  const toTime = (time) => {
-    let minutes = Math.floor(time / (1000 * 60));
-    let seconds = Math.floor((time / 1000) % 60);
-    let milliseconds = Math.floor(time % 1000);
-
-    minutes = minutes.toString().padStart(2, '0');
-    seconds = seconds.toString().padStart(2, '0');
-    milliseconds = milliseconds.toString().padStart(3, '0');
+  const toTime = (time: number): TimeDisplay => {
+    const mins = Math.floor(time / (1000 * 60));
+    const secs = Math.floor((time / 1000) % 60);
+    const ms = Math.floor(time % 1000);
 
     return {
-      minutes,
-      seconds,
-      milliseconds,
+      minutes: mins.toString().padStart(2, '0'),
+      seconds: secs.toString().padStart(2, '0'),
+      milliseconds: ms.toString().padStart(3, '0'),
     };
   };
 
@@ -150,7 +179,7 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
     </span>
   );
 
-  const avgLaps = (
+  const avgLaps2 = (
     <>
       ({bestAvgDisplayTime.startLapId + 1} - {bestAvgDisplayTime.endLapId + 1})
     </>
@@ -159,7 +188,7 @@ const RaceOverlayInfo = ({ username, raceStatus, timeLeftInMs, laps, averageLaps
   const bestAvgSpan = (
     <span className={styles.footerItemDigits}>
       {bestAvgDisplayTime.minutes}:{bestAvgDisplayTime.seconds}:{bestAvgDisplayTime.milliseconds}{' '}
-      {bestAvgDisplayTime.dnf ? '' : avgLaps}
+      {bestAvgDisplayTime.dnf ? '' : avgLaps2}
     </span>
   );
 

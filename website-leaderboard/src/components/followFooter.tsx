@@ -1,6 +1,14 @@
-import React from 'react';
 import styles from './followFooter.module.css';
 import { QrCode } from './qrCode';
+
+interface FollowFooterProps {
+  visible: boolean;
+  eventId?: string;
+  trackId?: string;
+  raceFormat?: string;
+  text?: string;
+  qrCodeVisible?: boolean | string;
+}
 
 const FollowFooter = ({
   visible,
@@ -8,8 +16,8 @@ const FollowFooter = ({
   trackId,
   raceFormat,
   text = 'Follow the race: #AWSDeepRacer',
-  qrCodeVisible = '',
-}) => {
+  qrCodeVisible = false,
+}: FollowFooterProps) => {
   return (
     <>
       {visible && (

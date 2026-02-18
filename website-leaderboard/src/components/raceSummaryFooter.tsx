@@ -1,15 +1,14 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { convertMsToString } from '../support-functions/time';
 import { Flag } from './flag';
 import styles from './raceSummaryFooter.module.css';
 
-const RaceSummaryFooter = (params) => {
+const RaceSummaryFooter = (params: any) => {
   const { t } = useTranslation();
 
   const windowSize = useWindowSize();
-  const aspectRatio = windowSize.width / windowSize.height;
+  const aspectRatio = (windowSize.width ?? 0) / (windowSize.height ?? 1);
 
   const {
     avgLapTime,

@@ -7,9 +7,9 @@ import { AwsRum } from 'aws-rum-web';
 import { LeaderboardWrapper } from './components/leaderboardWrapper';
 import { LandingPage } from './pages/landingPage';
 
-Amplify.configure(awsconfig);
+Amplify.configure(awsconfig as any);
 
-let awsRum = null;
+let awsRum: AwsRum | null = null;
 try {
   const config = JSON.parse(awsconfig.Rum.leaderboard.config);
   const APPLICATION_ID = awsconfig.Rum.leaderboard.id;

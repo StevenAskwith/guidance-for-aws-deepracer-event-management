@@ -1,7 +1,6 @@
 import { Link } from '@cloudscape-design/components';
 import Box from '@cloudscape-design/components/box';
 import Cards from '@cloudscape-design/components/cards';
-import * as React from 'react';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import Logo from '../assets/logo512.png';
@@ -62,7 +61,7 @@ export function LandingPage() {
       <div className={styles.landingPageCards}>
         <Cards
           ariaLabels={{
-            itemSelectionLabel: (e, n) => `select ${n.name}`,
+            itemSelectionLabel: (e, n) => `select ${n.linkName}`,
             selectionGroupLabel: 'Item selection',
           }}
           cardDefinition={{
