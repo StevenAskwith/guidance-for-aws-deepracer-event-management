@@ -1,3 +1,0 @@
-src/commentator/race-lap-information.tsx(99,11): error TS2740: Type 'Record<string, Lap>' is missing the following properties from type 'any[]': length, pop, push, concat, and 35 more.
-src/commentator/race-lap-information.tsx(103,11): error TS2322: Type 'Record<string, never> | AverageLap' is not assignable to type '{ [key: string]: any; avgTime: number; } | undefined'.
-  Property 'avgTime' is missing in type 'Record<string, never>' but required in type '{ [key: string]: any; avgTime: number; }'.
