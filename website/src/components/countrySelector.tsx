@@ -1,7 +1,8 @@
 import { SelectField } from '@aws-amplify/ui-react';
 import { FormField, Select, SelectProps } from '@cloudscape-design/components';
 import { getNames, registerLocale } from 'i18n-iso-countries';
-import React, { useEffect, useState } from 'react';
+import enLocale from 'i18n-iso-countries/langs/en.json';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -36,7 +37,7 @@ export function CountrySelector({
 
   // Populate country options for select dropdown
   useEffect(() => {
-    registerLocale(require('i18n-iso-countries/langs/en.json'));
+    registerLocale(enLocale);
     setCountryOptions(
       Object.entries(getNames('en', { select: 'official' })).map((_countryCode) => {
         return { label: _countryCode[1], value: _countryCode[0] };
@@ -46,7 +47,7 @@ export function CountrySelector({
 
   // Populate country options for Amplify select dropdown
   useEffect(() => {
-    registerLocale(require('i18n-iso-countries/langs/en.json'));
+    registerLocale(enLocale);
     setCountryOptionsAmplify(
       Object.entries(getNames('en', { select: 'official' })).map((_countryCode) => {
         return (

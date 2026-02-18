@@ -6,10 +6,10 @@ import {
   Header,
   Input,
   Select,
-  SelectProps,
-  SpaceBetween,
+  SpaceBetween
 } from '@cloudscape-design/components';
 import { getNames, registerLocale } from 'i18n-iso-countries';
+import enLocale from 'i18n-iso-countries/langs/en.json';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flag } from '../../../components/flag';
@@ -64,7 +64,7 @@ export const EventInfoPanel: React.FC<EventInfoPanelProps> = ({
 
   // Populate country options for select dropdown
   useEffect(() => {
-    registerLocale(require('i18n-iso-countries/langs/en.json'));
+    registerLocale(enLocale);
     setCountryOptions(
       Object.entries(getNames('en', { select: 'official' })).map((_countryCode) => {
         return { label: _countryCode[1], value: _countryCode[0] };

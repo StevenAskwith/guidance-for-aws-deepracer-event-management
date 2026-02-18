@@ -19,7 +19,7 @@ RUN npm update -g
 # Install cdk
 RUN npm install -g aws-cdk
 
-#Install Amplify
+# Install Amplify CLI (used by `make codegen` for GraphQL code generation)
 RUN npm install -g @aws-amplify/cli
 
 # NPM install
@@ -30,4 +30,5 @@ RUN npm install
 
 ENV PORT=3000
 
-CMD ["npm", "start"]
+# Vite needs --host to be accessible outside the container
+CMD ["npx", "vite", "--host"]
