@@ -14,6 +14,7 @@ export default defineConfig({
     },
     server: {
         port: 3000, // Keep same dev port as CRA
+        host: true,
         open: true,
     },
     build: {

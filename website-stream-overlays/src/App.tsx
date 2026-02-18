@@ -1,4 +1,4 @@
-import { Amplify } from 'aws-amplify';
+import { Amplify, type ResourcesConfig } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/api';
 import { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -15,7 +15,36 @@ import { useTranslation } from 'react-i18next';
 
 import './App.css';
 import awsExports from './config.json';
-Amplify.configure(awsExports as any);
+
+/**
+ * Legacy config shape produced by generate_stream_overlays_amplify_config_cfn.py
+ * We map this to Amplify v6 ResourcesConfig at runtime so the CDK scripts
+ * don't need to change.
+ */
+interface LegacyStreamOverlaysConfig {
+  API: {
+    aws_appsync_graphqlEndpoint: string;
+    aws_appsync_region: string;
+    aws_appsync_authenticationType: string;
+    aws_appsync_apiKey: string;
+  };
+}
+
+/** Map legacy config.json → Amplify v6 ResourcesConfig */
+function buildAmplifyConfig(legacy: LegacyStreamOverlaysConfig): ResourcesConfig {
+  return {
+    API: {
+      GraphQL: {
+        endpoint: legacy.API.aws_appsync_graphqlEndpoint,
+        region: legacy.API.aws_appsync_region,
+        defaultAuthMode: 'apiKey',
+        apiKey: legacy.API.aws_appsync_apiKey,
+      },
+    },
+  };
+}
+
+Amplify.configure(buildAmplifyConfig(awsExports as LegacyStreamOverlaysConfig));
 
 const client = generateClient();
 
