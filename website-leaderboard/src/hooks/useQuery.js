@@ -1,9 +1,11 @@
-import { API, graphqlOperation } from 'aws-amplify';
+import { generateClient } from 'aws-amplify/api';
 import { useEffect, useState } from 'react';
 
 import * as queries from '../graphql/queries';
 
-export default function useQuery(method, params = '') {
+const client = generateClient();
+
+export default function useQuery(method, params = {}) {
   const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,11 +13,11 @@ export default function useQuery(method, params = '') {
     const queryApi = async () => {
       try {
         setLoading(true);
-        const response = await API.graphql(graphqlOperation(queries[method], params));
+        const response = await client.graphql({ query: queries[method], variables: params });
         setData(response.data[method]);
         setLoading(false);
-      } catch (error) {
-        setError(error);
+      } catch (err) {
+        setError(err);
         setLoading(false);
       }
     };

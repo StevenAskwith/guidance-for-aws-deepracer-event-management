@@ -16,32 +16,31 @@ try {
   const APPLICATION_VERSION = '1.0.0';
   const APPLICATION_REGION = awsconfig.Rum.leaderboard.region;
 
-  /*eslint no-unused-vars: ["error", { "varsIgnorePattern": "awsRum" }]*/
   awsRum = new AwsRum(APPLICATION_ID, APPLICATION_VERSION, APPLICATION_REGION, config);
 } catch (error) {
   // Ignore errors thrown during CloudWatch RUM web client initialization
 }
 
-function App() {
-  const router = createBrowserRouter([
-    {
-      path: '/',
-      element: <LeaderboardWrapper />,
-    },
-    {
-      path: '/:eventId',
-      element: <LeaderboardWrapper />,
-    },
-    {
-      path: '/leaderboard/:eventId',
-      element: <LeaderboardWrapper />,
-    },
-    {
-      path: '/landing-page/:eventId',
-      element: <LandingPage />,
-    },
-  ]);
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <LeaderboardWrapper />,
+  },
+  {
+    path: '/:eventId',
+    element: <LeaderboardWrapper />,
+  },
+  {
+    path: '/leaderboard/:eventId',
+    element: <LeaderboardWrapper />,
+  },
+  {
+    path: '/landing-page/:eventId',
+    element: <LandingPage />,
+  },
+]);
 
+function App() {
   return <RouterProvider router={router} />;
 }
 

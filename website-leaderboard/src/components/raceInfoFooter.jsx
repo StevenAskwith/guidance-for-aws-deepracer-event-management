@@ -1,11 +1,11 @@
-import { API, graphqlOperation } from 'aws-amplify';
-import React, { useEffect, useState } from 'react';
+import { generateClient } from 'aws-amplify/api';
+import { useEffect, useState } from 'react';
 import { onNewOverlayInfo } from '../graphql/subscriptions';
 import { useWindowSize } from '../hooks/useWindowSize';
 import styles from './raceInfoFooter.module.css';
 import RaceOverlayInfo from './raceOverlayInfo';
 
-// import { useTranslation } from 'react-i18next';
+const client = generateClient();
 
 const racesStatusesWithFooterVisible = [
   //'NO_RACER_SELECTED',
@@ -29,30 +29,33 @@ const RaceInfoFooter = ({ eventId, trackId, visible, raceFormat }) => {
   const aspectRatio = windowSize.width / windowSize.height;
 
   useEffect(() => {
-    const subscription = API.graphql(
-      graphqlOperation(onNewOverlayInfo, { eventId: eventId, trackId: trackId })
-    ).subscribe({
-      next: ({ provider, value }) => {
-        const raceInfo = value.data.onNewOverlayInfo;
-        if (racesStatusesWithFooterVisible.includes(raceInfo.raceStatus)) {
-          SetRaceInfo((prevstate) => {
-            return {
-              username: raceInfo.username,
-              timeLeftInMs: raceInfo.timeLeftInMs,
-              raceStatus: raceInfo.raceStatus,
-              laps: raceInfo.laps,
-              currentLapTimeInMs: raceInfo.currentLapTimeInMs,
-              averageLaps: raceInfo.averageLaps,
-            };
-          });
-          SetIsVisible(true);
-        } else {
-          SetRaceInfo();
-          SetIsVisible(false);
-        }
-      },
-      error: (error) => console.warn(error),
-    });
+    const subscription = client
+      .graphql({
+        query: onNewOverlayInfo,
+        variables: { eventId: eventId, trackId: trackId },
+      })
+      .subscribe({
+        next: ({ data }) => {
+          const raceInfo = data.onNewOverlayInfo;
+          if (racesStatusesWithFooterVisible.includes(raceInfo.raceStatus)) {
+            SetRaceInfo((prevstate) => {
+              return {
+                username: raceInfo.username,
+                timeLeftInMs: raceInfo.timeLeftInMs,
+                raceStatus: raceInfo.raceStatus,
+                laps: raceInfo.laps,
+                currentLapTimeInMs: raceInfo.currentLapTimeInMs,
+                averageLaps: raceInfo.averageLaps,
+              };
+            });
+            SetIsVisible(true);
+          } else {
+            SetRaceInfo();
+            SetIsVisible(false);
+          }
+        },
+        error: (error) => console.warn(error),
+      });
 
     return () => {
       if (subscription) {

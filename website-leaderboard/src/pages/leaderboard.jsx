@@ -1,5 +1,5 @@
-import { API, graphqlOperation } from 'aws-amplify';
-import React, { useCallback, useEffect, useState } from 'react';
+import { generateClient } from 'aws-amplify/api';
+import { useCallback, useEffect, useState } from 'react';
 import Logo from '../assets/logo1024.png';
 import { FollowFooter } from '../components/followFooter';
 import { Header } from '../components/header';
@@ -9,6 +9,8 @@ import { RaceSummaryFooter } from '../components/raceSummaryFooter';
 import { getLeaderboard } from '../graphql/queries';
 import { onDeleteLeaderboardEntry, onNewLeaderboardEntry, onUpdateLeaderboardEntry } from '../graphql/subscriptions';
 import styles from './leaderboard.module.css';
+
+const client = generateClient();
 
 const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, showFlag }) => {
   const [leaderboardEntries, SetleaderboardEntries] = useState([]);
@@ -38,7 +40,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
   /**
    * Get the leaderboard entry based on the provided username
    * @param  {string} username entry to remove
-   * @param  {Array[Object]} allEntries all leaderbaord entries
+   * @param  {Array} allEntries all leaderboard entries
    * @return {[Number,Object]} entry index & leaderboard entry
    */
   const findEntryByUsername = (username, allEntries) => {
@@ -76,7 +78,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
    * Calculate overall rank (current leaderboard position)
    * @param  {Object} newEntry
    * @param  {Number} previousPostition
-   * @param {Array[Object]} allEntries    All lederboard entries
+   * @param {Array} allEntries    All leaderboard entries
    * @return {}
    */
   const calcRaceSummary = useCallback((newEntry, previousPostition, allEntries) => {
@@ -106,13 +108,12 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
         newEntry.gapToFastest = null;
       }
     }
-    //console.debug(newEntry);
     SetRaceSummaryData(newEntry);
   }, []);
 
   /**
    * Update leaderboard with a new entry
-   * @param  {Object} newEntry Leaderboard entry to be added
+   * @param  {Object} newLeaderboardEntry Leaderboard entry to be added
    * @return {}
    */
   const updateLeaderboardEntries = (newLeaderboardEntry) => {
@@ -128,8 +129,7 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
       console.debug(oldEntry);
       if (oldEntryIndex >= 0) {
         if (trackId === 'combined') {
-          // for combined leaderboard, only update  the entry when new entry has faster lap time
-          // this might be done in the backend in the future
+          // for combined leaderboard, only update the entry when new entry has faster lap time
           newState[oldEntryIndex] = newLeaderboardEntry;
 
           if (
@@ -169,7 +169,10 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
   useEffect(() => {
     if (eventId) {
       const getLeaderboardData = async () => {
-        const response = await API.graphql(graphqlOperation(getLeaderboard, { eventId: eventId, trackId: trackId }));
+        const response = await client.graphql({
+          query: getLeaderboard,
+          variables: { eventId: eventId, trackId: trackId },
+        });
         const leaderboard = response.data.getLeaderboard;
         response.data.getLeaderboard.entries.forEach((entry) => updateLeaderboardEntries(entry));
         setLeaderboardConfig(leaderboard.config);
@@ -182,63 +185,63 @@ const Leaderboard = ({ eventId, trackId, raceFormat, showQrCode, scrollEnabled, 
       // get all updates if trackId == 'combined'
       const subscriptionTrackId = trackId === 'combined' ? undefined : trackId;
       SetSubscription(
-        API.graphql(
-          graphqlOperation(onNewLeaderboardEntry, {
-            eventId: eventId,
-            trackId: subscriptionTrackId,
+        client
+          .graphql({
+            query: onNewLeaderboardEntry,
+            variables: { eventId: eventId, trackId: subscriptionTrackId },
           })
-        ).subscribe({
-          next: ({ provider, value }) => {
-            console.debug('onNewLeaderboardEntry');
-            const newEntry = value.data.onNewLeaderboardEntry;
-            console.debug(newEntry);
-            updateLeaderboardEntries(newEntry);
-            SetraceSummaryFooterIsVisible(true);
-            setTimeout(() => {
-              SetraceSummaryFooterIsVisible(false);
-            }, 12000);
-          },
-          error: (error) => console.warn(error),
-        })
+          .subscribe({
+            next: ({ data }) => {
+              console.debug('onNewLeaderboardEntry');
+              const newEntry = data.onNewLeaderboardEntry;
+              console.debug(newEntry);
+              updateLeaderboardEntries(newEntry);
+              SetraceSummaryFooterIsVisible(true);
+              setTimeout(() => {
+                SetraceSummaryFooterIsVisible(false);
+              }, 12000);
+            },
+            error: (error) => console.warn(error),
+          })
       );
 
       if (onUpdateSubscription) {
         onUpdateSubscription.unsubscribe();
       }
       SetOnUpdateSubscription(
-        API.graphql(
-          graphqlOperation(onUpdateLeaderboardEntry, {
-            eventId: eventId,
-            trackId: subscriptionTrackId,
+        client
+          .graphql({
+            query: onUpdateLeaderboardEntry,
+            variables: { eventId: eventId, trackId: subscriptionTrackId },
           })
-        ).subscribe({
-          next: ({ provider, value }) => {
-            console.debug('onUpdateLeaderboardEntry');
-            const newEntry = value.data.onUpdateLeaderboardEntry;
-            updateLeaderboardEntries(newEntry);
-          },
-          error: (error) => console.warn(error),
-        })
+          .subscribe({
+            next: ({ data }) => {
+              console.debug('onUpdateLeaderboardEntry');
+              const newEntry = data.onUpdateLeaderboardEntry;
+              updateLeaderboardEntries(newEntry);
+            },
+            error: (error) => console.warn(error),
+          })
       );
 
       if (onDeleteSubscription) {
         onDeleteSubscription.unsubscribe();
       }
       SetOnDeleteSubscription(
-        API.graphql(
-          graphqlOperation(onDeleteLeaderboardEntry, {
-            eventId: eventId,
-            trackId: subscriptionTrackId,
+        client
+          .graphql({
+            query: onDeleteLeaderboardEntry,
+            variables: { eventId: eventId, trackId: subscriptionTrackId },
           })
-        ).subscribe({
-          next: ({ provider, value }) => {
-            console.debug('onDeleteLeaderboardEntry');
-            const entryToDelete = value.data.onDeleteLeaderboardEntry;
-            console.debug(entryToDelete);
-            removeLeaderboardEntry(entryToDelete);
-          },
-          error: (error) => console.warn(error),
-        })
+          .subscribe({
+            next: ({ data }) => {
+              console.debug('onDeleteLeaderboardEntry');
+              const entryToDelete = data.onDeleteLeaderboardEntry;
+              console.debug(entryToDelete);
+              removeLeaderboardEntry(entryToDelete);
+            },
+            error: (error) => console.warn(error),
+          })
       );
 
       return () => {
