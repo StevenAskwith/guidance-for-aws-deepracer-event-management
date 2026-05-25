@@ -54,5 +54,25 @@ export class ModelsManagerDefaultModelsDeployment extends NestedStack {
       memoryLimit: 512,
       role: defaultModelsDeploymentRole,
     });
+
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole on the BucketDeployment custom resource Lambda is managed by CDK and cannot be configured.',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason:
+          'BucketDeployment custom resource Lambda requires wildcard S3 permissions; managed by CDK.',
+        appliesTo: ['Action::s3:GetObject*', 'Action::s3:GetBucket*', 'Action::s3:List*', { regex: '/^Resource::arn:aws:s3:::cdk-.*/' }],
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'BucketDeployment custom resource Lambda runtime is managed by CDK and cannot be configured.',
+      },
+    ]);
   }
 }
