@@ -32,7 +32,7 @@ export class CwRumAppMonitor extends NestedStack {
       allowClassicFlow: true,
     });
 
-    NagSuppressions.addResourceSuppressionsByPath(stack, `${scope.node.path}/${id}/CwRumIdentityPool`, [
+    NagSuppressions.addResourceSuppressions(rum_identity_pool, [
       {
         id: 'AwsSolutions-COG7',
         reason: 'CloudWatch RUM requires an unauthenticated identity pool to operate.',
@@ -147,5 +147,25 @@ export class CwRumAppMonitor extends NestedStack {
             "enableXRay": ${enableXray}
         }`;
     this.config = rumConfig;
+
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole on the AwsCustomResource framework Lambda is managed by CDK and cannot be configured by the application.',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason:
+          'AwsCustomResource framework Lambda requires wildcard permissions; managed by CDK custom-resources module.',
+        appliesTo: ['Resource::*'],
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'AwsCustomResource framework Lambda runtime is managed by CDK and cannot be configured by the application.',
+      },
+    ]);
   }
 }
