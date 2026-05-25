@@ -1,4 +1,4 @@
-import { RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { NestedStack, NestedStackProps, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rum from 'aws-cdk-lib/aws-rum';
@@ -6,7 +6,7 @@ import * as customResources from 'aws-cdk-lib/custom-resources';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 
-export interface CwRumAppMonitorProps {
+export interface CwRumAppMonitorProps extends NestedStackProps {
   domainName: string;
   allowCookies?: boolean;
   enableXray?: boolean;
@@ -14,14 +14,14 @@ export interface CwRumAppMonitorProps {
   telemetries?: string[];
 }
 
-export class CwRumAppMonitor extends Construct {
+export class CwRumAppMonitor extends NestedStack {
   public readonly script: string;
   public readonly id: string;
   public readonly region: string;
   public readonly config: string;
 
   constructor(scope: Construct, id: string, props: CwRumAppMonitorProps) {
-    super(scope, id);
+    super(scope, id, props);
 
     const stack = Stack.of(this);
     this.region = stack.region;
