@@ -1,4 +1,4 @@
-import { NestedStack, NestedStackProps, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rum from 'aws-cdk-lib/aws-rum';
@@ -6,7 +6,7 @@ import * as customResources from 'aws-cdk-lib/custom-resources';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 
-export interface CwRumAppMonitorProps extends NestedStackProps {
+export interface CwRumAppMonitorProps {
   domainName: string;
   allowCookies?: boolean;
   enableXray?: boolean;
@@ -14,14 +14,14 @@ export interface CwRumAppMonitorProps extends NestedStackProps {
   telemetries?: string[];
 }
 
-export class CwRumAppMonitor extends NestedStack {
+export class CwRumAppMonitor extends Construct {
   public readonly script: string;
-  public readonly id: string;
+  public readonly rumId: string;
   public readonly region: string;
   public readonly config: string;
 
   constructor(scope: Construct, id: string, props: CwRumAppMonitorProps) {
-    super(scope, id, props);
+    super(scope, id);
 
     const stack = Stack.of(this);
     this.region = stack.region;
@@ -134,8 +134,7 @@ export class CwRumAppMonitor extends NestedStack {
         </script>`;
 
     this.script = rumScript;
-    // this.name = cfn_app_monitor.ref // TODO is this export needed?
-    this.id = appMonitorId; // TODO is this export needed?
+    this.rumId = appMonitorId;
 
     const rumConfig = `{
             "sessionSampleRate": ${sessionSampleRate},
@@ -147,25 +146,5 @@ export class CwRumAppMonitor extends NestedStack {
             "enableXRay": ${enableXray}
         }`;
     this.config = rumConfig;
-
-    NagSuppressions.addStackSuppressions(this, [
-      {
-        id: 'AwsSolutions-IAM4',
-        reason:
-          'AWSLambdaBasicExecutionRole on the AwsCustomResource framework Lambda is managed by CDK and cannot be configured by the application.',
-        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason:
-          'AwsCustomResource framework Lambda requires wildcard permissions; managed by CDK custom-resources module.',
-        appliesTo: ['Resource::*'],
-      },
-      {
-        id: 'AwsSolutions-L1',
-        reason:
-          'AwsCustomResource framework Lambda runtime is managed by CDK and cannot be configured by the application.',
-      },
-    ]);
   }
 }

@@ -297,7 +297,7 @@ export class DeepracerEventManagerStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'cwRumAppMonitorId', {
-      value: cwRumAppMonitor.id,
+      value: cwRumAppMonitor.rumId,
     });
 
     new cdk.CfnOutput(this, 'cwRumAppMonitorRegion', {
