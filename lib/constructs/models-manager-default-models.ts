@@ -1,4 +1,4 @@
-import { CfnResource, NestedStack, NestedStackProps, Stack } from 'aws-cdk-lib';
+import { CfnResource, NestedStack, NestedStackProps, Size, Stack } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment';
@@ -44,14 +44,15 @@ export class ModelsManagerDefaultModelsDeployment extends NestedStack {
       ],
       true
     );
-    /* Deploy Default DeepRacer models. FOr the models to be properly index this needs to run
+    /* Deploy Default DeepRacer models. For the models to be properly index this needs to run
         after the antivirus deployment and lambda putting the models info into the models DDB table */
     new s3Deployment.BucketDeployment(this, 'ModelsDeploy', {
       sources: [s3Deployment.Source.asset('./lib/default_models')],
       destinationBucket: props.uploadBucket,
       destinationKeyPrefix: `private/${stack.region}:00000000-0000-0000-0000-000000000000/000000000000/default/`,
       retainOnDelete: false,
-      memoryLimit: 512,
+      memoryLimit: 1024, // was 512
+      ephemeralStorageSize: Size.gibibytes(2), // add — /tmp for download + extract
       role: defaultModelsDeploymentRole,
     });
 
