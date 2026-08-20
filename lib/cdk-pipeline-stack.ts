@@ -281,23 +281,45 @@ export class CdkPipelineStack extends cdk.Stack {
     // Upload default models directly from the source checkout — avoids bundling
     // 249 MB of .tar.gz files into cdk.out (which would exceed the CodePipeline
     // artifact size limit for SynthAndDeployBackend_Output).
+    // Shared between the sync command (which resolves the region from the CodeBuild
+    // environment) and the IAM statements (which resolve it from CloudFormation).
+    const defaultModelsKeySuffix = ':00000000-0000-0000-0000-000000000000/000000000000/default/';
+    const defaultModelsPrefix = `private/${cdk.Aws.REGION}${defaultModelsKeySuffix}`;
+    const dremBucketsArnPattern = `arn:${cdk.Aws.PARTITION}:s3:::drem-backend-${props.labelName}-*`;
+
     const defaultModelsDeployStep = new pipelines.CodeBuildStep('DeployDefaultModels', {
       buildEnvironment: {
         computeType: codebuild.ComputeType.SMALL,
       },
       commands: [
         'aws s3 sync ./lib/default_models/' +
-          ' s3://$uploadBucketName/private/$AWS_DEFAULT_REGION:00000000-0000-0000-0000-000000000000/000000000000/default/' +
-          ' --no-progress',
+          ` s3://$uploadBucketName/private/$AWS_DEFAULT_REGION${defaultModelsKeySuffix}` +
+          ' --size-only --no-progress',
       ],
       envFromCfnOutputs: {
         uploadBucketName: infrastructure.uploadBucketName,
       },
       rolePolicyStatements: [
+        // Bucket-level: sync lists the destination prefix before uploading. The upload
+        // bucket ARN isn't known at synth time (it's created by the stage this pipeline
+        // deploys, with a generated name suffix), so scope by name pattern + account +
+        // the default-models key prefix instead.
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['s3:PutObject', 's3:ListBucket', 's3:DeleteObject'],
-          resources: ['*'],
+          actions: ['s3:ListBucket'],
+          resources: [dremBucketsArnPattern],
+          conditions: {
+            StringEquals: { 's3:ResourceAccount': cdk.Aws.ACCOUNT_ID },
+            StringLike: { 's3:prefix': [defaultModelsPrefix, `${defaultModelsPrefix}*`] },
+          },
+        }),
+        // Object-level: write only inside the default-models prefix. s3:DeleteObject is
+        // not needed — the sync has no --delete.
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['s3:PutObject'],
+          resources: [`${dremBucketsArnPattern}/${defaultModelsPrefix}*`],
+          conditions: { StringEquals: { 's3:ResourceAccount': cdk.Aws.ACCOUNT_ID } },
         }),
       ],
     });
