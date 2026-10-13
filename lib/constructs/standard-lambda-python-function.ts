@@ -60,8 +60,8 @@ export class StandardLambdaPythonFunction extends lambdaPython.PythonFunction {
       architecture: lambda.Architecture.ARM_64,
       bundling:
         os.arch() === 'arm64'
-          ? { image: DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest-arm64') }
-          : { image: DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest') },
+          ? { image: DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest-arm64') }
+          : { image: DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest') },
       ...props,
       environment: {
         ...props.environment,
@@ -127,7 +127,7 @@ export class StandardLambdaPythonFunction extends lambdaPython.PythonFunction {
         {
           id: 'AwsSolutions-L1',
           reason:
-            'Python 3.12 is the actively maintained runtime used across this project. Upgrading to 3.14 requires full dependency and integration validation and is tracked as a separate work item.',
+            'Python 3.14 is the latest stable Lambda runtime supported by the CDK version in use.',
         },
       ],
       true

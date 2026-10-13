@@ -52,10 +52,10 @@ export class DeepracerEventManagerStack extends cdk.Stack {
 
     // Lambda config — defined locally, these are constants
     const lambda_architecture = lambda.Architecture.ARM_64;
-    const lambda_runtime = lambda.Runtime.PYTHON_3_12;
-    let lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest');
+    const lambda_runtime = lambda.Runtime.PYTHON_3_14;
+    let lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest');
     if (os.arch() === 'arm64') {
-      lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest-arm64');
+      lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest-arm64');
     }
 
     const lambdaConfig = {

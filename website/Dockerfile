@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:20-alpine
+FROM public.ecr.aws/docker/library/node:24-alpine
 
 # Install packages
 RUN apk update && apk add --update --no-cache \

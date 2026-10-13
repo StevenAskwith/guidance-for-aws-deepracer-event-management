@@ -147,10 +147,10 @@ export class BaseStack extends cdk.Stack {
     // Lambda
     // Common Config
     const lambda_architecture = awsLambda.Architecture.ARM_64;
-    const lambda_runtime = awsLambda.Runtime.PYTHON_3_12;
-    var lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest');
+    const lambda_runtime = awsLambda.Runtime.PYTHON_3_14;
+    var lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest');
     if (os.arch() === 'arm64') {
-      lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.12:latest-arm64');
+      lambda_bundling_image = DockerImage.fromRegistry('public.ecr.aws/sam/build-python3.14:latest-arm64');
     }
 
     // Layers
@@ -273,7 +273,7 @@ export class BaseStack extends cdk.Stack {
     const powertoolsLambdaLayer = lambdaPython.PythonLayerVersion.fromLayerVersionArn(
       this,
       'lambdaPowertoolsLambdaLayer',
-      `arn:aws:lambda:${stack.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:79`
+      `arn:aws:lambda:${stack.region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python314-arm64:38`
     );
 
     new ssm.StringParameter(this, 'powertoolsLayerArn', {

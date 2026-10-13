@@ -16,7 +16,7 @@ import { BaseStack } from './base-stack';
 import { DeepracerEventManagerStack } from './drem-app-stack';
 
 // Constants
-const NODE_VERSION = '22'; // other possible options: stable, latest, lts
+const NODE_VERSION = '24'; // other possible options: stable, latest, lts
 const CDK_VERSION = '2.1145.0'; // other possible options: latest
 const AMPLIFY_VERSION = '12.14.4';
 
@@ -256,15 +256,15 @@ export class CdkPipelineStack extends cdk.Stack {
 
         // Build leaderboard and overlays, copy into website/public/
         'docker run --rm -v $(pwd):/foo -w /foo/website/leaderboard' +
-          " public.ecr.aws/sam/build-nodejs22.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
+          " public.ecr.aws/sam/build-nodejs24.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
         'mkdir -p ./website/public/leaderboard && cp -r ./website/leaderboard/build/. ./website/public/leaderboard/',
         'docker run --rm -v $(pwd):/foo -w /foo/website/overlays' +
-          " public.ecr.aws/sam/build-nodejs22.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
+          " public.ecr.aws/sam/build-nodejs24.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
         'mkdir -p ./website/public/overlays && cp -r ./website/overlays/build/. ./website/public/overlays/',
 
         // Build main site (sub-apps already in public/)
         'docker run --rm -v $(pwd):/foo -w /foo/website' +
-          " public.ecr.aws/sam/build-nodejs22.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
+          " public.ecr.aws/sam/build-nodejs24.x:latest bash -c 'npm install --cache /tmp/empty-cache --legacy-peer-deps && npm run build'",
 
         // Sync everything and invalidate
         'aws s3 sync ./website/build/ s3://$sourceBucketName/ --delete',
@@ -373,7 +373,7 @@ export class CdkPipelineStack extends cdk.Stack {
 
     const bucketEmptier = new lambda.Function(this, 'PipelineArtifactBucketEmptier', {
       description: 'Empty the CDK Pipelines artifact bucket on stack delete',
-      runtime: lambda.Runtime.PYTHON_3_12,
+      runtime: lambda.Runtime.PYTHON_3_14,
       handler: 'index.handler',
       timeout: Duration.minutes(5),
       memorySize: 256,
@@ -432,7 +432,7 @@ def handler(event, context):
         {
           id: 'AwsSolutions-L1',
           reason:
-            'PYTHON_3_12 is the latest stable Lambda runtime supported by the CDK version in use; bump when CDK exposes a newer Python.',
+            'PYTHON_3_14 is the latest stable Lambda runtime supported by the CDK version in use; bump when CDK exposes a newer Python.',
         },
       ],
       true

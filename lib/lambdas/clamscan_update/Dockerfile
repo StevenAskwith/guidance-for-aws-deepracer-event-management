@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # from https://github.com/awslabs/cdk-serverless-clamscan/blob/main/assets/lambda/code/download_defs/Dockerfile
 
-FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.12
+FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.14
 LABEL name=lambda/python/clamav
 LABEL version=1.0
 
