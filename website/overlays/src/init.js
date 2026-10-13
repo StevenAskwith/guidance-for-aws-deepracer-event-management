@@ -114,15 +114,15 @@ function GetFormattedLapTime(timeInMS, showMinutes = false) {
   if (timeInMS == 999999999) return '00.000';
 
   if (showMinutes) {
-    var min = Math.floor(timeInMS / 1000 / 60);
-    var sec = Math.floor(timeInMS / 1000) - min * 60; // - (min * 60));
-    var ms = String(timeInMS - (min * 60 * 1000 + sec * 1000));
+    const min = Math.floor(timeInMS / 1000 / 60);
+    const sec = Math.floor(timeInMS / 1000) - min * 60; // - (min * 60));
+    const ms = String(timeInMS - (min * 60 * 1000 + sec * 1000));
     //    return `${PadZero(min)}:${PadZero(sec)}:${ms}`
     return `${PadZero(min)}:${PadZero(sec)}.${PadZeroMS(ms).slice(0, 3)}`;
   } else {
     //    var min = Math.floor(timeInMS / 1000 / 60);
-    var sec = Math.floor(timeInMS / 1000); // - (min * 60));
-    var ms = String(timeInMS - sec * 1000); //((min * 60 * 1000) + (sec * 1000)));
+    const sec = Math.floor(timeInMS / 1000); // - (min * 60));
+    const ms = String(timeInMS - sec * 1000); //((min * 60 * 1000) + (sec * 1000)));
     //    return `${PadZero(min)}:${PadZero(sec)}:${ms}`
     return `${PadZero(sec)}.${PadZeroMS(ms).slice(0, 3)}`;
   }

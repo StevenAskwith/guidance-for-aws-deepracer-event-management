@@ -20,5 +20,12 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // Plain .js modules (legacy D3 overlay helpers) run in the browser.
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: { document: 'readonly', window: 'readonly', console: 'readonly', setTimeout: 'readonly' },
+    },
+  },
   prettier
 );
