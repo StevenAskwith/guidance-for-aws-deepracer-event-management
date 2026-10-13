@@ -11,43 +11,10 @@
     "cdk": "cdk",
     "postinstall": "[ -n \"$CODEBUILD_BUILD_ID\" ] && exit 0; (cd website && npm install --legacy-peer-deps) || true; (cd website/leaderboard && npm install --legacy-peer-deps) || true; (cd website/overlays && npm install --legacy-peer-deps) || true"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
     "@types/jest": "^30.0.0",
     "@types/node": "20.19.33",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
     "aws-cdk-lib": "2.273.0",
-    "eslint": "^8.48.0",
-    "eslint-config-node": "^4.1.0",
-    "eslint-config-prettier": "^9.1.2",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-import-resolver-typescript": "^3.10.1",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^27.9.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^4.6.2",
     "jest": "^30.5.2",
     "jest-junit": "^17.0.0",
     "prettier": "^3.8.1",
