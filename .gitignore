@@ -67,3 +67,6 @@ build.log
 # Claude Code working artifacts (plans / specs) — kept out of the repo
 # so AI-generated planning docs don't pile up under docs/. See #276.
 docs/superpowers/
+
+# DREM data exports (contain user email addresses)
+drem-export-*/
