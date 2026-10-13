@@ -16,5 +16,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "recommendedNode": "20.x LTS"
+  "recommendedNode": "20.x LTS",
+  "overrides": {
+    "node-libgpiod": {
+      "node-gyp": "^11.5.0"
+    }
+  }
 }
