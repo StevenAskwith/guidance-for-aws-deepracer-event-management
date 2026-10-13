@@ -1,10 +1,10 @@
-aws-lambda-powertools[tracer]==3.8.0
+aws-lambda-powertools[tracer]==3.35.0
 py-avataaars==1.1.2
 weasyprint==70.0
 # Pin pydyf to a version WeasyPrint 70 supports (>=0.11). Older WeasyPrint (62.x)
 # needed pydyf<0.11 because of the Stream.transform signature change.
 pydyf==0.12.1
 jinja2==3.1.6
-boto3==1.35.36
-requests==2.33.0
-requests-aws4auth==1.3.1
+boto3==1.43.112
+requests==2.34.2
+requests-aws4auth==1.4.0

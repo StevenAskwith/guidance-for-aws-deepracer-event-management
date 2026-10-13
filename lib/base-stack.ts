@@ -273,7 +273,7 @@ export class BaseStack extends cdk.Stack {
     const powertoolsLambdaLayer = lambdaPython.PythonLayerVersion.fromLayerVersionArn(
       this,
       'lambdaPowertoolsLambdaLayer',
-      `arn:aws:lambda:${stack.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:11`
+      `arn:aws:lambda:${stack.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:79`
     );
 
     new ssm.StringParameter(this, 'powertoolsLayerArn', {
