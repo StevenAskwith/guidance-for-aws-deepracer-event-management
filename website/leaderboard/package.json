@@ -12,12 +12,12 @@
     "classnames": "^2.5.1",
     "i18next": "^25.8.11",
     "i18next-browser-languagedetector": "^8.2.1",
-    "i18next-http-backend": "^3.0.2",
+    "i18next-http-backend": "^4.0.2",
     "qrcode.react": "^3.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^15.7.4",
-    "react-router-dom": "^6.30.3",
+    "react-router-dom": "^7.18.4",
     "web-vitals": "^4.2.4"
   },
   "devDependencies": {
@@ -38,7 +38,7 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.4",
     "vite": "^7.3.1",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.0"
   },
   "scripts": {
     "test": "vitest run",
@@ -46,5 +46,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint ."
+  },
+  "overrides": {
+    "aws-rum-web": {
+      "uuid": "^11.1.1"
+    }
   }
 }

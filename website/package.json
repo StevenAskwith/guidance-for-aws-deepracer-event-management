@@ -34,13 +34,13 @@
     "i18n-iso-countries": "^7.14.0",
     "i18next": "^25.8.11",
     "i18next-browser-languagedetector": "^8.2.1",
-    "i18next-http-backend": "^3.0.2",
+    "i18next-http-backend": "^4.0.2",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^15.7.4",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^6.30.3",
+    "react-router-dom": "^7.18.4",
     "topojson-client": "^3.1.0",
     "web-vitals": "^4.2.4",
     "world-atlas": "^2.0.2",
@@ -75,5 +75,10 @@
     "typescript-eslint": "8.59.4",
     "vite": "^7.3.1",
     "vitest": "^4.1.0"
+  },
+  "overrides": {
+    "aws-rum-web": {
+      "uuid": "^11.1.1"
+    }
   }
 }
