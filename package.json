@@ -13,23 +13,23 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "20.19.33",
+    "@types/node": "20.19.43",
     "aws-cdk-lib": "2.273.0",
     "jest": "^30.5.2",
     "jest-junit": "^17.0.0",
-    "prettier": "^3.8.1",
-    "ts-jest": "^29.4.6",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.14",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },
   "dependencies": {
     "@aws-cdk/aws-lambda-python-alpha": "^2.273.0-alpha.0",
-    "@cloudscape-design/component-toolkit": "^1.0.0-beta.138",
+    "@cloudscape-design/component-toolkit": "^1.0.0-beta.189",
     "aws-cdk-lib": "2.273.0",
     "awscdk-appsync-utils": "^0.0.858",
     "cdk-nag": "2.38.2",
     "cdk-serverless-clamscan": "^2.13.46",
-    "constructs": "^10.5.0",
+    "constructs": "^10.8.1",
     "source-map-support": "^0.5.21"
   }
 }
