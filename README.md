@@ -4,6 +4,69 @@
 
 # Welcome to AWS DeepRacer Event Manager (DREM)
 
+> [!IMPORTANT]
+> **DREM has been sunset and is no longer actively developed.** Its successor is
+> **[DeepRacer on AWS (DRonAWS)](https://github.com/aws-solutions/deepracer-on-aws)**
+> ([solution page](https://aws.amazon.com/solutions/implementations/deepracer-on-aws)).
+> Since v1.3.0, DRonAWS includes race management for in-person events, covering
+> events with multiple tracks, timekeeping, combined leaderboards, fleets and car
+> management, model upload to cars, a commentator view, a public leaderboard and a
+> streaming overlay. Please plan to move your events to DRonAWS.
+>
+> The final DREM release is still deployable and this repository stays available for
+> reference, but new features and pull requests will not be accepted.
+
+## Thank you
+
+DREM grew from a tool for timing AWS DeepRacer races into the platform behind in-person
+events around the world, from AWS Summits to community meetups, universities and
+corporate leagues. That happened because of the people who built it, tested it at
+trackside, filed issues, translated it and kept it running.
+
+Thank you to everyone who contributed code, especially
+[@StevenAskwith](https://github.com/StevenAskwith),
+[@davidfsmith](https://github.com/davidfsmith),
+[@esbjj](https://github.com/esbjj),
+[@larsll](https://github.com/larsll),
+[@daniellindner](https://github.com/daniellindner),
+[@marcobuss](https://github.com/marcobuss),
+[@chrisscudder](https://github.com/chrisscudder),
+[@franky920920](https://github.com/franky920920),
+[@yasaws](https://github.com/yasaws),
+[@anindith123](https://github.com/anindith123),
+[@MarkitectRoss](https://github.com/MarkitectRoss) and
+[@mattcamp](https://github.com/mattcamp).
+Thank you also to every event organiser, timekeeper, commentator and racer who used DREM
+and told us what to fix. Much of what you asked for now lives on in DRonAWS.
+
+## Moving to DeepRacer on AWS
+
+1. **Export your data before you tear anything down.** `scripts/drem_export.py` writes
+   your events, races, leaderboards, fleets, racer profiles and users to local JSON.
+   See [scripts/README.md](./scripts/README.md). Models, car logs and videos are not
+   included, so download any you want to keep from the S3 buckets.
+2. **Deploy DRonAWS** by following its
+   [deployment guide](https://docs.aws.amazon.com/solutions/latest/deepracer-on-aws/prerequisites.html).
+3. **Bring your history across (optional).** See
+   [docs/migrating-to-dronaws.md](./docs/migrating-to-dronaws.md) for how DREM data maps
+   onto DRonAWS and the options for importing it.
+4. **Re-register your cars and timers** with DRonAWS. Cars and timers are registered as
+   SSM hybrid activations, so their registrations cannot be copied from DREM.
+5. **Remove DREM** when you no longer need it. Follow the [Cleanup](#cleanup) steps,
+   including the manual removal of retained S3 buckets and DynamoDB tables.
+
+At the time of writing, some DREM features are not available in DRonAWS:
+
+- Label printing for cars and racers (Brother QL)
+- PDF race results, podium sheets and racer certificates
+- Car log and video processing
+- Per-event landing pages, and QR codes on the leaderboard
+- Languages other than English (DREM ships de, en, es, fr, jp and se)
+
+Check the [DRonAWS changelog](https://github.com/aws-solutions/deepracer-on-aws/blob/main/CHANGELOG.md)
+for the current feature set. If you rely on one of these features, you can raise a
+feature request with the DRonAWS project.
+
 ## Overview
 
 The AWS DeepRacer Event Manager (DREM) is used to run and manage all aspects of in-person events for AWS DeepRacer, an autonomous 1/18th scale race car designed to test reinforcement learning (RL) models by racing on a physical track.

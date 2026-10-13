@@ -1,5 +1,11 @@
 # Contributing Guidelines
 
+> [!IMPORTANT]
+> DREM has been sunset in favour of [DeepRacer on AWS](https://github.com/aws-solutions/deepracer-on-aws)
+> and is no longer accepting new features. Please send feature requests and contributions
+> for in-person DeepRacer event management to that project instead. The guidelines below
+> are kept for reference.
+
 Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
 documentation, we greatly value feedback and contributions from our community.
 
